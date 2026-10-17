@@ -23,15 +23,26 @@ final class FolderPicker {
     }
 
     static void show(Activity a, String title, Allowed allowed, Picked picked) {
+        show(a, title, allowed, picked, Folders.ROOT, null);
+    }
+
+    /**
+     * Ordner wählen. Oben steht „Neuer Ordner …“ (wird unter newParent angelegt und sofort gewählt);
+     * der Ordner current (z. B. der gerade geöffnete) wird nicht angeboten.
+     */
+    static void show(Activity a, String title, Allowed allowed, Picked picked, String newParent, String current) {
         Folders f = Store.folders(a);
         List<String> ids = new ArrayList<>();
         List<String> labels = new ArrayList<>();
-        if (allowed == null || allowed.ok(Folders.ROOT)) {
+        ids.add(null);
+        labels.add("＋  " + a.getString(R.string.folder_new_dots));
+        if ((allowed == null || allowed.ok(Folders.ROOT)) && !Folders.ROOT.equals(current)) {
             ids.add(Folders.ROOT);
             labels.add(a.getString(R.string.folder_top));
         }
         for (Folders.Folder x : f.tree()) {
             if (allowed != null && !allowed.ok(x.id)) continue;
+            if (x.id.equals(current)) continue;
             StringBuilder b = new StringBuilder();
             int d = f.depth(x.id);
             for (int i = 1; i < d; i++) b.append("      ");
@@ -39,11 +50,13 @@ final class FolderPicker {
             ids.add(x.id);
             labels.add(b.toString());
         }
+        String parent = newParent == null || !f.exists(newParent) || f.depth(newParent) >= Folders.MAX_DEPTH ? Folders.ROOT : newParent;
         Ui.dialog(a).setTitle(title)
-                .setItems(labels.toArray(new String[0]), (d, w) -> picked.picked(ids.get(w)))
-                .setNeutralButton(R.string.folder_new, (d, w) -> create(a, Folders.ROOT, newId -> {
-                    if (newId != null) picked.picked(newId);
-                }))
+                .setItems(labels.toArray(new String[0]), (d, w) -> {
+                    String id = ids.get(w);
+                    if (id != null) picked.picked(id);
+                    else create(a, parent, newId -> { if (newId != null) picked.picked(newId); });
+                })
                 .setNegativeButton(R.string.cancel, null).show();
     }
 

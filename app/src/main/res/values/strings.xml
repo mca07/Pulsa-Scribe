@@ -346,7 +346,7 @@
     <string name="off_err_no_model">Kein Offline-Modell installiert (Einstellungen → Offline-Erkennung).</string>
     <string name="st_offline">Wird offline transkribiert</string>
     <!-- Mehrfachauswahl -->
-    <string name="sel_count">%1$d ausgewählt</string>
+    <string name="sel_count">%1$d ✓</string>
     <string name="sel_all">Alle</string>
     <string name="sel_none">Keine</string>
     <string name="sel_close">Auswahl beenden</string>
@@ -365,4 +365,10 @@
     <string name="crm_copied">CRM-Eintrag kopiert – im CRM einfügen</string>
     <string name="crm_clip_label">CRM-Eintrag</string>
     <string name="crm_mail_subject">CRM-Eintrag: %1$s</string>
+    <string name="sel_move_short">Verschieben</string>
+    <string name="folder_new_dots">Neuer Ordner …</string>
+    <plurals name="sel_move_title">
+        <item quantity="one">%1$d Transkript verschieben nach</item>
+        <item quantity="other">%1$d Transkripte verschieben nach</item>
+    </plurals>
 </resources>

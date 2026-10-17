@@ -117,3 +117,9 @@ Jeden Punkt am Handy ausprobieren und ✅ oder ❌ notieren. Bei ❌ bitte einen
 - [ ] Android 13+: Kopier-Vorschau unten links zeigt den Text nicht an (als sensibel markiert)
 - [ ] „CRM-Eintrag per E-Mail“ → Mail-App mit Betreff „CRM-Eintrag: …“ und dem Text
 - [ ] Neue Aufnahme mit Vorlage „CRM-Eintrag (Kundenkontakt)“ starten → direkt im CRM-Format
+
+## 15. Mehrere verschieben (neu in 1.9)
+- [ ] Lange drücken → mehrere markieren → oben Knopf „Verschieben“ (mit Ordner-Symbol) gut sichtbar
+- [ ] „Verschieben“ → Titel „2 Transkripte verschieben nach“; der gerade geöffnete Ordner steht nicht in der Liste
+- [ ] Oben „＋ Neuer Ordner …“ → Name eingeben → Ordner wird im aktuellen Ordner angelegt und alle markierten landen sofort darin
+- [ ] Hinweis „2 verschoben nach …“, Auswahl ist beendet, Liste aktualisiert

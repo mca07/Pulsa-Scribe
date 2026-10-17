@@ -41,13 +41,17 @@
             android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_close"
             android:tint="?attr/pl_text" android:contentDescription="@string/sel_close" />
         <TextView android:id="@+id/sel_count" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:layout_marginStart="4dp" android:textColor="?attr/pl_text" android:textSize="16sp" android:textStyle="bold" />
+            android:layout_marginStart="4dp" android:textColor="?attr/pl_text" android:textSize="16sp" android:textStyle="bold"
+            android:maxLines="1" android:ellipsize="end" />
         <TextView android:id="@+id/sel_all" android:layout_width="wrap_content" android:layout_height="48dp"
             android:gravity="center" android:paddingStart="12dp" android:paddingEnd="12dp" android:text="@string/sel_all"
             android:textColor="?attr/pl_accent" android:textSize="15sp" android:background="@drawable/crumb_bg"
             android:clickable="true" android:focusable="true" />
-        <ImageButton android:id="@+id/sel_move" android:layout_width="48dp" android:layout_height="48dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_folder"
+        <TextView android:id="@+id/sel_move" android:layout_width="wrap_content" android:layout_height="48dp"
+            android:layout_marginStart="4dp" android:gravity="center" android:paddingStart="10dp" android:paddingEnd="12dp"
+            android:drawableStart="@drawable/ic_folder" android:drawablePadding="6dp" android:text="@string/sel_move_short"
+            android:textColor="?attr/pl_accent" android:textSize="15sp" android:background="@drawable/crumb_bg"
+            android:maxLines="1" android:clickable="true" android:focusable="true"
             android:contentDescription="@string/sel_move" />
         <ImageButton android:id="@+id/sel_delete" android:layout_width="48dp" android:layout_height="48dp"
             android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_delete"

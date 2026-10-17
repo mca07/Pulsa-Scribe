@@ -820,13 +820,14 @@ public final class MainActivity extends Activity {
     private void moveSelected() {
         if (selected.isEmpty()) return;
         List<String> ids = new ArrayList<>(selected);
-        FolderPicker.show(this, getString(R.string.folder_move_to), null, target -> {
+        String title = getResources().getQuantityString(R.plurals.sel_move_title, ids.size(), ids.size());
+        FolderPicker.show(this, title, null, target -> {
             for (String id : ids) Store.moveTranscript(this, id, target);
             selected.clear();
             Toast.makeText(this, getString(R.string.sel_moved, ids.size(),
                     OptionsForm.folderLabel(this, Store.folders(this), target)), Toast.LENGTH_SHORT).show();
             refresh();
-        });
+        }, folder, folder);
     }
 
     /** Für den Hinweis in den Einstellungen. */
