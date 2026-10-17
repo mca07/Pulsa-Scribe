@@ -163,7 +163,25 @@ final class Store {
         if (cur == null) return false;
         t.title = cur.title;
         t.folder = cur.folder; // darf während der Arbeit verschoben werden
+        // Haken und Todoist-Verknüpfung gehören der Oberfläche bzw. dem Abgleich
+        if (t.summary != null) t.summary.carryTaskState(cur.summary);
         save(c, t);
+        return true;
+    }
+
+    interface TaskEdit {
+        /** true = geändert, speichern. */
+        boolean edit(Transcript.Task k);
+    }
+
+    /** Eine Aufgabe ändern; index und Text müssen noch passen (sonst wurde die Zusammenfassung ersetzt). */
+    static synchronized boolean editTask(Context c, String id, int index, String what, TaskEdit e) {
+        Transcript t = get(c, id);
+        if (t == null || t.summary == null || index < 0 || index >= t.summary.tasks.size()) return false;
+        if (!t.summary.tasks.get(index).what.equals(what)) return false;
+        Transcript n = copy(t);
+        if (!e.edit(n.summary.tasks.get(index))) return false;
+        save(c, n);
         return true;
     }
 

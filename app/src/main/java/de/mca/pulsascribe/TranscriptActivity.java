@@ -64,6 +64,7 @@ import de.mca.pulsascribe.core.Transcript;
 public final class TranscriptActivity extends Activity {
     static final String EXTRA_READ_WHEN_DONE = "read_when_done";
     static final String EXTRA_QUERY = "query";
+    static final String EXTRA_TAB_SUMMARY = "tab_summary";
     private static final int REQ_SAVE = 5;
     private static final int TAB_TEXT = 0, TAB_SUMMARY = 1, TAB_ASK = 2;
 
@@ -216,6 +217,7 @@ public final class TranscriptActivity extends Activity {
         } else {
             readWhenDone = getIntent().getBooleanExtra(EXTRA_READ_WHEN_DONE, false);
             if (!first.isAudio() && readWhenDone) startTab = TAB_SUMMARY;
+            if (getIntent().getBooleanExtra(EXTRA_TAB_SUMMARY, false)) startTab = TAB_SUMMARY;
         }
         reload();
         setTab(startTab);
@@ -232,6 +234,7 @@ public final class TranscriptActivity extends Activity {
         if (!themeName.equals(Design.get(this))) { recreate(); return; }
         Store.addListener(onChange);
         reload();
+        TodoistSync.pull(this, false, null);
     }
 
     @Override
@@ -397,23 +400,19 @@ public final class TranscriptActivity extends Activity {
         bullets(h[1], s.points);
         if (!s.tasks.isEmpty()) {
             section(h[2]);
-            for (Transcript.Task k : s.tasks) {
-                TextView v = Ui.body(this, "☐  " + (k.who.isEmpty() ? k.what : k.what + " — " + k.who));
-                v.setTextSize(15);
-                v.setBackgroundResource(R.drawable.crumb_bg);
-                v.setClickable(true);
-                v.setFocusable(true);
-                v.setOnClickListener(x -> taskMenu(x, k));
-                summaryBox.addView(v);
+            boolean token = TodoistToken.has(this);
+            for (int i = 0; i < s.tasks.size(); i++) {
+                Transcript.Task k = s.tasks.get(i);
+                // Haken/Verknüpfung stehen immer im Original (Übersetzung hat dieselbe Reihenfolge)
+                Transcript.Task orig = t.summary != null && i < t.summary.tasks.size() ? t.summary.tasks.get(i) : k;
+                summaryBox.addView(taskRow(k, orig, i, token));
             }
-            TextView all = new TextView(this);
-            all.setText(R.string.tasks_mail_all);
-            all.setTextColor(Design.color(this, R.attr.pl_accent));
-            all.setTextSize(14);
-            all.setMinHeight(Ui.dp(this, 44));
-            all.setGravity(Gravity.CENTER_VERTICAL);
-            all.setOnClickListener(x -> mailTasks(s.tasks));
-            summaryBox.addView(all);
+            LinearLayout actions = new LinearLayout(this);
+            actions.setOrientation(LinearLayout.VERTICAL);
+            actions.addView(linkText(R.string.tasks_mail_all, x -> mailTasks(openTasks(s))));
+            actions.addView(linkText(R.string.tasks_share_all, x -> shareTasks(openTasks(s))));
+            if (token) actions.addView(linkText(R.string.td_send_all, x -> sendTodoist(-1)));
+            summaryBox.addView(actions);
         }
         bullets(h[3], s.decisions);
         bullets(h[4], s.questions);
@@ -521,16 +520,92 @@ public final class TranscriptActivity extends Activity {
         }
     }
 
-    private void taskMenu(View anchor, Transcript.Task k) {
+    private View taskRow(Transcript.Task shown, Transcript.Task orig, int index, boolean token) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setBackgroundResource(R.drawable.crumb_bg);
+        CheckBox cb = new CheckBox(this);
+        cb.setChecked(orig.done);
+        cb.setContentDescription(getString(R.string.task_done_cd, shown.what));
+        cb.setOnCheckedChangeListener((b, on) -> TodoistSync.setDone(this, id, index, orig.what, on));
+        row.addView(cb, new LinearLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48)));
+        TextView v = Ui.body(this, shown.who.isEmpty() ? shown.what : shown.what + " — " + shown.who);
+        v.setTextSize(15);
+        if (orig.done) {
+            v.setPaintFlags(v.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
+            v.setTextColor(Design.color(this, R.attr.pl_muted));
+        }
+        v.setPadding(0, Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
+        row.addView(v, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        if (!orig.remote.isEmpty()) {
+            TextView tag = new TextView(this);
+            tag.setText(R.string.td_linked);
+            tag.setTextSize(11);
+            tag.setTextColor(Design.color(this, R.attr.pl_accent));
+            tag.setPadding(0, 0, Ui.dp(this, 8), 0);
+            row.addView(tag);
+        }
+        row.setClickable(true);
+        row.setFocusable(true);
+        row.setOnClickListener(x -> taskMenu(x, shown, orig, index, token));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = Ui.dp(this, 4);
+        row.setLayoutParams(lp);
+        return row;
+    }
+
+    private TextView linkText(int res, View.OnClickListener l) {
+        TextView all = new TextView(this);
+        all.setText(res);
+        all.setTextColor(Design.color(this, R.attr.pl_accent));
+        all.setTextSize(14);
+        all.setMinHeight(Ui.dp(this, 44));
+        all.setGravity(Gravity.CENTER_VERTICAL);
+        all.setOnClickListener(l);
+        return all;
+    }
+
+    private static List<Transcript.Task> openTasks(Transcript.Summary s) {
+        List<Transcript.Task> l = new ArrayList<>();
+        for (Transcript.Task k : s.tasks) if (!k.done) l.add(k);
+        return l.isEmpty() ? s.tasks : l;
+    }
+
+    private void taskMenu(View anchor, Transcript.Task k, Transcript.Task orig, int index, boolean token) {
         PopupMenu m = new PopupMenu(this, anchor);
         m.getMenu().add(0, 1, 0, R.string.m_task_calendar);
         m.getMenu().add(0, 2, 0, R.string.m_task_mail);
+        m.getMenu().add(0, 3, 0, R.string.m_task_share);
+        if (token && orig.remote.isEmpty() && !orig.done) m.getMenu().add(0, 4, 0, R.string.td_send_one);
         m.setOnMenuItemClickListener(mi -> {
-            if (mi.getItemId() == 1) addToCalendar(k);
-            else mailTasks(java.util.Collections.singletonList(k));
+            switch (mi.getItemId()) {
+                case 1: addToCalendar(k); break;
+                case 2: mailTasks(java.util.Collections.singletonList(k)); break;
+                case 3: shareTasks(java.util.Collections.singletonList(k)); break;
+                case 4: sendTodoist(index); break;
+                default: return false;
+            }
             return true;
         });
         m.show();
+    }
+
+    private void sendTodoist(int index) {
+        Toast.makeText(this, R.string.td_sending, Toast.LENGTH_SHORT).show();
+        TodoistSync.push(this, id, index, res -> {
+            if (!isFinishing()) Toast.makeText(this, res, Toast.LENGTH_LONG).show();
+        });
+    }
+
+    /** An jede Aufgaben-App (Todoist, Microsoft To Do, TickTick …): eine Zeile je Aufgabe. */
+    private void shareTasks(List<Transcript.Task> tasks) {
+        StringBuilder b = new StringBuilder();
+        for (Transcript.Task k : tasks) b.append(k.what).append(k.who.isEmpty() ? "" : " (" + k.who + ")").append('\n');
+        Intent i = new Intent(Intent.ACTION_SEND).setType("text/plain")
+                .putExtra(Intent.EXTRA_SUBJECT, tasks.size() == 1 ? Text.line(tasks.get(0).what, 200) : getString(R.string.tasks_mail_subject, t.title))
+                .putExtra(Intent.EXTRA_TEXT, b.toString().trim());
+        launch(Intent.createChooser(i, getString(R.string.m_task_share)));
     }
 
     /** Kalender-App mit vorausgefülltem Termin öffnen (keine Kalender-Berechtigung nötig). */

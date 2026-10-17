@@ -107,6 +107,7 @@ public final class MainActivity extends Activity {
         findViewById(R.id.main_new_folder).setOnClickListener(v -> FolderPicker.create(this, folder, id -> refresh()));
         findViewById(R.id.main_folder_more).setOnClickListener(this::folderHeaderMenu);
         findViewById(R.id.main_search).setOnClickListener(v -> openSearch());
+        findViewById(R.id.main_tasks).setOnClickListener(v -> startActivity(new Intent(this, TasksActivity.class)));
         findViewById(R.id.main_search_close).setOnClickListener(v -> closeSearch());
         searchInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
@@ -138,6 +139,7 @@ public final class MainActivity extends Activity {
         if (!themeName.equals(Design.get(this))) { recreate(); return; }
         Store.addListener(onChange);
         refresh();
+        TodoistSync.pull(this, false, null);
         startPendingRecording(this);
         handler.removeCallbacks(recTick);
         handler.postDelayed(recTick, 1000);

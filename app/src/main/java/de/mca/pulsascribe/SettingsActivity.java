@@ -31,6 +31,22 @@ public final class SettingsActivity extends Activity {
             } catch (RuntimeException ignored) { }
         });
 
+        updateTodoist();
+        findViewById(R.id.row_td_token).setOnClickListener(v -> TodoistDialog.show(this, this::updateTodoist));
+        findViewById(R.id.row_td_get).setOnClickListener(v -> {
+            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(de.mca.pulsascribe.core.Todoist.TOKEN_URL))
+                    .addCategory(Intent.CATEGORY_BROWSABLE);
+            try {
+                startActivity(i);
+            } catch (RuntimeException ignored) { }
+        });
+        bindSwitch(R.id.row_td_auto, R.id.sw_td_auto, Settings.todoistAuto(this), on -> Settings.setTodoistAuto(this, on));
+        findViewById(R.id.row_td_sync).setOnClickListener(v -> {
+            if (!TodoistToken.has(this)) { TodoistDialog.show(this, this::updateTodoist); return; }
+            Toast.makeText(this, R.string.td_syncing, Toast.LENGTH_SHORT).show();
+            TodoistSync.pull(this, true, res -> { if (!isFinishing()) Toast.makeText(this, res, Toast.LENGTH_LONG).show(); });
+        });
+
         TextView lang = findViewById(R.id.lang_value);
         lang.setText(Languages.label(Settings.language(this)));
         findViewById(R.id.row_lang).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.set_lang)
@@ -398,6 +414,10 @@ public final class SettingsActivity extends Activity {
         s.setChecked(value);
         s.setOnCheckedChangeListener((b, on) -> t.set(on));
         findViewById(rowId).setOnClickListener(v -> s.toggle());
+    }
+
+    private void updateTodoist() {
+        ((TextView) findViewById(R.id.td_status)).setText(TodoistToken.has(this) ? R.string.td_status_on : R.string.td_status_off);
     }
 
     private void updateKey() {

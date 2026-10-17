@@ -371,4 +371,48 @@
         <item quantity="one">%1$d Transkript verschieben nach</item>
         <item quantity="other">%1$d Transkripte verschieben nach</item>
     </plurals>
+    <!-- Aufgaben / Todoist (1.10) -->
+    <string name="tasks_title">Aufgaben</string>
+    <string name="tasks_show_done">Erledigte</string>
+    <string name="tasks_empty">Keine offenen Aufgaben. Aufgaben entstehen mit jeder Zusammenfassung.</string>
+    <string name="tasks_open_talk">Gespräch öffnen</string>
+    <plurals name="tasks_open">
+        <item quantity="one">%1$d offene Aufgabe</item>
+        <item quantity="other">%1$d offene Aufgaben</item>
+    </plurals>
+    <string name="task_done_cd">Erledigt: %1$s</string>
+    <string name="tasks_share_all">Offene Aufgaben an Aufgaben-App teilen</string>
+    <string name="m_task_share">An Aufgaben-App teilen</string>
+    <string name="td_section">Aufgaben – Todoist</string>
+    <string name="td_token">Todoist-Token</string>
+    <string name="td_status_on">Verbunden – Aufgaben landen im Projekt „Pulsa Scribe“</string>
+    <string name="td_status_off">Nicht eingerichtet (optional)</string>
+    <string name="td_get">Token in Todoist holen</string>
+    <string name="td_get_sub">Todoist → Einstellungen → Integrationen → Entwickler → API-Token kopieren</string>
+    <string name="td_auto">Neue Aufgaben automatisch senden</string>
+    <string name="td_auto_sub">Aus: nur auf Knopfdruck. An: nach jeder Zusammenfassung alle offenen Aufgaben.</string>
+    <string name="td_sync_now">Jetzt abgleichen</string>
+    <string name="td_sync_sub">Erledigt in Todoist ↔ abgehakt in der App (sonst automatisch beim Öffnen)</string>
+    <string name="td_dialog_text">Füge deinen persönlichen API-Token aus Todoist ein. Er wird verschlüsselt auf dem Handy gespeichert. An Todoist gehen nur Aufgabentext, Zuständiger und Titel/Datum des Gesprächs – nie das Transkript.</string>
+    <string name="td_token_hint">API-Token</string>
+    <string name="td_token_invalid">Das sieht nicht wie ein Todoist-Token aus.</string>
+    <string name="td_remove">Entfernen</string>
+    <string name="td_removed">Todoist-Verbindung entfernt</string>
+    <string name="td_test_ok">Todoist verbunden</string>
+    <string name="td_bad_token">Todoist hat den Token abgelehnt. Bitte neu eintragen.</string>
+    <string name="td_rate">Todoist meldet zu viele Anfragen. Bitte später erneut versuchen.</string>
+    <string name="td_offline">Todoist nicht erreichbar. Bitte Internetverbindung prüfen.</string>
+    <string name="td_failed">Todoist hat die Anfrage nicht angenommen.</string>
+    <string name="td_bad_reply">Unerwartete Antwort von Todoist.</string>
+    <string name="td_no_token">Bitte zuerst in den Einstellungen den Todoist-Token eintragen.</string>
+    <string name="td_nothing">Nichts zu senden – alle offenen Aufgaben sind schon in Todoist.</string>
+    <string name="td_sent_one">Aufgabe an Todoist gesendet</string>
+    <string name="td_sent">Aufgaben an Todoist gesendet</string>
+    <string name="td_sending">Sende an Todoist …</string>
+    <string name="td_syncing">Gleiche mit Todoist ab …</string>
+    <string name="td_synced">Mit Todoist abgeglichen</string>
+    <string name="td_synced_changes">Mit Todoist abgeglichen – Änderungen übernommen</string>
+    <string name="td_send_one">An Todoist senden</string>
+    <string name="td_send_all">Offene Aufgaben an Todoist senden</string>
+    <string name="td_linked">Todoist ✓</string>
 </resources>

@@ -14,6 +14,8 @@
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="@string/main_subtitle" android:textSize="13sp" android:textColor="?attr/pl_header_muted" />
         </LinearLayout>
+        <ImageButton android:id="@+id/main_tasks" style="@style/HeaderIconButton"
+            android:src="@drawable/ic_check_circle" android:contentDescription="@string/tasks_title" />
         <ImageButton android:id="@+id/main_search" style="@style/HeaderIconButton"
             android:src="@drawable/ic_search" android:contentDescription="@string/search_all_hint" />
         <ImageButton android:id="@+id/main_settings" style="@style/HeaderIconButton"

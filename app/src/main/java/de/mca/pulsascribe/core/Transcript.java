@@ -45,6 +45,12 @@ public final class Transcript {
 
     public static final class Task {
         public String what, who;
+        /** Abgehakt (in der App oder in Todoist). */
+        public boolean done;
+        /** ID der verknüpften Todoist-Aufgabe, "" = nicht verknüpft. */
+        public String remote = "";
+        /** Zuletzt bekannter Stand in Todoist (zum Abgleich). */
+        public boolean remoteDone;
 
         public Task(String what, String who) {
             this.what = what == null ? "" : what;
@@ -58,6 +64,27 @@ public final class Transcript {
         public final List<Task> tasks = new ArrayList<>();
         public final List<String> decisions = new ArrayList<>();
         public final List<String> questions = new ArrayList<>();
+
+        /**
+         * Übernimmt Haken und Todoist-Verknüpfung aus einem älteren Stand für Aufgaben mit gleichem Text
+         * (neue Zusammenfassung, gleichzeitige Änderung durch den Dienst).
+         */
+        public void carryTaskState(Summary from) {
+            if (from == null) return;
+            List<Task> pool = new ArrayList<>(from.tasks);
+            for (Task k : tasks) {
+                for (int i = 0; i < pool.size(); i++) {
+                    Task o = pool.get(i);
+                    if (o.what.equals(k.what)) {
+                        k.done = o.done;
+                        k.remote = o.remote;
+                        k.remoteDone = o.remoteDone;
+                        pool.remove(i);
+                        break;
+                    }
+                }
+            }
+        }
 
         public boolean isEmpty() {
             return overview.isEmpty() && points.isEmpty() && tasks.isEmpty() && decisions.isEmpty() && questions.isEmpty();
@@ -223,6 +250,11 @@ public final class Transcript {
             Map<String, Object> x = new LinkedHashMap<>();
             x.put("what", k.what);
             x.put("who", k.who);
+            if (k.done) x.put("done", true);
+            if (!k.remote.isEmpty()) {
+                x.put("todoist", k.remote);
+                if (k.remoteDone) x.put("todoistDone", true);
+            }
             t.add(x);
         }
         o.put("tasks", t);
@@ -415,7 +447,14 @@ public final class Transcript {
                 if (k == null) continue;
                 String what = Text.line(Json.str(k, "what"), 400);
                 if (what.isEmpty()) continue;
-                s.tasks.add(new Task(what, Text.line(Json.str(k, "who"), 60)));
+                Task task = new Task(what, Text.line(Json.str(k, "who"), 60));
+                task.done = Json.bool(k, "done", false);
+                String r = Json.str(k, "todoist");
+                if (Todoist.validId(r)) {
+                    task.remote = r;
+                    task.remoteDone = Json.bool(k, "todoistDone", false);
+                }
+                s.tasks.add(task);
             }
         }
         return s;

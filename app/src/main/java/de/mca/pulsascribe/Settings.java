@@ -81,4 +81,7 @@ final class Settings {
     static void setModelIndex(Context c, int i) {
         if (i >= 0 && i < Gemini.MODELS.length) p(c).edit().putInt("model_idx", i).apply();
     }
+
+    static boolean todoistAuto(Context c) { return p(c).getBoolean("todoist_auto", false); }
+    static void setTodoistAuto(Context c, boolean v) { p(c).edit().putBoolean("todoist_auto", v).apply(); }
 }

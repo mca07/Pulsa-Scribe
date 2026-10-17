@@ -2,9 +2,11 @@ package de.mca.pulsascribe.core;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -384,5 +386,73 @@ public class FeatureTest {
         assertTrue(g.startsWith("Betreff: Gespräch Kunde\n"));
         assertTrue(g.contains("Kernpunkte:\n- Betreff: Schulung"));
         assertEquals("", Export.crmEntry(t, null));
+    }
+
+    @Test
+    public void taskStateRoundTripAndCarry() {
+        Transcript t = new Transcript();
+        t.id = "abcdefgh12";
+        t.summary = new Transcript.Summary();
+        Transcript.Task a = new Transcript.Task("Angebot schicken", "Marian");
+        a.done = true;
+        a.remote = "6X7rM8997g3RQmvh";
+        a.remoteDone = true;
+        t.summary.tasks.add(a);
+        t.summary.tasks.add(new Transcript.Task("Rückruf", ""));
+        Transcript r = Transcript.fromJson(t.toJson());
+        assertTrue(r.summary.tasks.get(0).done);
+        assertEquals("6X7rM8997g3RQmvh", r.summary.tasks.get(0).remote);
+        assertTrue(r.summary.tasks.get(0).remoteDone);
+        assertFalse(r.summary.tasks.get(1).done);
+        assertEquals("", r.summary.tasks.get(1).remote);
+        // Ungültige ID wird verworfen
+        String evil = t.toJson().replace("6X7rM8997g3RQmvh", "../x?y");
+        assertEquals("", Transcript.fromJson(evil).summary.tasks.get(0).remote);
+        // Neue Zusammenfassung übernimmt Haken bei gleichem Text
+        Transcript.Summary n = new Transcript.Summary();
+        n.tasks.add(new Transcript.Task("Neu", ""));
+        n.tasks.add(new Transcript.Task("Angebot schicken", "Marian"));
+        n.carryTaskState(r.summary);
+        assertFalse(n.tasks.get(0).done);
+        assertTrue(n.tasks.get(1).done);
+        assertEquals("6X7rM8997g3RQmvh", n.tasks.get(1).remote);
+        // Übersicht
+        java.util.List<Transcript> all = java.util.Collections.singletonList(r);
+        assertEquals(1, Todoist.openCount(all));
+        assertEquals(1, Todoist.tasks(all, false).size());
+        assertEquals(2, Todoist.tasks(all, true).size());
+    }
+
+    @Test
+    public void todoistRequestsAndReplies() {
+        assertTrue(Todoist.validToken("0123456789abcdef0123456789abcdef01234567"));
+        assertFalse(Todoist.validToken("kurz"));
+        assertFalse(Todoist.validToken("0123456789abcdef0123456789abcdef0123456\n"));
+        assertEquals("tasks/123/close", Todoist.taskPath("123", "close"));
+        try { Todoist.taskPath("../projects", null); fail(); } catch (IllegalArgumentException expected) { }
+        assertEquals(Todoist.requestId("a", "b"), Todoist.requestId("a", "b"));
+        assertNotEquals(Todoist.requestId("a", "b"), Todoist.requestId("a", "c"));
+        Transcript t = new Transcript();
+        t.title = "Kunde [Link](http://x)";
+        t.createdMs = 0;
+        Transcript.Task k = new Transcript.Task("Mail **senden** [hier](http://evil)", "Sprecher 2");
+        String body = Todoist.taskBody(k, t, "p1");
+        assertFalse(body.contains("["));
+        assertFalse(body.contains("**"));
+        assertTrue(body.contains("\"project_id\":\"p1\""));
+        assertTrue(body.contains("Zuständig: Sprecher 2"));
+        assertFalse(Todoist.taskBody(k, t, "").contains("project_id"));
+        Todoist.State s = Todoist.parseTask("{\"id\":\"6X7\",\"checked\":true,\"is_deleted\":false,\"content\":\"x\"}");
+        assertEquals("6X7", s.id);
+        assertTrue(s.checked);
+        assertFalse(s.deleted);
+        assertNull(Todoist.parseTask("{\"id\":\"a/b\"}"));
+        assertNull(Todoist.parseTask("kein json"));
+        String page = "{\"results\":[{\"id\":\"1\",\"name\":\"Inbox\"},{\"id\":\"9\",\"name\":\"Pulsa Scribe\",\"is_archived\":true},"
+                + "{\"id\":\"7\",\"name\":\"Pulsa Scribe\"}],\"next_cursor\":\"abc\"}";
+        assertEquals("7", Todoist.findProject(page));
+        assertEquals("abc", Todoist.nextCursor(page));
+        assertEquals("", Todoist.nextCursor("{\"next_cursor\":null}"));
+        assertEquals("", Todoist.findProject("{\"results\":[]}"));
     }
 }

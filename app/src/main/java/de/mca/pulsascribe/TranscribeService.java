@@ -855,6 +855,7 @@ public final class TranscribeService extends Service {
     }
 
     private void notifyDone(Transcript t, boolean ok) {
+        if (ok) TodoistSync.autoPush(this, t.id);
         NotificationManager nm = getSystemService(NotificationManager.class);
         if (!nm.areNotificationsEnabled()) return;
         String text = ok ? (t.error.isEmpty() ? getString(R.string.n_done_text) : t.error) : t.error;

@@ -141,6 +141,19 @@
 - ✅ Hinweis „Von Gemini erstellt – bitte vor dem Weitergeben prüfen“ steht direkt über den Knöpfen
 - ✅ Unit-Test `crmTemplateAndEntry`
 
+## 9g. Aufgaben und Todoist (ab 1.10)
+- ✅ Todoist ist optional und aus, solange kein Token eingetragen ist; automatisches Senden zusätzlich standardmäßig aus
+- ✅ Token: AES-256-GCM mit eigenem Android-Keystore-Schlüssel, eigene Einstellungsdatei, nicht in der Datensicherung (allowBackup=false, nicht im verschlüsselten Export); Eingabe mit FLAG_SECURE, Passwortfeld, kein Autofill; wird vor dem Speichern gegen die API geprüft
+- ✅ Nur HTTPS zu fest geprüftem Host `api.todoist.com`, keine Weiterleitungen, Zeitlimits, Antwort max. 1 MB, Token nur im Authorization-Header (nie in URL/Log)
+- ✅ Datensparsam: übertragen werden nur Aufgabentext, Zuständiger, Titel und Datum des Gesprächs – kein Transkript, keine Zusammenfassung, kein Ton
+- ✅ Gemini-Text wird vor dem Senden entschärft (Markdown-Links/Formatierung entfernt), Länge begrenzt
+- ✅ IDs aus Todoist werden per Positivliste `[A-Za-z0-9_-]{1,64}` geprüft, bevor sie in Pfade oder Speicher gelangen; Pfade werden nur über `taskPath` gebaut
+- ✅ Keine Duplikate bei Wiederholung: feste `X-Request-Id` je Gespräch und Aufgabentext
+- ✅ Abgleich höchstens 1×/Minute und max. 60 Abfragen je Lauf; Abbruch bei 401/403/429 oder offline mit verständlicher Meldung
+- ✅ Gleichzeitige Änderungen (Dienst schreibt Zusammenfassung, Nutzer hakt ab): `Store.update` übernimmt Haken/Verknüpfung aus dem aktuellen Stand; `Store.editTask` prüft Index und Text
+- ✅ Teilen an andere Aufgaben-Apps nur per Android-Teilen-Dialog durch Nutzeraktion
+- ✅ Unit-Tests `taskStateRoundTripAndCarry`, `todoistRequestsAndReplies`
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB

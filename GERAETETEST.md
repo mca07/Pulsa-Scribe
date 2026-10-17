@@ -123,3 +123,22 @@ Jeden Punkt am Handy ausprobieren und ✅ oder ❌ notieren. Bei ❌ bitte einen
 - [ ] „Verschieben“ → Titel „2 Transkripte verschieben nach“; der gerade geöffnete Ordner steht nicht in der Liste
 - [ ] Oben „＋ Neuer Ordner …“ → Name eingeben → Ordner wird im aktuellen Ordner angelegt und alle markierten landen sofort darin
 - [ ] Hinweis „2 verschoben nach …“, Auswahl ist beendet, Liste aktualisiert
+
+## 16. Aufgaben und Todoist (neu in 1.10)
+Ohne Todoist:
+- [ ] Startbildschirm: neues Haken-Symbol oben → „Aufgaben“ zeigt offene Aufgaben aller Gespräche, gruppiert nach Gespräch
+- [ ] Kästchen antippen → Aufgabe durchgestrichen, Zähler sinkt; „Erledigte“ einschalten → wieder sichtbar, Haken entfernen geht
+- [ ] Aufgabe antippen → Gespräch öffnet im Tab Zusammenfassung
+- [ ] Im Gespräch: Kästchen vor jeder Aufgabe; Zeile antippen → Menü mit Kalender / E-Mail / „An Aufgaben-App teilen“
+- [ ] „Offene Aufgaben an Aufgaben-App teilen“ → z. B. Microsoft To Do oder Todoist-App wählen → Aufgabe(n) dort angelegt
+- [ ] „Zusammenfassung neu erstellen“ → Haken bei unveränderten Aufgaben bleiben erhalten
+Mit Todoist:
+- [ ] Einstellungen → „Token in Todoist holen“ → Token kopieren → „Todoist-Token“ → einfügen → „Todoist verbunden“ (falscher Token → Fehlermeldung im Feld, nichts gespeichert)
+- [ ] Bildschirmfoto im Token-Dialog ist gesperrt
+- [ ] Im Gespräch „Offene Aufgaben an Todoist senden“ → in Todoist erscheint Projekt „Pulsa Scribe“ mit den Aufgaben (Beschreibung: Zuständig + Gespräch/Datum); in der App steht „Todoist ✓“
+- [ ] Noch einmal senden → „Nichts zu senden“, keine Doppelten in Todoist
+- [ ] In der App abhaken → in Todoist erledigt; in Todoist abhaken → App öffnen/„Aufgaben“ → nach max. 1 Minute bzw. ↻ abgehakt
+- [ ] In Todoist eine Aufgabe löschen → Abgleich → in der App bleibt sie, aber ohne „Todoist ✓“
+- [ ] Schalter „Neue Aufgaben automatisch senden“ an → neues Gespräch → Aufgaben landen ohne Knopfdruck in Todoist
+- [ ] Flugmodus → Senden → „Todoist nicht erreichbar“, App bleibt bedienbar
+- [ ] „Todoist-Token“ → „Entfernen“ → Knöpfe für Todoist verschwinden
