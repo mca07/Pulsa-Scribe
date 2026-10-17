@@ -358,4 +358,11 @@
     <string name="sel_moved">%1$d verschoben nach %2$s</string>
     <string name="sel_hint">Antippen zum Auswählen</string>
     <string name="sum_length">Länge der Zusammenfassung</string>
+    <string name="crm_copy">CRM-Eintrag kopieren</string>
+    <string name="crm_mail">CRM-Eintrag per E-Mail</string>
+    <string name="crm_make">Als CRM-Eintrag erstellen</string>
+    <string name="crm_make_confirm">Die Vorlage wird auf „CRM-Eintrag“ umgestellt und die Zusammenfassung neu erstellt. Die bisherige Zusammenfassung wird ersetzt.</string>
+    <string name="crm_copied">CRM-Eintrag kopiert – im CRM einfügen</string>
+    <string name="crm_clip_label">CRM-Eintrag</string>
+    <string name="crm_mail_subject">CRM-Eintrag: %1$s</string>
 </resources>

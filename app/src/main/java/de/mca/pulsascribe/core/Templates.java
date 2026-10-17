@@ -4,10 +4,10 @@ package de.mca.pulsascribe.core;
 public final class Templates {
     private Templates() {}
 
-    public static final String STANDARD = "standard", MEETING = "meeting", LESSON = "lesson", INTERVIEW = "interview", POST = "post";
+    public static final String STANDARD = "standard", MEETING = "meeting", LESSON = "lesson", INTERVIEW = "interview", POST = "post", CRM = "crm";
 
-    public static final String[] IDS = {STANDARD, MEETING, LESSON, INTERVIEW, POST};
-    public static final String[] LABELS = {"Allgemein", "Kundentermin / Besprechung", "Kurs-Lektion (Lernzettel)", "Interview", "Beitrag / Artikel"};
+    public static final String[] IDS = {STANDARD, MEETING, CRM, LESSON, INTERVIEW, POST};
+    public static final String[] LABELS = {"Allgemein", "Kundentermin / Besprechung", "CRM-Eintrag (Kundenkontakt)", "Kurs-Lektion (Lernzettel)", "Interview", "Beitrag / Artikel"};
 
     // Länge der Zusammenfassung
     public static final String SHORT = "short", MEDIUM = "medium", LONG = "long";
@@ -57,6 +57,7 @@ public final class Templates {
     public static String[] headings(String id) {
         switch (clean(id)) {
             case MEETING: return new String[]{"Überblick", "Besprochene Punkte", "Aufgaben", "Entscheidungen", "Offene Fragen"};
+            case CRM: return new String[]{"Notiz", "CRM-Felder", "Nächste Schritte / Wiedervorlage", "Vereinbarungen", "Offen / im CRM aktualisieren"};
             case LESSON: return new String[]{"Worum es geht", "Lernzettel", "Übungen / To-dos", "Merksätze und Begriffe", "Prüfungsfragen"};
             case INTERVIEW: return new String[]{"Überblick", "Wichtigste Aussagen", "Nächste Schritte", "Zitate", "Offene Punkte"};
             case POST: return new String[]{"Kurzfassung", "Kernaussagen", "Handlungsempfehlungen", "Fakten und Zahlen", "Fragen zum Nachdenken"};
@@ -71,6 +72,20 @@ public final class Templates {
                 return "This is a business meeting or customer appointment. overview = 3 to 6 sentences: purpose, participants' roles if clear, outcome; "
                         + "points = topics discussed with the key facts (at most 12); tasks = action items (what, and who = person responsible as named, empty if unclear, "
                         + "include deadlines in 'what' if mentioned); decisions = agreements and decisions; questions = open issues and questions to clarify.";
+            case CRM:
+                return "This is a customer contact (call, visit, voice message or meeting) to be logged in a CRM system. Write factually, in third person, no filler. "
+                        + "overview = the activity note for the CRM: 3 to 6 sentences on reason for contact, what was discussed and the result; "
+                        + "points = CRM fields, each entry exactly in the form 'Field name: value', in this order and only if the information is in the transcript "
+                        + "(never guess company or person names; use the speaker names as given): "
+                        + "Subject (short, max 8 words), Contact type (phone call, visit, video call, e-mail, voice message), Company, Contact person (name and role), "
+                        + "Other persons mentioned (name and role), Reason for contact, Result, Customer satisfaction, Products / systems in use, "
+                        + "Interest / sales opportunity (product or service, status), Follow-up date (date or time frame if mentioned), Priority (only if clear). "
+                        + "Write the field names in the output language (e.g. German: Betreff, Kontaktart, Firma, Ansprechpartner, Weitere Personen, Anlass, Ergebnis, "
+                        + "Zufriedenheit, Eingesetzte Produkte, Interesse / Verkaufschance, Wiedervorlage, Priorität). "
+                        + "tasks = next steps and follow-ups (what, including deadline if mentioned; who = person responsible as named, empty if unclear); "
+                        + "decisions = agreements made with the customer; "
+                        + "questions = open points the customer or team still has to clarify, and master data that should be updated in the CRM "
+                        + "(e.g. a contact person who left the company, new responsibilities).";
             case LESSON:
                 return "This is a lesson, lecture or training video. overview = 2 to 4 sentences on the topic and learning goals; "
                         + "points = a study sheet: the key learning content as clear, self-contained statements (at most 15); "

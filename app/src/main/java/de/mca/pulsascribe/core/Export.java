@@ -198,6 +198,51 @@ public final class Export {
         return out;
     }
 
+    /**
+     * Zusammenfassung als Text zum Einfügen in ein CRM (Notizfeld oder E-Mail).
+     * Nur Klartext, keine Formatierung; Inhalte sind bereits beim Laden bereinigt.
+     */
+    public static String crmEntry(Transcript t, Transcript.Summary s) {
+        StringBuilder b = new StringBuilder();
+        if (s == null) return "";
+        String[] h = Templates.headings(t.template);
+        boolean crm = Templates.CRM.equals(Templates.clean(t.template));
+        String subject = "";
+        if (crm) {
+            for (String p : s.points) {
+                String l = p.toLowerCase(Locale.ROOT);
+                if (l.startsWith("betreff:") || l.startsWith("subject:")) { subject = p.substring(p.indexOf(':') + 1).trim(); break; }
+            }
+        }
+        b.append("Betreff: ").append(subject.isEmpty() ? t.title : subject).append('\n');
+        b.append("Datum: ").append(new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMANY).format(new Date(t.createdMs)));
+        if (t.durationMs > 0) b.append(" (").append(Times.duration(t.durationMs)).append(')');
+        b.append('\n');
+        if (crm) {
+            for (String p : s.points) {
+                String l = p.toLowerCase(Locale.ROOT);
+                if (l.startsWith("betreff:") || l.startsWith("subject:")) continue;
+                b.append(p).append('\n');
+            }
+        }
+        if (!s.overview.isEmpty()) b.append('\n').append(h[0]).append(":\n").append(s.overview).append('\n');
+        if (!crm) crmList(b, h[1], s.points);
+        crmList(b, h[3], s.decisions);
+        if (!s.tasks.isEmpty()) {
+            List<String> l = new ArrayList<>();
+            for (Transcript.Task k : s.tasks) l.add(k.who.isEmpty() ? k.what : k.what + " (Zuständig: " + k.who + ")");
+            crmList(b, h[2], l);
+        }
+        crmList(b, h[4], s.questions);
+        return b.toString().trim() + "\n";
+    }
+
+    private static void crmList(StringBuilder b, String heading, List<String> items) {
+        if (items.isEmpty()) return;
+        b.append('\n').append(heading).append(":\n");
+        for (String i : items) b.append("- ").append(i).append('\n');
+    }
+
     private static void speechList(List<String> out, String heading, List<String> items) {
         if (items.isEmpty()) return;
         out.add(heading + ":");

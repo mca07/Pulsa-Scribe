@@ -356,4 +356,33 @@ public class FeatureTest {
         String schema = Json.write(Json.obj(Json.obj(m, "generationConfig"), "responseSchema"));
         assertTrue(schema.contains("\"tags\""));
     }
+
+    @Test
+    public void crmTemplateAndEntry() {
+        assertEquals(Templates.CRM, Templates.clean("crm"));
+        assertTrue(Templates.fields(Templates.CRM).contains("Wiedervorlage"));
+        Transcript t = new Transcript();
+        t.title = "Gespräch Kunde";
+        t.template = Templates.CRM;
+        t.createdMs = 0;
+        Transcript.Summary s = new Transcript.Summary();
+        s.overview = "Kunde ist zufrieden.";
+        s.points.add("Betreff: Schulung myFactory");
+        s.points.add("Ansprechpartner: Inhaber");
+        s.tasks.add(new Transcript.Task("Infos intern verteilen", "Sprecher 2"));
+        s.decisions.add("Anfragen laufen über Sprecher 2");
+        s.questions.add("Ehemaliger Ansprechpartner ausgeschieden");
+        String e = Export.crmEntry(t, s);
+        assertTrue(e.startsWith("Betreff: Schulung myFactory\n"));
+        assertTrue(e.contains("Ansprechpartner: Inhaber\n"));
+        assertEquals(1, e.split("Betreff:", -1).length - 1);
+        assertTrue(e.contains("- Infos intern verteilen (Zuständig: Sprecher 2)"));
+        assertTrue(e.contains("Offen / im CRM aktualisieren:\n- Ehemaliger"));
+        // Andere Vorlage: Titel als Betreff, Punkte als Liste
+        t.template = Templates.STANDARD;
+        String g = Export.crmEntry(t, s);
+        assertTrue(g.startsWith("Betreff: Gespräch Kunde\n"));
+        assertTrue(g.contains("Kernpunkte:\n- Betreff: Schulung"));
+        assertEquals("", Export.crmEntry(t, null));
+    }
 }

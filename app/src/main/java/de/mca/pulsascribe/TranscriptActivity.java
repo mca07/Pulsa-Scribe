@@ -424,6 +424,55 @@ public final class TranscriptActivity extends Activity {
         summaryBox.addView(hint);
         summaryBox.addView(secondaryButton(R.string.read_summary, v -> reader.speak(Export.speechSummary(t, s), speechLang(true))),
                 new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        // CRM: kopieren / per E-Mail; bei anderer Vorlage zuerst als CRM-Eintrag zusammenfassen lassen
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = Ui.dp(this, 8);
+        if (Templates.CRM.equals(t.template)) {
+            summaryBox.addView(secondaryButton(R.string.crm_copy, v -> copyCrm(s)), lp);
+            LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(lp);
+            summaryBox.addView(secondaryButton(R.string.crm_mail, v -> mailCrm(s)), lp2);
+        } else if (!t.isWorking() && !t.segments.isEmpty()) {
+            summaryBox.addView(secondaryButton(R.string.crm_make, v -> makeCrm()), lp);
+        }
+    }
+
+    private String crmText(Transcript.Summary s) {
+        Transcript c = shownCopy();
+        return Export.crmEntry(c, c.summary != null ? c.summary : s);
+    }
+
+    private void copyCrm(Transcript.Summary s) {
+        ClipboardManager cm = getSystemService(ClipboardManager.class);
+        if (cm == null) return;
+        ClipData clip = ClipData.newPlainText(getString(R.string.crm_clip_label), crmText(s));
+        // Kundendaten: nicht in der Zwischenablage-Vorschau anzeigen (Android 13+)
+        android.os.PersistableBundle extras = new android.os.PersistableBundle();
+        extras.putBoolean("android.content.extra.IS_SENSITIVE", true);
+        clip.getDescription().setExtras(extras);
+        cm.setPrimaryClip(clip);
+        Toast.makeText(this, R.string.crm_copied, Toast.LENGTH_SHORT).show();
+    }
+
+    private void mailCrm(Transcript.Summary s) {
+        Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+                .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crm_mail_subject, t.title))
+                .putExtra(Intent.EXTRA_TEXT, crmText(s));
+        launch(i);
+    }
+
+    /** Vorlage auf CRM-Eintrag umstellen und Zusammenfassung neu erstellen. */
+    private void makeCrm() {
+        if (!editable() || t.segments.isEmpty()) return;
+        if (!GeminiKey.has(this)) { KeyDialog.show(this, null); return; }
+        Ui.dialog(this).setMessage(R.string.crm_make_confirm)
+                .setPositiveButton(R.string.summary_create, (d, w) -> {
+                    Transcript n = Store.copy(t);
+                    n.template = Templates.CRM;
+                    Store.save(this, n);
+                    TranscribeService.summary(this, id);
+                    setTab(TAB_SUMMARY);
+                })
+                .setNegativeButton(R.string.cancel, null).show();
     }
 
     private TextView primaryButton(int res, View.OnClickListener l) {
