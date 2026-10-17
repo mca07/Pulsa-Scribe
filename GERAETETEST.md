@@ -1,10 +1,10 @@
-# Pulsa Scribe – Gerätetest (Version 1.5)
+# Pulsa Scribe – Gerätetest (Version 1.6)
 
 Jeden Punkt am Handy ausprobieren und ✅ oder ❌ notieren. Bei ❌ bitte einen Screenshot und den genauen Text der Meldung in den Chat schicken.
 
 ## 1. Installation und Einrichtung
 - [ ] APK aus dem GitHub-Release „neueste“ installiert (signiert, nicht die Test-APK)
-- [ ] Einstellungen → Version zeigt „1.5.x“
+- [ ] Einstellungen → Version zeigt „1.6.x“
 - [ ] Einstellungen → „Schlüssel bei Google AI Studio holen“ öffnet den Browser
 - [ ] Einstellungen → Gemini-Schlüssel einfügen → „Hinterlegt“; Screenshot im Schlüssel-Dialog ist gesperrt
 - [ ] Falscher Schlüssel (z. B. nur „abc“) → Meldung „sieht nicht wie ein Gemini-Schlüssel aus“
@@ -96,3 +96,10 @@ Jeden Punkt am Handy ausprobieren und ✅ oder ❌ notieren. Bei ❌ bitte einen
 - [ ] Flugmodus an → offline transkribieren klappt trotzdem; die Zusammenfassung kommt erst mit Internet (oder Hinweis)
 - [ ] Offline-Transkription abbrechen → „Abgebrochen“, „Erneut versuchen“ geht weiter
 - [ ] Optional: „Genau (Large v3 Turbo)“ laden – läuft es auf dem Handy, oder kommt „Modell konnte nicht geladen werden“?
+
+## 12. Mehrfachauswahl (neu in 1.6)
+- [ ] Transkript lange drücken → wird markiert, oben erscheint „1 ausgewählt“ mit Alle / Ordner / Papierkorb
+- [ ] Weitere antippen → zählt mit; „Alle“ markiert alle sichtbaren, danach heißt der Knopf „Keine“
+- [ ] Papierkorb → Rückfrage „… Transkripte löschen?“ → gelöscht
+- [ ] Ordner-Symbol → Ziel wählen → alle markierten werden verschoben
+- [ ] Zurück-Taste oder ✕ beendet die Auswahl
