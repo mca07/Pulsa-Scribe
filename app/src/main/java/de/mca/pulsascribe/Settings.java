@@ -61,6 +61,14 @@ final class Settings {
     static String template(Context c) { return de.mca.pulsascribe.core.Templates.clean(p(c).getString("template", "standard")); }
     static void setTemplate(Context c, String v) { p(c).edit().putString("template", de.mca.pulsascribe.core.Templates.clean(v)).apply(); }
 
+    static String engine(Context c) {
+        return "whisper".equals(p(c).getString("engine", "gemini")) ? "whisper" : "gemini";
+    }
+
+    static void setEngine(Context c, String e) {
+        p(c).edit().putString("engine", "whisper".equals(e) ? "whisper" : "gemini").apply();
+    }
+
     /** Zuletzt erfolgreiches Modell (Index in der festen Liste), damit nicht jedes Mal von vorn probiert wird. */
     static int modelIndex(Context c) {
         int i = p(c).getInt("model_idx", 0);

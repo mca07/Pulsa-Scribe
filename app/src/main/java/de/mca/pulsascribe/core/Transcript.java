@@ -89,7 +89,9 @@ public final class Transcript {
     public Summary summary;
     public String kind = KIND_AUDIO;
     public String folder = "";                 // Ordner-ID, "" = oberste Ebene
-    public boolean aggregate;                  // Ordner-Auswertung (wird nicht erneut mit ausgewertet)
+    public boolean aggregate;
+    public static final String ENGINE_GEMINI = "gemini", ENGINE_WHISPER = "whisper";
+    public String engine = ENGINE_GEMINI;      // Transkription online (Gemini) oder offline (Whisper)                  // Ordner-Auswertung (wird nicht erneut mit ausgewertet)
     public final List<String> tags = new ArrayList<>();
     public String template = Templates.STANDARD;
     public final List<Answer> answers = new ArrayList<>();          // Fragen an das Transkript
@@ -186,6 +188,7 @@ public final class Transcript {
         m.put("kind", kind);
         m.put("folder", folder);
         m.put("aggregate", aggregate);
+        m.put("engine", engine);
         m.put("tags", new ArrayList<Object>(tags));
         m.put("template", template);
         List<Object> qa = new ArrayList<>();
@@ -308,6 +311,7 @@ public final class Transcript {
         String folder = Json.str(m, "folder");
         t.folder = folder != null && Text.isId(folder) ? folder : "";
         t.aggregate = Json.bool(m, "aggregate", false);
+        t.engine = ENGINE_WHISPER.equals(Json.str(m, "engine")) ? ENGINE_WHISPER : ENGINE_GEMINI;
         setTags(t.tags, Json.arr(m, "tags"));
         t.template = Templates.clean(Json.str(m, "template"));
         List<Object> qa = Json.arr(m, "qa");

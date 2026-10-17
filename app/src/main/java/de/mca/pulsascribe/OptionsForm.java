@@ -20,7 +20,7 @@ import de.mca.pulsascribe.core.Transcript;
 final class OptionsForm {
     private final EditText title, terms;
     private final Switch diarize, summary, clean, readAfter;
-    private String lang, template, folder;
+    private String lang, template, folder, engine;
     private final String fallbackTitle;
     private final boolean audio;
 
@@ -53,6 +53,31 @@ final class OptionsForm {
                 }).show());
         Ui.add(col, langRow);
 
+        engine = Settings.engine(a);
+        if (audio) {
+            Ui.add(col, Ui.label(a, R.string.off_engine));
+            String[] engLabels = {a.getString(R.string.off_engine_gemini), a.getString(R.string.off_engine_whisper)};
+            TextView engRow = Ui.choiceRow(a, engLabels["whisper".equals(engine) ? 1 : 0]);
+            engRow.setOnClickListener(v -> Ui.dialog(a).setTitle(R.string.off_engine)
+                    .setSingleChoiceItems(engLabels, "whisper".equals(engine) ? 1 : 0, (d, w) -> {
+                        d.dismiss();
+                        if (w == 1 && !OfflineModels.anyInstalled(a)) {
+                            Ui.dialog(a).setMessage(R.string.off_need_model)
+                                    .setPositiveButton(R.string.settings, (d2, w2) -> a.startActivity(new android.content.Intent(a, SettingsActivity.class)))
+                                    .setNegativeButton(R.string.cancel, null).show();
+                            return;
+                        }
+                        engine = w == 1 ? "whisper" : "gemini";
+                        engRow.setText(engLabels[w]);
+                        diarizeRowState();
+                    }).show());
+            Ui.add(col, engRow);
+            if ("whisper".equals(engine) && !OfflineModels.anyInstalled(a)) {
+                engine = "gemini";
+                engRow.setText(engLabels[0]);
+            }
+        }
+
         Ui.add(col, Ui.label(a, R.string.start_template));
         template = audio ? Settings.template(a) : Templates.POST;
         TextView tplRow = Ui.choiceRow(a, Templates.label(template));
@@ -71,6 +96,7 @@ final class OptionsForm {
         summary = Ui.switchRow(a, R.string.start_summary, audio ? Settings.summarize(a) : true);
         clean = Ui.switchRow(a, R.string.start_clean, Settings.cleanFillers(a));
         readAfter = Ui.switchRow(a, R.string.share_read_after, !audio);
+        diarizeRowState();
         if (audio) {
             Ui.add(col, diarize);
             Ui.add(col, summary);
@@ -92,6 +118,14 @@ final class OptionsForm {
         }
     }
 
+    /** Offline gibt es keine Sprechererkennung. */
+    private void diarizeRowState() {
+        if (diarize == null) return;
+        boolean off = "whisper".equals(engine);
+        diarize.setEnabled(!off);
+        if (off) diarize.setChecked(false);
+    }
+
     static String folderLabel(Activity a, Folders f, String id) {
         return Folders.ROOT.equals(id) || !f.exists(id) ? a.getString(R.string.folder_top) : f.pathText(id);
     }
@@ -110,7 +144,8 @@ final class OptionsForm {
         t.language = Languages.clean(lang);
         t.template = Templates.clean(template);
         t.folder = folder;
-        t.diarize = audio && diarize.isChecked();
+        t.engine = audio && "whisper".equals(engine) ? Transcript.ENGINE_WHISPER : Transcript.ENGINE_GEMINI;
+        t.diarize = audio && diarize.isChecked() && !Transcript.ENGINE_WHISPER.equals(t.engine);
         t.summarize = !audio || summary.isChecked();
         t.cleanFillers = clean.isChecked();
         t.terms = terms == null ? "" : Text.line(terms.getText().toString(), Transcript.MAX_TERMS);

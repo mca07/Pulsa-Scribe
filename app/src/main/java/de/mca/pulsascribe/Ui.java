@@ -159,6 +159,7 @@ final class Ui {
         int[] live = TranscribeService.liveProgress(t.id);
         if (Transcript.PREPARE.equals(t.status)) return live != null ? live[1] : -1;
         if (Transcript.TRANSCRIBE.equals(t.status)) {
+            if (live != null && live[1] >= 0 && live[0] == R.string.st_offline) return live[1];
             int n = t.chunks();
             return Math.min(99, t.chunksDone * 100 / Math.max(1, n));
         }

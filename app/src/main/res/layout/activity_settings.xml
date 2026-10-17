@@ -89,6 +89,20 @@
                         android:contentDescription="@string/set_keep_audio" />
                 </LinearLayout>
             </LinearLayout>
+            <TextView style="@style/SettingsHeader" android:text="@string/off_section" />
+            <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_engine" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/off_engine" />
+                        <TextView style="@style/SettingsSub" android:text="@string/off_engine_sub" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/engine_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="150dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/off_models" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </LinearLayout>
             <TextView style="@style/SettingsHeader" android:text="@string/m_read" />
             <LinearLayout style="@style/SettingsCard">
                 <LinearLayout android:id="@+id/row_rate" style="@style/SettingsRow">

@@ -211,6 +211,7 @@ public final class TranscribeService extends Service {
     private synchronized void cancelJob(String id) {
         if (id.equals(runningId)) {
             cancelCurrent = true;
+            OfflineRunner.abort(true);
             GeminiClient c = client;
             if (c != null) c.cancel();
             return;
@@ -265,12 +266,15 @@ public final class TranscribeService extends Service {
             while ((job = next()) != null) {
                 try {
                     String key = GeminiKey.get(this);
-                    if (key == null) {
+                    Transcript jt = Store.get(this, job.id);
+                    boolean offline = job.type == T_FULL && jt != null && jt.isAudio()
+                            && Transcript.ENGINE_WHISPER.equals(jt.engine);
+                    if (key == null && !offline) {
                         if (job.type == T_FULL || job.type == T_FOLDER) fail(job.id, getString(R.string.err_no_key));
                         else restore(job, getString(R.string.err_no_key));
                         continue;
                     }
-                    client = new GeminiClient(key);
+                    client = key == null ? null : new GeminiClient(key);
                     switch (job.type) {
                         case T_FULL: process(job, false); break;
                         case T_SUMMARY: process(job, true); break;
@@ -293,6 +297,7 @@ public final class TranscribeService extends Service {
                 }
             }
         } finally {
+            OfflineRunner.close(); // Modell aus dem Speicher
             releaseWake();
             new android.os.Handler(getMainLooper()).post(this::stopIfIdle);
         }
@@ -331,8 +336,8 @@ public final class TranscribeService extends Service {
             }
         }
 
-        // Zusammenfassung
-        if ((t.summarize || summaryOnly) && !t.segments.isEmpty()) {
+        // Zusammenfassung (offline ohne Schlüssel: keine)
+        if ((t.summarize || summaryOnly) && !t.segments.isEmpty() && client != null) {
             if (cancelCurrent) { finishCanceled(job, t, summaryOnly); return; }
             t.status = Transcript.SUMMARY;
             persist(t);
@@ -458,6 +463,53 @@ public final class TranscribeService extends Service {
             info.durationMs = idx.frameToMs(endFrame) - idx.frameToMs(startFrame);
             info.knownSpeakers = Gemini.knownSpeakers(t);
             info.previousTail = i > 0 ? Gemini.tail(t, 300) : "";
+            if (Transcript.ENGINE_WHISPER.equals(t.engine)) {
+                // Offline: whisper.cpp auf dem Gerät
+                List<Transcript.Segment> segs;
+                try {
+                    de.mca.pulsascribe.core.Offline.Model m = OfflineModels.usable(this);
+                    if (m == null) { fail(t.id, getString(R.string.off_err_no_model)); return false; }
+                    OfflineRunner.open(OfflineModels.file(this, m));
+                    final int pi = i, pn = n, sf = startFrame, ef = endFrame, total = idx.frames;
+                    segs = OfflineRunner.run(audio, idx, startFrame, endFrame, t.language, new OfflineRunner.Progress() {
+                        long last;
+
+                        @Override
+                        public void on(int percent) {
+                            long now = SystemClock.elapsedRealtime();
+                            if (now - last < 1000) return;
+                            last = now;
+                            int overall = (int) ((sf + (long) (ef - sf) * percent / 100) * 100 / Math.max(1, total));
+                            setLive(t.id, R.string.st_offline, overall);
+                            notifyWork(t.id, pn > 1 ? getString(R.string.st_transcribe_part, pi + 1, pn) : getString(R.string.st_offline), overall);
+                        }
+
+                        @Override
+                        public boolean canceled() {
+                            return cancelCurrent;
+                        }
+                    });
+                    t.model = "whisper-" + m.id;
+                } catch (OfflineRunner.OfflineException e) {
+                    if (cancelCurrent) { markCanceled(t.id); return false; }
+                    t.status = Transcript.ERROR;
+                    t.error = getString(e.messageRes);
+                    persist(t);
+                    notifyDone(t, false);
+                    return false;
+                } catch (IOException e) {
+                    if (cancelCurrent) { markCanceled(t.id); return false; }
+                    t.status = Transcript.ERROR;
+                    t.error = getString(R.string.off_err_run);
+                    persist(t);
+                    notifyDone(t, false);
+                    return false;
+                }
+                t.segments.addAll(segs);
+                t.chunksDone = i + 1;
+                persist(t);
+                continue;
+            }
             String prompt = Gemini.transcribePrompt(t.language, t.diarize, t.cleanFillers, t.terms, info);
             long from = idx.offsets[startFrame], to = idx.offsets[endFrame];
             long chunkMs = info.durationMs, offsetMs = idx.frameToMs(startFrame);

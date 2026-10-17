@@ -121,6 +121,21 @@ public final class SettingsActivity extends Activity {
             try { startActivityForResult(i, REQ_RESTORE); } catch (RuntimeException e) { Toast.makeText(this, R.string.no_app, Toast.LENGTH_SHORT).show(); }
         });
 
+        TextView engine = findViewById(R.id.engine_value);
+        String[] engLabels = {getString(R.string.off_engine_gemini), getString(R.string.off_engine_whisper)};
+        engine.setText(engLabels["whisper".equals(Settings.engine(this)) ? 1 : 0]);
+        findViewById(R.id.row_engine).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.off_engine)
+                .setSingleChoiceItems(engLabels, "whisper".equals(Settings.engine(this)) ? 1 : 0, (d, w) -> {
+                    d.dismiss();
+                    if (w == 1 && !OfflineModels.anyInstalled(this)) {
+                        Toast.makeText(this, R.string.off_need_model, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    Settings.setEngine(this, w == 1 ? "whisper" : "gemini");
+                    engine.setText(engLabels[w]);
+                }).setNegativeButton(R.string.cancel, null).show());
+        buildModels();
+
         String version = "";
         try {
             version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -247,6 +262,115 @@ public final class SettingsActivity extends Activity {
                 if (!isFinishing()) Ui.dialog(this).setMessage(r).setPositiveButton(R.string.ok, null).show();
             });
         }, "backup").start();
+    }
+
+    // ------------------------------------------------------------------ Offline-Modelle
+
+    private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final java.util.Set<String> verifying = new java.util.HashSet<>();
+    private final Runnable modelTick = new Runnable() {
+        @Override
+        public void run() {
+            buildModels();
+            handler.postDelayed(this, 1000);
+        }
+    };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        handler.post(modelTick);
+    }
+
+    @Override
+    protected void onPause() {
+        handler.removeCallbacks(modelTick);
+        super.onPause();
+    }
+
+    private void buildModels() {
+        android.widget.LinearLayout box = findViewById(R.id.off_models);
+        if (box == null) return;
+        box.removeAllViews();
+        String selected = OfflineModels.selected(this);
+        for (de.mca.pulsascribe.core.Offline.Model m : de.mca.pulsascribe.core.Offline.MODELS) {
+            android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+            row.setOrientation(android.widget.LinearLayout.VERTICAL);
+            int p = Ui.dp(this, 16);
+            row.setPadding(p, Ui.dp(this, 12), p, Ui.dp(this, 12));
+            row.setBackgroundResource(R.drawable.settings_row);
+            row.setClickable(true);
+            row.setFocusable(true);
+            TextView title = new TextView(this);
+            title.setText(m.label);
+            title.setTextSize(16);
+            title.setTextColor(Design.color(this, R.attr.pl_text));
+            TextView sub = new TextView(this);
+            sub.setTextSize(13);
+            sub.setTextColor(Design.color(this, R.attr.pl_muted));
+            int st = OfflineModels.downloadState(this, m);
+            boolean inst = OfflineModels.installed(this, m);
+            String state;
+            if (verifying.contains(m.id)) state = getString(R.string.off_verifying);
+            else if (inst) state = getString(m.id.equals(selected) ? R.string.off_selected : R.string.off_installed);
+            else if (st == 101) { state = getString(R.string.off_verifying); verify(m); }
+            else if (st == -2) state = getString(R.string.off_failed);
+            else if (st >= 0) state = getString(R.string.off_downloading, st);
+            else state = getString(R.string.off_download);
+            sub.setText(state);
+            row.addView(title);
+            row.addView(sub);
+            row.setOnClickListener(v -> modelMenu(v, m));
+            box.addView(row);
+        }
+    }
+
+    private void verify(de.mca.pulsascribe.core.Offline.Model m) {
+        if (!verifying.add(m.id)) return;
+        new Thread(() -> {
+            boolean ok = OfflineModels.verifyAndInstall(this, m);
+            runOnUiThread(() -> {
+                verifying.remove(m.id);
+                if (ok) {
+                    if (!OfflineModels.installed(this, de.mca.pulsascribe.core.Offline.model(OfflineModels.selected(this)))) {
+                        OfflineModels.setSelected(this, m.id);
+                    }
+                } else if (!isFinishing()) {
+                    Toast.makeText(this, R.string.off_bad_hash, Toast.LENGTH_LONG).show();
+                }
+                buildModels();
+            });
+        }, "verify").start();
+    }
+
+    private void modelMenu(android.view.View anchor, de.mca.pulsascribe.core.Offline.Model m) {
+        boolean inst = OfflineModels.installed(this, m);
+        int st = OfflineModels.downloadState(this, m);
+        if (!inst && (st < 0) && !verifying.contains(m.id)) {
+            Ui.dialog(this).setMessage(getString(R.string.off_dl_confirm, m.label))
+                    .setPositiveButton(R.string.off_download, (d, w) -> {
+                        if (OfflineModels.download(this, m) < 0) Toast.makeText(this, R.string.no_app, Toast.LENGTH_SHORT).show();
+                        buildModels();
+                    })
+                    .setNegativeButton(R.string.cancel, null).show();
+            return;
+        }
+        android.widget.PopupMenu pm = new android.widget.PopupMenu(this, anchor);
+        if (inst) {
+            pm.getMenu().add(0, 1, 0, R.string.off_model_menu_use);
+            pm.getMenu().add(0, 2, 0, R.string.off_model_menu_delete);
+        } else if (st >= 0 && st <= 100) {
+            pm.getMenu().add(0, 3, 0, R.string.off_model_menu_cancel);
+        }
+        pm.setOnMenuItemClickListener(mi -> {
+            if (mi.getItemId() == 1) OfflineModels.setSelected(this, m.id);
+            else if (mi.getItemId() == 2) OfflineModels.delete(this, m);
+            else OfflineModels.cancelDownload(this, m);
+            if (!OfflineModels.anyInstalled(this)) Settings.setEngine(this, "gemini");
+            buildModels();
+            return true;
+        });
+        pm.show();
     }
 
     private int rateIndex() {

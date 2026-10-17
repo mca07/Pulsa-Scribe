@@ -321,4 +321,28 @@
     <string name="restore_bad_file">Die Datei ist keine gültige oder vollständige Pulsa-Scribe-Sicherung.</string>
     <string name="backup_busy">Bitte zuerst laufende Transkriptionen und Aufnahmen beenden.</string>
     <string name="backup_file_name">pulsa-scribe-sicherung-%1$s.pscb</string>
+    <!-- Offline-Erkennung -->
+    <string name="off_section">Offline-Erkennung (Whisper)</string>
+    <string name="off_engine">Transkription</string>
+    <string name="off_engine_sub">Offline bleibt der Ton auf dem Handy, ist aber langsamer und ohne Sprechererkennung. Zusammenfassung und Fragen nutzen weiterhin Gemini, wenn ein Schlüssel hinterlegt ist.</string>
+    <string name="off_engine_gemini">Online (Gemini)</string>
+    <string name="off_engine_whisper">Offline (Whisper)</string>
+    <string name="off_need_model">Für die Offline-Erkennung zuerst unter Einstellungen ein Modell herunterladen.</string>
+    <string name="off_dl_title">Whisper-Modell: %1$s</string>
+    <string name="off_download">Herunterladen</string>
+    <string name="off_downloading">Wird geladen … %1$d %%</string>
+    <string name="off_verifying">Wird geprüft …</string>
+    <string name="off_installed">Installiert ✓</string>
+    <string name="off_selected">Installiert ✓ · wird verwendet</string>
+    <string name="off_failed">Download fehlgeschlagen – erneut versuchen</string>
+    <string name="off_bad_hash">Prüfung fehlgeschlagen (Datei beschädigt oder verändert) – bitte erneut laden.</string>
+    <string name="off_model_menu_use">Verwenden</string>
+    <string name="off_model_menu_delete">Löschen</string>
+    <string name="off_model_menu_cancel">Download abbrechen</string>
+    <string name="off_dl_confirm">%1$s herunterladen? Quelle: huggingface.co (ggerganov/whisper.cpp). Die Datei wird nach dem Laden per SHA-256 geprüft. Im WLAN empfohlen.</string>
+    <string name="off_err_native">Die Offline-Erkennung ist auf diesem Gerät nicht verfügbar.</string>
+    <string name="off_err_model">Das Offline-Modell konnte nicht geladen werden (zu wenig Speicher?). Ein kleineres Modell wählen.</string>
+    <string name="off_err_run">Die Offline-Erkennung ist fehlgeschlagen. Erneut versuchen oder online transkribieren.</string>
+    <string name="off_err_no_model">Kein Offline-Modell installiert (Einstellungen → Offline-Erkennung).</string>
+    <string name="st_offline">Wird offline transkribiert</string>
 </resources>
