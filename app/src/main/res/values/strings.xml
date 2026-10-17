@@ -65,7 +65,7 @@
     <string name="m_export">Exportieren / Teilen …</string>
     <string name="m_copy">Text kopieren</string>
     <string name="m_speakers">Sprecher umbenennen</string>
-    <string name="m_resummary">Zusammenfassung neu erstellen</string>
+    <string name="m_resummary">Zusammenfassung neu erstellen …</string>
     <string name="m_rename">Titel ändern</string>
     <string name="m_delete_audio">Ton löschen (Text bleibt)</string>
     <string name="m_delete">Transkript löschen</string>
@@ -357,4 +357,5 @@
     <string name="sel_deleted">%1$d gelöscht</string>
     <string name="sel_moved">%1$d verschoben nach %2$s</string>
     <string name="sel_hint">Antippen zum Auswählen</string>
+    <string name="sum_length">Länge der Zusammenfassung</string>
 </resources>

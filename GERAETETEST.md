@@ -1,10 +1,10 @@
-# Pulsa Scribe – Gerätetest (Version 1.6)
+# Pulsa Scribe – Gerätetest (Version 1.7)
 
 Jeden Punkt am Handy ausprobieren und ✅ oder ❌ notieren. Bei ❌ bitte einen Screenshot und den genauen Text der Meldung in den Chat schicken.
 
 ## 1. Installation und Einrichtung
 - [ ] APK aus dem GitHub-Release „neueste“ installiert (signiert, nicht die Test-APK)
-- [ ] Einstellungen → Version zeigt „1.6.x“
+- [ ] Einstellungen → Version zeigt „1.7.x“
 - [ ] Einstellungen → „Schlüssel bei Google AI Studio holen“ öffnet den Browser
 - [ ] Einstellungen → Gemini-Schlüssel einfügen → „Hinterlegt“; Screenshot im Schlüssel-Dialog ist gesperrt
 - [ ] Falscher Schlüssel (z. B. nur „abc“) → Meldung „sieht nicht wie ein Gemini-Schlüssel aus“
@@ -103,3 +103,9 @@ Jeden Punkt am Handy ausprobieren und ✅ oder ❌ notieren. Bei ❌ bitte einen
 - [ ] Papierkorb → Rückfrage „… Transkripte löschen?“ → gelöscht
 - [ ] Ordner-Symbol → Ziel wählen → alle markierten werden verschoben
 - [ ] Zurück-Taste oder ✕ beendet die Auswahl
+
+## 13. Sprache und Länge der Zusammenfassung (neu in 1.7)
+- [ ] Deutsches Gespräch mit Sprache „Automatisch erkennen“ → Zusammenfassung ist auf Deutsch
+- [ ] Beim Start „Länge der Zusammenfassung“ = Kurz → höchstens ~5 Punkte je Abschnitt
+- [ ] Im Transkript ⋮ → „Zusammenfassung neu erstellen …“ → „Ausführlich“ → deutlich mehr Details; Sprache dort ebenfalls wählbar
+- [ ] Einstellungen → „Länge der Zusammenfassung“ als Standard ändern

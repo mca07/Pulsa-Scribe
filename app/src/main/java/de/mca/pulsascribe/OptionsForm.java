@@ -20,7 +20,7 @@ import de.mca.pulsascribe.core.Transcript;
 final class OptionsForm {
     private final EditText title, terms;
     private final Switch diarize, summary, clean, readAfter;
-    private String lang, template, folder, engine;
+    private String lang, template, folder, engine, length;
     private final String fallbackTitle;
     private final boolean audio;
 
@@ -89,6 +89,17 @@ final class OptionsForm {
                 }).show());
         Ui.add(col, tplRow);
 
+        Ui.add(col, Ui.label(a, R.string.sum_length));
+        length = Settings.summaryLength(a);
+        TextView lenRow = Ui.choiceRow(a, Templates.LENGTH_LABELS[Templates.lengthIndex(length)]);
+        lenRow.setOnClickListener(v -> Ui.dialog(a).setTitle(R.string.sum_length)
+                .setSingleChoiceItems(Templates.LENGTH_LABELS, Templates.lengthIndex(length), (d, w) -> {
+                    length = Templates.LENGTHS[w];
+                    lenRow.setText(Templates.LENGTH_LABELS[w]);
+                    d.dismiss();
+                }).show());
+        Ui.add(col, lenRow);
+
         View gap = new View(a);
         gap.setMinimumHeight(Ui.dp(a, 6));
         Ui.add(col, gap);
@@ -143,6 +154,7 @@ final class OptionsForm {
         t.createdMs = System.currentTimeMillis();
         t.language = Languages.clean(lang);
         t.template = Templates.clean(template);
+        t.summaryLength = Templates.cleanLength(length);
         t.folder = folder;
         t.engine = audio && "whisper".equals(engine) ? Transcript.ENGINE_WHISPER : Transcript.ENGINE_GEMINI;
         t.diarize = audio && diarize.isChecked() && !Transcript.ENGINE_WHISPER.equals(t.engine);

@@ -9,6 +9,35 @@ public final class Templates {
     public static final String[] IDS = {STANDARD, MEETING, LESSON, INTERVIEW, POST};
     public static final String[] LABELS = {"Allgemein", "Kundentermin / Besprechung", "Kurs-Lektion (Lernzettel)", "Interview", "Beitrag / Artikel"};
 
+    // Länge der Zusammenfassung
+    public static final String SHORT = "short", MEDIUM = "medium", LONG = "long";
+    public static final String[] LENGTHS = {SHORT, MEDIUM, LONG};
+    public static final String[] LENGTH_LABELS = {"Kurz (das Wichtigste auf einen Blick)", "Mittel", "Ausführlich (mit Details)"};
+
+    public static String cleanLength(String id) {
+        for (String l : LENGTHS) if (l.equals(id)) return l;
+        return MEDIUM;
+    }
+
+    public static int lengthIndex(String id) {
+        String c = cleanLength(id);
+        for (int i = 0; i < LENGTHS.length; i++) if (LENGTHS[i].equals(c)) return i;
+        return 1;
+    }
+
+    /** Anweisung zur Länge; überschreibt die Zahlen aus den Feldbeschreibungen. */
+    public static String lengthDirective(String id) {
+        switch (cleanLength(id)) {
+            case SHORT:
+                return "LENGTH: SHORT. Keep it brief: overview 2 to 3 sentences, at most 5 entries in each list, each entry one short sentence. This overrides any numbers given above.";
+            case LONG:
+                return "LENGTH: DETAILED. Be thorough: overview 6 to 10 sentences, up to 25 entries in points with concrete details, names, numbers and examples, "
+                        + "list every task, decision and open question. This overrides any maximum numbers given above.";
+            default:
+                return "LENGTH: MEDIUM. Use the numbers given above.";
+        }
+    }
+
     public static String clean(String id) {
         for (String i : IDS) if (i.equals(id)) return i;
         return STANDARD;

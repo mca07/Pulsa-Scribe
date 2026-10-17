@@ -318,6 +318,39 @@ public class FeatureTest {
     }
 
     @Test
+    public void languageIsDetectedAndForced() {
+        assertEquals("de", Languages.detect("Heute geht es um das Angebot und wir haben noch nicht die Preise für den Kunden."));
+        assertEquals("en", Languages.detect("Today we talk about the offer and we have not seen the prices for this customer yet."));
+        assertEquals("", Languages.detect("Hallo"));
+        Transcript t = new Transcript();
+        t.id = "abcdefgh12";
+        t.language = Languages.AUTO;
+        t.segments.add(new Transcript.Segment(0, "Sprecher 1", "Wir müssen das Angebot noch prüfen, und die Preise sind nicht klar."));
+        t.segments.add(new Transcript.Segment(5000, "Sprecher 2", "Ich schicke dir die Unterlagen bis Freitag, das ist kein Problem."));
+        String p = Gemini.summaryPrompt(t, Languages.SUM_SAME);
+        assertTrue(p.contains("Write ALL text values of the JSON in German"));
+        assertTrue(p.contains("Do not write in English"));
+        assertTrue(Gemini.summaryPrompt(t, "en").contains("in English."));
+        t.language = "ro";
+        assertTrue(Gemini.summaryPrompt(t, Languages.SUM_SAME).contains("in Romanian"));
+        assertTrue(Gemini.questionPrompt(t, "Wann kommen die Unterlagen und wer schickt sie?", Languages.SUM_SAME).contains("in German"));
+    }
+
+    @Test
+    public void summaryLengthChangesPrompt() {
+        Transcript t = new Transcript();
+        t.id = "abcdefgh12";
+        t.segments.add(new Transcript.Segment(0, "", "x"));
+        t.summaryLength = Templates.SHORT;
+        assertTrue(Gemini.summaryPrompt(t, "de").contains("LENGTH: SHORT"));
+        t.summaryLength = Templates.LONG;
+        assertTrue(Gemini.summaryPrompt(t, "de").contains("LENGTH: DETAILED"));
+        assertEquals(Templates.MEDIUM, Templates.cleanLength("riesig"));
+        Transcript r = Transcript.fromJson(t.toJson());
+        assertEquals(Templates.LONG, r.summaryLength);
+    }
+
+    @Test
     public void summaryRequestIncludesTagsInSchema() throws Exception {
         Map<String, Object> m = Json.obj(Json.parse(Gemini.summaryRequest("x")));
         String schema = Json.write(Json.obj(Json.obj(m, "generationConfig"), "responseSchema"));

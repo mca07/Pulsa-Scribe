@@ -381,7 +381,7 @@ public final class TranscriptActivity extends Activity {
             none.setPadding(0, Ui.dp(this, 16), 0, Ui.dp(this, 10));
             summaryBox.addView(none);
             if (!t.isWorking() && !t.segments.isEmpty()) {
-                summaryBox.addView(primaryButton(R.string.summary_create, v -> TranscribeService.summary(this, id)),
+                summaryBox.addView(primaryButton(R.string.summary_create, v -> resummarize()),
                         new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             }
             return;
@@ -888,13 +888,47 @@ public final class TranscriptActivity extends Activity {
                     Store.save(this, n);
                     if (!n.segments.isEmpty()) {
                         Ui.dialog(this).setMessage(R.string.template_resummary)
-                                .setPositiveButton(R.string.summary_create, (d2, w2) -> {
-                                    TranscribeService.summary(this, id);
-                                    setTab(TAB_SUMMARY);
-                                })
+                                .setPositiveButton(R.string.summary_create, (d2, w2) -> resummarize())
                                 .setNegativeButton(R.string.cancel, null).show();
                     }
                 }).show();
+    }
+
+    /** Zusammenfassung (neu) erstellen: Länge und Sprache wählbar. */
+    private void resummarize() {
+        if (!editable() || t.segments.isEmpty()) return;
+        if (!GeminiKey.has(this)) { KeyDialog.show(this, null); return; }
+        LinearLayout col = Ui.column(this);
+        Ui.add(col, Ui.label(this, R.string.sum_length));
+        final String[] len = {t.summaryLength};
+        TextView lenRow = Ui.choiceRow(this, Templates.LENGTH_LABELS[Templates.lengthIndex(len[0])]);
+        lenRow.setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.sum_length)
+                .setSingleChoiceItems(Templates.LENGTH_LABELS, Templates.lengthIndex(len[0]), (d, w) -> {
+                    len[0] = Templates.LENGTHS[w];
+                    lenRow.setText(Templates.LENGTH_LABELS[w]);
+                    d.dismiss();
+                }).show());
+        Ui.add(col, lenRow);
+        Ui.add(col, Ui.label(this, R.string.set_sum_lang));
+        final String[] sl = {Settings.summaryLanguage(this)};
+        TextView langRow = Ui.choiceRow(this, Languages.SUM_LABELS[Languages.summaryIndex(sl[0])]);
+        langRow.setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.set_sum_lang)
+                .setSingleChoiceItems(Languages.SUM_LABELS, Languages.summaryIndex(sl[0]), (d, w) -> {
+                    sl[0] = Languages.SUM_CODES[w];
+                    langRow.setText(Languages.SUM_LABELS[w]);
+                    d.dismiss();
+                }).show());
+        Ui.add(col, langRow);
+        Ui.dialog(this).setTitle(R.string.m_resummary).setView(col)
+                .setPositiveButton(R.string.summary_create, (d, w) -> {
+                    Transcript n = Store.copy(t);
+                    n.summaryLength = Templates.cleanLength(len[0]);
+                    Store.save(this, n);
+                    Settings.setSummaryLanguage(this, sl[0]);
+                    TranscribeService.summary(this, id);
+                    setTab(TAB_SUMMARY);
+                })
+                .setNegativeButton(R.string.cancel, null).show();
     }
 
     private void chooseTranslation() {
@@ -947,7 +981,7 @@ public final class TranscriptActivity extends Activity {
                 case 1: exportDialog(); return true;
                 case 2: copyText(); return true;
                 case 3: renameSpeakers(); return true;
-                case 4: TranscribeService.summary(this, id); setTab(TAB_SUMMARY); return true;
+                case 4: resummarize(); return true;
                 case 5: MainActivity.rename(this, id); return true;
                 case 6:
                     Ui.dialog(this).setTitle(R.string.delete_audio_title).setMessage(R.string.delete_audio_text)

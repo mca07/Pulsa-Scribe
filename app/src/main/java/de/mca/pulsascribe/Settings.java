@@ -61,6 +61,9 @@ final class Settings {
     static String template(Context c) { return de.mca.pulsascribe.core.Templates.clean(p(c).getString("template", "standard")); }
     static void setTemplate(Context c, String v) { p(c).edit().putString("template", de.mca.pulsascribe.core.Templates.clean(v)).apply(); }
 
+    static String summaryLength(Context c) { return de.mca.pulsascribe.core.Templates.cleanLength(p(c).getString("sum_len", "medium")); }
+    static void setSummaryLength(Context c, String v) { p(c).edit().putString("sum_len", de.mca.pulsascribe.core.Templates.cleanLength(v)).apply(); }
+
     static String engine(Context c) {
         return "whisper".equals(p(c).getString("engine", "gemini")) ? "whisper" : "gemini";
     }

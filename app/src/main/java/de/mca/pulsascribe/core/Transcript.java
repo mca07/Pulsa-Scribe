@@ -94,6 +94,7 @@ public final class Transcript {
     public String engine = ENGINE_GEMINI;      // Transkription online (Gemini) oder offline (Whisper)                  // Ordner-Auswertung (wird nicht erneut mit ausgewertet)
     public final List<String> tags = new ArrayList<>();
     public String template = Templates.STANDARD;
+    public String summaryLength = Templates.MEDIUM;
     public final List<Answer> answers = new ArrayList<>();          // Fragen an das Transkript
     public final Map<String, Translation> translations = new LinkedHashMap<>(); // Sprachcode → Übersetzung
 
@@ -191,6 +192,7 @@ public final class Transcript {
         m.put("engine", engine);
         m.put("tags", new ArrayList<Object>(tags));
         m.put("template", template);
+        m.put("sumLength", summaryLength);
         List<Object> qa = new ArrayList<>();
         for (Answer a : answers) {
             Map<String, Object> o = new LinkedHashMap<>();
@@ -314,6 +316,7 @@ public final class Transcript {
         t.engine = ENGINE_WHISPER.equals(Json.str(m, "engine")) ? ENGINE_WHISPER : ENGINE_GEMINI;
         setTags(t.tags, Json.arr(m, "tags"));
         t.template = Templates.clean(Json.str(m, "template"));
+        t.summaryLength = Templates.cleanLength(Json.str(m, "sumLength"));
         List<Object> qa = Json.arr(m, "qa");
         if (qa != null) {
             for (Object o : qa) {

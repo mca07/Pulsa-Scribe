@@ -59,6 +59,16 @@ public final class SettingsActivity extends Activity {
                     d.dismiss();
                 }).setNegativeButton(R.string.cancel, null).show());
 
+        TextView lenV = findViewById(R.id.sum_len_value);
+        lenV.setText(de.mca.pulsascribe.core.Templates.LENGTH_LABELS[de.mca.pulsascribe.core.Templates.lengthIndex(Settings.summaryLength(this))]);
+        findViewById(R.id.row_sum_len).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.sum_length)
+                .setSingleChoiceItems(de.mca.pulsascribe.core.Templates.LENGTH_LABELS,
+                        de.mca.pulsascribe.core.Templates.lengthIndex(Settings.summaryLength(this)), (d, w) -> {
+                    Settings.setSummaryLength(this, de.mca.pulsascribe.core.Templates.LENGTHS[w]);
+                    lenV.setText(de.mca.pulsascribe.core.Templates.LENGTH_LABELS[w]);
+                    d.dismiss();
+                }).setNegativeButton(R.string.cancel, null).show());
+
         TextView rate = findViewById(R.id.rate_value);
         rate.setText(Settings.SPEECH_LABELS[rateIndex()]);
         findViewById(R.id.row_rate).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.set_rate)
