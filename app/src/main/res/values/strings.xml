@@ -301,4 +301,24 @@
     <string name="error_generic">Etwas ist schiefgelaufen.</string>
     <string name="widget_name">Pulsa Scribe: Schnellstart</string>
     <string name="widget_desc">Aufnehmen oder Datei wählen mit einem Tipp</string>
+    <!-- Datensicherung -->
+    <string name="backup_create">Sicherung erstellen</string>
+    <string name="backup_create_sub">Verschlüsselte Datei mit allen Transkripten und Ordnern, z. B. für den Handywechsel. Der Gemini-Schlüssel ist nicht enthalten.</string>
+    <string name="backup_restore">Sicherung wiederherstellen</string>
+    <string name="backup_restore_sub">Ergänzt fehlende Transkripte und Ordner; Vorhandenes bleibt unverändert.</string>
+    <string name="backup_pw">Passwort (mind. 8 Zeichen)</string>
+    <string name="backup_pw2">Passwort wiederholen</string>
+    <string name="backup_pw_short">Mindestens 8 Zeichen.</string>
+    <string name="backup_pw_mismatch">Die Passwörter stimmen nicht überein.</string>
+    <string name="backup_media">Ton und Bilder mitsichern (deutlich größer)</string>
+    <string name="backup_warn">Ohne das Passwort lässt sich die Sicherung nicht mehr öffnen – bitte gut aufbewahren.</string>
+    <string name="backup_running">Sicherung läuft …</string>
+    <string name="restore_running">Wird wiederhergestellt …</string>
+    <string name="backup_done">Sicherung gespeichert.</string>
+    <string name="restore_done">Wiederhergestellt: %1$d neu, %2$d schon vorhanden, %3$d übersprungen.</string>
+    <string name="backup_failed">Die Sicherung ist fehlgeschlagen.</string>
+    <string name="restore_bad_pw">Falsches Passwort oder die Datei wurde verändert.</string>
+    <string name="restore_bad_file">Die Datei ist keine gültige oder vollständige Pulsa-Scribe-Sicherung.</string>
+    <string name="backup_busy">Bitte zuerst laufende Transkriptionen und Aufnahmen beenden.</string>
+    <string name="backup_file_name">pulsa-scribe-sicherung-%1$s.pscb</string>
 </resources>

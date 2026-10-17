@@ -118,6 +118,20 @@
             </LinearLayout>
             <TextView style="@style/SettingsHeader" android:text="@string/set_sec_data" />
             <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_backup" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/backup_create" />
+                        <TextView style="@style/SettingsSub" android:text="@string/backup_create_sub" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_restore" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/backup_restore" />
+                        <TextView style="@style/SettingsSub" android:text="@string/backup_restore_sub" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
                 <LinearLayout android:id="@+id/row_privacy" style="@style/SettingsRow">
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                         <TextView style="@style/SettingsTitle" android:text="@string/set_privacy" />

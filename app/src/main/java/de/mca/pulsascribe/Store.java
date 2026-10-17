@@ -264,6 +264,24 @@ final class Store {
         save(c, n);
     }
 
+    /** Nach einer Wiederherstellung: alles neu von der Platte laden. */
+    static synchronized void reload(Context c) {
+        cache.clear();
+        loaded = false;
+        ensureLoaded(c);
+        changed();
+    }
+
+    static File foldersFileFor(Context c) {
+        return foldersFile(c);
+    }
+
+    static synchronized boolean anyWorking(Context c) {
+        ensureLoaded(c);
+        for (Transcript t : cache.values()) if (t.isWorking()) return true;
+        return false;
+    }
+
     static void addListener(Runnable r) { listeners.add(r); }
 
     static void removeListener(Runnable r) { listeners.remove(r); }
