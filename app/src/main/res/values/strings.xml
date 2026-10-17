@@ -51,7 +51,7 @@
     <string name="start_set_key">Schlüssel hinterlegen</string>
 
     <string name="hint_title">Kurz vorab</string>
-    <string name="hint_text">• Pulsa Scribe sendet die Tonspur zur Transkription an Google Gemini (mit deinem eigenen Schlüssel). Kunden-, Personal- oder andere vertrauliche Gespräche nur, wenn das für dich und die Beteiligten in Ordnung ist.\n\n• Gespräche nur mit Einverständnis aller Beteiligten aufnehmen und transkribieren. Heimliches Aufnehmen nicht-öffentlich gesprochener Worte ist in Deutschland strafbar (§ 201 StGB).\n\n• Mit dem kostenlosen Kontingent gelten die Bedingungen von Google für die Gemini API. Für Kundendaten die bezahlte Variante und eine Vereinbarung zur Auftragsverarbeitung nutzen.\n\n• Transkripte und Ton bleiben auf deinem Handy. Bei Google hochgeladene Daten werden nicht dauerhaft in deinem Konto gespeichert.</string>
+    <string name="hint_text">• Pulsa Scribe sendet die Tonspur zur Transkription an Google Gemini (mit deinem eigenen Schlüssel). Kunden-, Personal- oder andere vertrauliche Gespräche nur, wenn das für dich und die Beteiligten in Ordnung ist.\n\n• Gespräche nur mit Einverständnis aller Beteiligten aufnehmen und transkribieren. Heimliches Aufnehmen nicht-öffentlich gesprochener Worte ist in Deutschland strafbar (§ 201 StGB).\n\n• Mit dem kostenlosen Kontingent gelten die Bedingungen von Google für die Gemini API. Für Kundendaten die bezahlte Variante und eine Vereinbarung zur Auftragsverarbeitung nutzen.\n\n• Transkripte und Ton bleiben auf deinem Handy. Der Ton wird direkt in der Anfrage gesendet und nicht als Datei bei Google abgelegt; wie Google Anfragen verarbeitet, regeln die Bedingungen der Gemini API.</string>
     <string name="hint_ok">Verstanden</string>
 
     <!-- Transkript -->
