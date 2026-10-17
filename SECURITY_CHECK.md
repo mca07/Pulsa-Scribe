@@ -56,7 +56,7 @@
 - ✅ PendingIntents explizit und `FLAG_IMMUTABLE`; „Beenden“ in der Aufnahme-Benachrichtigung öffnet die Aufnahme-Ansicht (Start der Transkription immer aus einer sichtbaren Ansicht)
 - ✅ Aufnahme: Bestätigung „Alle Beteiligten sind einverstanden“ vor jedem Start, Hinweis auf § 201 StGB, dauerhaft sichtbare Benachrichtigung mit Pause/Beenden, Mikrofon nur während der Aufnahme
 - – WebView: nicht verwendet
-- ✅ Keine sensiblen Daten in externem Speicher; Zwischenablage nur auf ausdrücklichen Wunsch („Text kopieren“)
+- ✅ Keine sensiblen Daten in externem Speicher; Zwischenablage nur auf ausdrücklichen Wunsch („Text kopieren“, „CRM-Eintrag kopieren“); der CRM-Eintrag wird als sensibel markiert (keine Vorschau ab Android 13)
 - ⚠️ Kein `FLAG_SECURE` für die Transkript-Ansicht (nur für den Schlüssel-Dialog), siehe Offene Punkte
 - ✅ Hintergrund: Vordergrund-Dienste mit sichtbarer Benachrichtigung (dataSync bzw. microphone), WakeLock begrenzt (3 h bzw. 6 h + 10 min), Android-15-Zeitlimit (`onTimeout`) behandelt
 - ✅ Datei-Freigaben: dauerhafte SAF-Freigabe nur für gewählte Dateien (für erneute Versuche), geteilte Dateien nur befristet an den Dienst weitergereicht
@@ -133,6 +133,13 @@
 - ✅ Offline verlässt der Ton das Gerät nicht; Zusammenfassung/Fragen nur, wenn ein Gemini-Schlüssel hinterlegt ist (in der App erklärt)
 - ⚠️ Keine Sprechererkennung offline; Large v3 Turbo braucht viel Arbeitsspeicher (ca. 1 GB) und ist langsam – in der App als „Genau“ gekennzeichnet
 - ⚠️ Modell-Download über Hugging Face: Hugging Face sieht IP-Adresse und Zeitpunkt (offengelegt im Download-Hinweis)
+
+## 9f. CRM-Eintrag (ab 1.8)
+- ✅ Vorlage „crm“ steht auf der festen Positivliste; unbekannte Werte fallen auf „standard“ zurück
+- ✅ Prompt verbietet erfundene Firmen-/Personennamen; Ergebnis läuft durch dieselbe Prüfung (`fromJson`, Längen, Steuerzeichen) wie jede Zusammenfassung
+- ✅ Weitergabe nur durch Nutzeraktion: Zwischenablage (sensibel markiert) oder E-Mail-Entwurf per `mailto:` – kein automatischer Versand, keine CRM-Schnittstelle, keine Zugangsdaten
+- ✅ Hinweis „Von Gemini erstellt – bitte vor dem Weitergeben prüfen“ steht direkt über den Knöpfen
+- ✅ Unit-Test `crmTemplateAndEntry`
 
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung

@@ -109,3 +109,11 @@ Jeden Punkt am Handy ausprobieren und ✅ oder ❌ notieren. Bei ❌ bitte einen
 - [ ] Beim Start „Länge der Zusammenfassung“ = Kurz → höchstens ~5 Punkte je Abschnitt
 - [ ] Im Transkript ⋮ → „Zusammenfassung neu erstellen …“ → „Ausführlich“ → deutlich mehr Details; Sprache dort ebenfalls wählbar
 - [ ] Einstellungen → „Länge der Zusammenfassung“ als Standard ändern
+
+## 14. CRM-Eintrag (neu in 1.8)
+- [ ] Vorhandenes Kundengespräch öffnen → Tab Zusammenfassung → „Als CRM-Eintrag erstellen“ → Rückfrage bestätigen → neue Zusammenfassung mit Notiz, CRM-Feldern (Betreff, Kontaktart, Ansprechpartner …), Nächste Schritte, Vereinbarungen, Offen
+- [ ] Keine erfundenen Firmen- oder Personennamen; fehlende Felder fehlen einfach
+- [ ] „CRM-Eintrag kopieren“ → in myFactory (oder Notizen-App) einfügen → Text vollständig, Betreff oben, nur einmal
+- [ ] Android 13+: Kopier-Vorschau unten links zeigt den Text nicht an (als sensibel markiert)
+- [ ] „CRM-Eintrag per E-Mail“ → Mail-App mit Betreff „CRM-Eintrag: …“ und dem Text
+- [ ] Neue Aufnahme mit Vorlage „CRM-Eintrag (Kundenkontakt)“ starten → direkt im CRM-Format
