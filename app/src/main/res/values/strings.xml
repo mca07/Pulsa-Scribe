@@ -345,4 +345,16 @@
     <string name="off_err_run">Die Offline-Erkennung ist fehlgeschlagen. Erneut versuchen oder online transkribieren.</string>
     <string name="off_err_no_model">Kein Offline-Modell installiert (Einstellungen → Offline-Erkennung).</string>
     <string name="st_offline">Wird offline transkribiert</string>
+    <!-- Mehrfachauswahl -->
+    <string name="sel_count">%1$d ausgewählt</string>
+    <string name="sel_all">Alle</string>
+    <string name="sel_none">Keine</string>
+    <string name="sel_close">Auswahl beenden</string>
+    <string name="sel_move">Ausgewählte verschieben</string>
+    <string name="sel_delete">Ausgewählte löschen</string>
+    <string name="sel_delete_title">%1$d Transkripte löschen?</string>
+    <string name="sel_delete_text">Die ausgewählten Transkripte werden mit Text, Zusammenfassung und Ton vom Handy gelöscht. Laufende Transkriptionen werden abgebrochen.</string>
+    <string name="sel_deleted">%1$d gelöscht</string>
+    <string name="sel_moved">%1$d verschoben nach %2$s</string>
+    <string name="sel_hint">Antippen zum Auswählen</string>
 </resources>

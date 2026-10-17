@@ -21,6 +21,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupMenu;
@@ -61,6 +62,9 @@ public final class MainActivity extends Activity {
     private EditText searchInput;
     private String folder = Folders.ROOT;
     private String query = "";
+    /** Mehrfachauswahl: IDs der markierten Transkripte (leer = keine Auswahl aktiv). */
+    private final java.util.LinkedHashSet<String> selected = new java.util.LinkedHashSet<>();
+    private View selectBar;
     private Uri pendingUri; // Datei wartet auf Hinweis/Schlüssel
     private boolean persistable;
     private String themeName;
@@ -87,6 +91,11 @@ public final class MainActivity extends Activity {
         crumbs = findViewById(R.id.main_crumbs);
         crumbsScroll = findViewById(R.id.main_crumbs_scroll);
         crumbsRow = findViewById(R.id.main_crumbs_row);
+        selectBar = findViewById(R.id.main_select_bar);
+        findViewById(R.id.sel_close).setOnClickListener(v -> clearSelection());
+        findViewById(R.id.sel_all).setOnClickListener(v -> toggleAll());
+        findViewById(R.id.sel_delete).setOnClickListener(v -> deleteSelected());
+        findViewById(R.id.sel_move).setOnClickListener(v -> moveSelected());
         searchBar = findViewById(R.id.main_search_bar);
         searchInput = findViewById(R.id.main_search_input);
         adapter = new Adapter();
@@ -164,6 +173,7 @@ public final class MainActivity extends Activity {
     @Override
     @SuppressWarnings("deprecation")
     public void onBackPressed() {
+        if (!selected.isEmpty()) { clearSelection(); return; }
         if (searchBar.getVisibility() == View.VISIBLE) { closeSearch(); return; }
         Folders f = Store.folders(this);
         if (f.exists(folder)) {
@@ -207,7 +217,17 @@ public final class MainActivity extends Activity {
         }
         adapter.notifyDataSetChanged();
         empty.setVisibility(rows.isEmpty() && (searching || searchBar.getVisibility() != View.VISIBLE) ? View.VISIBLE : View.GONE);
-        crumbsRow.setVisibility(searchBar.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+        // Auswahl bereinigen: gelöschte oder nicht mehr sichtbare Einträge fallen heraus
+        java.util.Set<String> visible = new java.util.HashSet<>();
+        for (Row r : rows) if (r.t != null) visible.add(r.t.id);
+        selected.retainAll(visible);
+        boolean selecting = !selected.isEmpty();
+        selectBar.setVisibility(selecting ? View.VISIBLE : View.GONE);
+        if (selecting) {
+            ((TextView) findViewById(R.id.sel_count)).setText(getString(R.string.sel_count, selected.size()));
+            ((TextView) findViewById(R.id.sel_all)).setText(selected.size() == visible.size() ? R.string.sel_none : R.string.sel_all);
+        }
+        crumbsRow.setVisibility(searchBar.getVisibility() == View.VISIBLE || selecting ? View.GONE : View.VISIBLE);
         buildCrumbs(f);
     }
 
@@ -723,6 +743,7 @@ public final class MainActivity extends Activity {
             boolean failed = Transcript.ERROR.equals(t.status) || Transcript.CANCELED.equals(t.status);
             st.setTextColor(Design.color(MainActivity.this, Transcript.ERROR.equals(t.status) ? R.attr.pl_error : R.attr.pl_muted));
             Button retry = v.findViewById(R.id.it_retry);
+            retry.setEnabled(selected.isEmpty());
             retry.setVisibility(failed ? View.VISIBLE : View.GONE);
             retry.setOnClickListener(x -> {
                 askNotifications();
@@ -733,11 +754,79 @@ public final class MainActivity extends Activity {
                     TranscribeService.start(MainActivity.this, t.id, null);
                 }
             });
-            v.findViewById(R.id.it_card).setOnClickListener(x -> openItem(t, r.hit));
-            v.findViewById(R.id.it_card).setOnLongClickListener(x -> { itemMenu(x, t); return true; });
-            v.findViewById(R.id.it_action).setOnClickListener(x -> itemMenu(x, t));
+            View card = v.findViewById(R.id.it_card);
+            boolean selecting = !selected.isEmpty(), isSel = selected.contains(t.id);
+            card.setActivated(isSel);
+            ImageButton action = v.findViewById(R.id.it_action);
+            action.setImageResource(selecting ? (isSel ? R.drawable.ic_check_circle : R.drawable.ic_circle_empty) : R.drawable.ic_more);
+            action.setContentDescription(getString(selecting ? R.string.sel_hint : R.string.more));
+            card.setOnClickListener(x -> { if (selecting) toggle(t.id); else openItem(t, r.hit); });
+            card.setOnLongClickListener(x -> { toggle(t.id); return true; });
+            action.setOnClickListener(x -> { if (selecting) toggle(t.id); else itemMenu(x, t); });
             return v;
         }
+    }
+
+    // ------------------------------------------------------------------ Mehrfachauswahl
+
+    private void toggle(String id) {
+        if (!selected.remove(id)) selected.add(id);
+        refresh();
+    }
+
+    private void clearSelection() {
+        selected.clear();
+        refresh();
+    }
+
+    /** Alle sichtbaren Transkripte auswählen bzw. – wenn schon alle markiert – keine. */
+    private void toggleAll() {
+        java.util.List<String> ids = new ArrayList<>();
+        for (Row r : rows) if (r.t != null) ids.add(r.t.id);
+        if (selected.size() == ids.size()) selected.clear();
+        else selected.addAll(ids);
+        refresh();
+    }
+
+    private void deleteSelected() {
+        if (selected.isEmpty()) return;
+        List<String> ids = new ArrayList<>(selected);
+        Ui.dialog(this).setTitle(getString(R.string.sel_delete_title, ids.size())).setMessage(R.string.sel_delete_text)
+                .setPositiveButton(R.string.delete, (d, w) -> {
+                    int n = 0;
+                    for (String id : ids) {
+                        Transcript t = Store.get(this, id);
+                        if (t == null) continue;
+                        if (t.isWorking()) {
+                            if (Transcript.RECORDING.equals(t.status)) RecordService.command(this, RecordService.ACTION_DISCARD);
+                            else TranscribeService.cancel(this, id);
+                        }
+                        if (!t.sourceUri.isEmpty()) {
+                            try {
+                                getContentResolver().releasePersistableUriPermission(Uri.parse(t.sourceUri),
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            } catch (RuntimeException ignored) { }
+                        }
+                        Store.delete(this, id);
+                        n++;
+                    }
+                    selected.clear();
+                    Toast.makeText(this, getString(R.string.sel_deleted, n), Toast.LENGTH_SHORT).show();
+                    refresh();
+                })
+                .setNegativeButton(R.string.cancel, null).show();
+    }
+
+    private void moveSelected() {
+        if (selected.isEmpty()) return;
+        List<String> ids = new ArrayList<>(selected);
+        FolderPicker.show(this, getString(R.string.folder_move_to), null, target -> {
+            for (String id : ids) Store.moveTranscript(this, id, target);
+            selected.clear();
+            Toast.makeText(this, getString(R.string.sel_moved, ids.size(),
+                    OptionsForm.folderLabel(this, Store.folders(this), target)), Toast.LENGTH_SHORT).show();
+            refresh();
+        });
     }
 
     /** Für den Hinweis in den Einstellungen. */

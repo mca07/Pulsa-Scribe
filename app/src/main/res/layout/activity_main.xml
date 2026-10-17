@@ -33,6 +33,27 @@
             android:tint="?attr/pl_muted" android:contentDescription="@string/close" />
     </LinearLayout>
 
+    <!-- Auswahl (langes Drücken) -->
+    <LinearLayout android:id="@+id/main_select_bar" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone"
+        android:background="?attr/pl_accent_soft" android:paddingStart="4dp" android:paddingEnd="4dp">
+        <ImageButton android:id="@+id/sel_close" android:layout_width="48dp" android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_close"
+            android:tint="?attr/pl_text" android:contentDescription="@string/sel_close" />
+        <TextView android:id="@+id/sel_count" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:layout_marginStart="4dp" android:textColor="?attr/pl_text" android:textSize="16sp" android:textStyle="bold" />
+        <TextView android:id="@+id/sel_all" android:layout_width="wrap_content" android:layout_height="48dp"
+            android:gravity="center" android:paddingStart="12dp" android:paddingEnd="12dp" android:text="@string/sel_all"
+            android:textColor="?attr/pl_accent" android:textSize="15sp" android:background="@drawable/crumb_bg"
+            android:clickable="true" android:focusable="true" />
+        <ImageButton android:id="@+id/sel_move" android:layout_width="48dp" android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_folder"
+            android:contentDescription="@string/sel_move" />
+        <ImageButton android:id="@+id/sel_delete" android:layout_width="48dp" android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_delete"
+            android:contentDescription="@string/sel_delete" />
+    </LinearLayout>
+
     <!-- Ordnerpfad -->
     <LinearLayout android:id="@+id/main_crumbs_row" android:layout_width="match_parent" android:layout_height="wrap_content"
         android:orientation="horizontal" android:gravity="center_vertical"

@@ -3,7 +3,7 @@
     android:layout_width="match_parent" android:layout_height="wrap_content"
     android:paddingTop="5dp" android:paddingBottom="5dp">
     <LinearLayout android:id="@+id/it_card" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/card"
+        android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/card_select"
         android:foreground="?android:attr/selectableItemBackground"
         android:paddingStart="16dp" android:paddingEnd="6dp" android:paddingTop="14dp" android:paddingBottom="14dp">
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
