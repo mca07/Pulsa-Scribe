@@ -1,10 +1,10 @@
-# Pulsa Scribe – Gerätetest (Version 1.1)
+# Pulsa Scribe – Gerätetest (Version 1.5)
 
 Jeden Punkt am Handy ausprobieren und ✅ oder ❌ notieren. Bei ❌ bitte einen Screenshot und den genauen Text der Meldung in den Chat schicken.
 
 ## 1. Installation und Einrichtung
 - [ ] APK aus dem GitHub-Release „neueste“ installiert (signiert, nicht die Test-APK)
-- [ ] Einstellungen → Version zeigt „1.1.x“
+- [ ] Einstellungen → Version zeigt „1.5.x“
 - [ ] Einstellungen → „Schlüssel bei Google AI Studio holen“ öffnet den Browser
 - [ ] Einstellungen → Gemini-Schlüssel einfügen → „Hinterlegt“; Screenshot im Schlüssel-Dialog ist gesperrt
 - [ ] Falscher Schlüssel (z. B. nur „abc“) → Meldung „sieht nicht wie ein Gemini-Schlüssel aus“
@@ -57,3 +57,42 @@ Jeden Punkt am Handy ausprobieren und ✅ oder ❌ notieren. Bei ❌ bitte einen
 - [ ] Einstellungen → „Ton behalten“ aus → nach dem Transkribieren ist kein Abspielen mehr möglich, Text bleibt
 - [ ] ⋮ → „Ton löschen (Text bleibt)“
 - [ ] Handy neu starten → alle Transkripte sind noch da
+
+## 7. Ordner und Schlagwörter (neu in 1.2)
+- [ ] Ordner-Symbol oben rechts → „Kunden“ anlegen → antippen → darin „Müller GmbH“ anlegen → Pfad „Alle › Kunden › Müller GmbH“
+- [ ] In „Müller GmbH“ aufnehmen oder Datei wählen → neuer Eintrag landet automatisch dort
+- [ ] Eintrag lange drücken → „Verschieben …“ → anderer Ordner; „Schlagwörter …“ → „Vertrieb, KI“ → erscheinen als #Vertrieb #KI
+- [ ] Ordner ⋮ → Umbenennen, Verschieben (nicht in sich selbst möglich), Löschen → Inhalt wandert eine Ebene hoch
+- [ ] Zurück-Taste geht eine Ordnerebene hoch
+- [ ] Lupe auf der Startseite → Suchbegriff findet Treffer in allen Ordnern, „#vertrieb“ sucht nur Schlagwörter; Treffer antippen → Transkript öffnet mit markierter Stelle
+
+## 8. Teilen → Zusammenfassen und Vorlesen (neu in 1.2)
+- [ ] In LinkedIn/Browser einen Beitragstext markieren → Teilen → „Zusammenfassen“ (Pulsa Scribe) → Dialog → „Zusammenfassen“ → Zusammenfassung erscheint und wird vorgelesen
+- [ ] Screenshot eines Beitrags → Teilen → Pulsa Scribe → Bild oben, darunter gelesener Text, Zusammenfassung, Vorlesen
+- [ ] Nur einen Link teilen → Hinweis, dass Links nicht geöffnet werden
+- [ ] Im Transkript ⋮ → „Vorlesen …“ → Zusammenfassung bzw. Transkript ab der markierten Stelle; Leiste „Wird vorgelesen …“ mit Stopp
+- [ ] Einstellungen → Vorlesegeschwindigkeit ändern → hörbar schneller/langsamer
+- [ ] Schnelleinstellungen bearbeiten → Kachel „Aufnehmen“ hinzufügen → antippen öffnet die Aufnahme
+- [ ] Startbildschirm → Widgets → „Pulsa Scribe: Schnellstart“ → „Aufnehmen“ und „Pulsa Scribe“ funktionieren
+
+## 9. Vorlagen, Fragen, Übersetzen, Aufgaben (neu in 1.3)
+- [ ] Beim Start „Kurs-Lektion (Lernzettel)“ wählen (z. B. BZKI-Video) → Zusammenfassung mit „Lernzettel“, „Merksätze und Begriffe“, „Prüfungsfragen“ mit Antworten
+- [ ] ⋮ → „Vorlage der Zusammenfassung …“ → „Kundentermin“ → neu zusammenfassen
+- [ ] Reiter „Fragen“ → „Was wurde zum Preis gesagt?“ → Antwort mit ▶-Zeiten → Antippen springt im Ton dorthin
+- [ ] ⋮ → „Übersetzen …“ → Englisch → nach kurzer Zeit erscheint der englische Text, Hinweis oben; ⋮ → „Anzeigen in …“ → Original
+- [ ] Zusammenfassung → Aufgabe antippen → „In den Kalender“ (Kalender-App öffnet sich vorausgefüllt) bzw. „Per E-Mail senden“
+- [ ] Ordner ⋮ → „Ordner auswerten …“ → neuer Eintrag „Auswertung: …“ mit gemeinsamer Zusammenfassung
+
+## 10. Datensicherung (neu in 1.4)
+- [ ] Einstellungen → „Sicherung erstellen“ → Passwort zweimal → Speicherort (z. B. Google Drive) → „Sicherung gespeichert“
+- [ ] Mit Ton mitsichern → Datei deutlich größer
+- [ ] „Sicherung wiederherstellen“ mit falschem Passwort → Meldung „Falsches Passwort …“
+- [ ] Ein Transkript löschen → wiederherstellen → es ist wieder da, alle anderen bleiben unverändert („… schon vorhanden“)
+
+## 11. Offline-Erkennung (neu in 1.5)
+- [ ] Einstellungen → Offline-Erkennung → „Ausgewogen (Small, 190 MB)“ → Herunterladen → Fortschritt, danach „Wird geprüft …“ → „Installiert ✓ · wird verwendet“
+- [ ] Datei wählen → „Transkription: Offline (Whisper)“ → Benachrichtigung „Wird offline transkribiert … %“ → Text ohne Sprecher
+- [ ] Wie lange braucht 1 Minute Ton offline ungefähr? – bitte notieren (Small und ggf. Base)
+- [ ] Flugmodus an → offline transkribieren klappt trotzdem; die Zusammenfassung kommt erst mit Internet (oder Hinweis)
+- [ ] Offline-Transkription abbrechen → „Abgebrochen“, „Erneut versuchen“ geht weiter
+- [ ] Optional: „Genau (Large v3 Turbo)“ laden – läuft es auf dem Handy, oder kommt „Modell konnte nicht geladen werden“?

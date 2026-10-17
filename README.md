@@ -16,16 +16,25 @@ Designs Pulsa und Academy, hell und dunkel.
 GitHub Actions baut bei jedem Push auf `main` (Workflow „APK bauen“): Tests, dann signierte Release-APK als Release „neueste“.
 Benötigte Secrets: `SCRIBE_KEYSTORE_B64` (PKCS12, Base64) und `SCRIBE_KEYSTORE_PASSWORD`. Ohne Secrets entsteht eine Debug-Test-APK.
 
-Lokal: `gradle :app:testDebugUnitTest :app:assembleDebug` (Gradle 8.11.1, JDK 17, Android SDK 35).
+Lokal: `git submodule update --init` (whisper.cpp v1.9.5), dann `gradle :app:testDebugUnitTest :app:assembleDebug` (Gradle 8.11.1, JDK 17, Android SDK 35, NDK und CMake 3.22.1).
+
+## Funktionen (Stand 1.5)
+- Datei, geteiltes Video/Audio oder Live-Aufnahme → Transkript mit Sprechern, Zeitstempeln, Wiedergabe mit Sprung zur Stelle
+- Online (Gemini) oder offline (whisper.cpp, Modell Base/Small/Large v3 Turbo, SHA-256-geprüft)
+- Zusammenfassung mit Vorlagen (Allgemein, Kundentermin, Kurs-Lektion, Interview, Beitrag), Schlagwörter
+- Ordner mit Unterordnern, Suche über alles, Ordner-Auswertung
+- Text oder Screenshot teilen → Zusammenfassen und Vorlesen (Android-Sprachausgabe)
+- Fragen an ein Transkript mit Belegstellen, Übersetzen
+- Export PDF, Word, TXT, SRT; Aufgaben in Kalender/E-Mail
+- Verschlüsselte Datensicherung; Schnelleinstellungs-Kachel und Widget
 
 ## Einschränkungen
-- Transkription nur online über Gemini; Offline-Erkennung (Whisper) und Live-Aufnahme sind für die nächsten Versionen geplant.
 - Sprechererkennung über mehrere Teile hinweg ist eine Schätzung des Modells; Namen lassen sich umbenennen.
 - Geschützte Dateien (DRM) werden nicht unterstützt.
 
 ## Sicherheit und Datenschutz
 Siehe `SECURITY_CHECK.md`. Kurz: Schlüssel AES-256-GCM im Android Keystore, nur https zu `generativelanguage.googleapis.com`,
-keine Weiterleitungen, kein Backup, keine Bibliotheken, keine Speicher-Berechtigung, Teilen nur mit befristeter Freigabe.
+keine Weiterleitungen, kein Backup, einzige fremde Komponente whisper.cpp (MIT, fester Commit), keine Speicher-Berechtigung, Teilen nur mit befristeter Freigabe.
 Gespräche nur mit Einverständnis aller Beteiligten aufnehmen und transkribieren (§ 201 StGB).
 
 Schrift Inter: SIL Open Font License, siehe `tools/fonts/OFL-Inter.txt`.
