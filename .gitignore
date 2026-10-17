@@ -1,0 +1,13 @@
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+*.apk
+*.aab
+# Signierschlüssel niemals einchecken
+*.p12
+*.jks
+*.keystore
+*KEYSTORE*.txt

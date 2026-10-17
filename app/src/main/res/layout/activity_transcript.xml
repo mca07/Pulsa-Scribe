@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="?attr/pl_bg" android:fitsSystemWindows="true">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/header_bg"
+        android:paddingStart="6dp" android:paddingEnd="4dp" android:paddingTop="6dp" android:paddingBottom="9dp">
+        <ImageButton android:id="@+id/tr_back" style="@style/HeaderIconButton"
+            android:src="@drawable/ic_back" android:contentDescription="@string/back" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:layout_marginStart="4dp" android:orientation="vertical">
+            <TextView android:id="@+id/tr_title" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:textSize="18sp" android:textStyle="bold" android:textColor="?attr/pl_header_text"
+                android:maxLines="1" android:ellipsize="end" android:accessibilityHeading="true" />
+            <TextView android:id="@+id/tr_meta" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:textSize="12sp" android:textColor="?attr/pl_header_muted" android:maxLines="1" android:ellipsize="end" />
+        </LinearLayout>
+        <ImageButton android:id="@+id/tr_search" style="@style/HeaderIconButton"
+            android:src="@drawable/ic_search" android:contentDescription="@string/m_search" />
+        <ImageButton android:id="@+id/tr_share" style="@style/HeaderIconButton"
+            android:src="@drawable/ic_share" android:contentDescription="@string/m_export" />
+        <ImageButton android:id="@+id/tr_more" style="@style/HeaderIconButton"
+            android:src="@drawable/ic_more" android:contentDescription="@string/more" />
+    </LinearLayout>
+
+    <!-- Suche -->
+    <LinearLayout android:id="@+id/tr_search_bar" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone"
+        android:paddingStart="12dp" android:paddingEnd="4dp" android:paddingTop="8dp" android:background="?attr/pl_bg">
+        <EditText android:id="@+id/tr_search_input" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1"
+            android:background="@drawable/input_bg" android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:hint="@string/search_hint" android:inputType="text" android:imeOptions="actionSearch"
+            android:maxLength="60" android:textColor="?attr/pl_text" android:textColorHint="?attr/pl_muted" android:textSize="15sp" />
+        <TextView android:id="@+id/tr_search_count" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="10dp" android:textColor="?attr/pl_muted" android:textSize="13sp" />
+        <ImageButton android:id="@+id/tr_search_close" android:layout_width="48dp" android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_close"
+            android:tint="?attr/pl_muted" android:contentDescription="@string/close" />
+    </LinearLayout>
+
+    <!-- Hinweis (Status, Fehler) -->
+    <TextView android:id="@+id/tr_note" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginStart="12dp" android:layout_marginEnd="12dp" android:layout_marginTop="10dp"
+        android:background="@drawable/note_bg" android:padding="12dp" android:textColor="?attr/pl_text"
+        android:textSize="14sp" android:visibility="gone" />
+    <Button android:id="@+id/tr_retry" style="@style/Button.Secondary"
+        android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp" android:minHeight="44dp" android:text="@string/retry" android:visibility="gone" />
+
+    <!-- Reiter -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"
+        android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="10dp" android:paddingBottom="6dp">
+        <TextView android:id="@+id/tr_tab_text" android:layout_width="wrap_content" android:layout_height="40dp"
+            android:background="@drawable/chip" android:gravity="center" android:paddingStart="16dp" android:paddingEnd="16dp"
+            android:text="@string/tab_text" android:textSize="14sp" android:clickable="true" android:focusable="true" />
+        <TextView android:id="@+id/tr_tab_summary" android:layout_width="wrap_content" android:layout_height="40dp"
+            android:layout_marginStart="8dp" android:background="@drawable/chip" android:gravity="center"
+            android:paddingStart="16dp" android:paddingEnd="16dp" android:text="@string/tab_summary" android:textSize="14sp"
+            android:clickable="true" android:focusable="true" />
+    </LinearLayout>
+
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <ListView android:id="@+id/tr_list" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:divider="@null" android:dividerHeight="0dp" android:clipToPadding="false"
+            android:paddingStart="8dp" android:paddingEnd="8dp" android:paddingBottom="12dp"
+            android:listSelector="@android:color/transparent" android:fastScrollEnabled="true" />
+        <ScrollView android:id="@+id/tr_summary_scroll" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:visibility="gone">
+            <LinearLayout android:id="@+id/tr_summary" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:paddingStart="18dp" android:paddingEnd="18dp" android:paddingBottom="24dp" />
+        </ScrollView>
+    </FrameLayout>
+
+    <!-- Wiedergabe -->
+    <LinearLayout android:id="@+id/tr_player" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:background="?attr/pl_surface"
+        android:paddingStart="10dp" android:paddingEnd="14dp" android:paddingTop="8dp" android:paddingBottom="10dp">
+        <ImageButton android:id="@+id/tr_back10" android:layout_width="44dp" android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_replay10"
+            android:contentDescription="@string/back10" />
+        <ImageButton android:id="@+id/tr_play" android:layout_width="52dp" android:layout_height="52dp"
+            android:background="@drawable/play_bg" android:src="@drawable/ic_play" android:contentDescription="@string/play" />
+        <SeekBar android:id="@+id/tr_seek" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1"
+            android:layout_marginStart="4dp" android:contentDescription="@string/play" />
+        <TextView android:id="@+id/tr_time" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="?attr/pl_muted" android:textSize="13sp" android:fontFeatureSettings="tnum" />
+    </LinearLayout>
+</LinearLayout>

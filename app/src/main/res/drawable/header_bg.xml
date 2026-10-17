@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kopfbereich: Pulsa schlicht, Academy dunkler Verlauf mit blauer Linie unten -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <gradient android:angle="315" android:startColor="?attr/pl_header_bg" android:endColor="?attr/pl_header_bg2" />
+        </shape>
+    </item>
+    <item android:gravity="bottom" android:height="3dp">
+        <shape><solid android:color="?attr/pl_brand_line" /></shape>
+    </item>
+</layer-list>

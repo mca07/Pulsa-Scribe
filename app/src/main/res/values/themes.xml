@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Base.Scribe" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">?attr/pl_accent</item>
+        <item name="android:colorAccent">?attr/pl_accent</item>
+        <item name="android:colorControlActivated">?attr/pl_accent</item>
+        <item name="android:windowBackground">?attr/pl_bg</item>
+        <item name="android:textColorPrimary">?attr/pl_text</item>
+        <item name="android:textColorSecondary">?attr/pl_muted</item>
+        <item name="android:alertDialogTheme">@style/Dialog.Scribe</item>
+    </style>
+
+    <!-- Design „Pulsa“: Blaugrün -->
+    <style name="Theme.Scribe" parent="Base.Scribe">
+        <item name="pl_bg">#F3F6F6</item>
+        <item name="pl_surface">#FFFFFF</item>
+        <item name="pl_sunk">#EAF0EF</item>
+        <item name="pl_text">#11201E</item>
+        <item name="pl_muted">#566765</item>
+        <item name="pl_accent">#0B7F73</item>
+        <item name="pl_on_accent">#FFFFFF</item>
+        <item name="pl_accent_soft">#D7EEEA</item>
+        <item name="pl_divider">#DCE4E3</item>
+        <item name="pl_error">#B3261E</item>
+        <item name="pl_header_bg">#F3F6F6</item>
+        <item name="pl_header_bg2">#F3F6F6</item>
+        <item name="pl_header_text">#11201E</item>
+        <item name="pl_header_muted">#566765</item>
+        <item name="pl_header_field">#FFFFFF</item>
+        <item name="pl_brand_line">#00000000</item>
+        <item name="pl_light_bars">true</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:statusBarColor">#F3F6F6</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+    </style>
+
+    <!-- Design „Academy“: Navy und Blau, Schrift Inter, dunkler Kopfbereich -->
+    <style name="Theme.Scribe.Academy" parent="Base.Scribe">
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="pl_bg">#F5F7FA</item>
+        <item name="pl_surface">#FFFFFF</item>
+        <item name="pl_sunk">#EEF2F6</item>
+        <item name="pl_text">#1A1A1A</item>
+        <item name="pl_muted">#5B6675</item>
+        <item name="pl_accent">#0079B8</item>
+        <item name="pl_on_accent">#FFFFFF</item>
+        <item name="pl_accent_soft">#E2F3FB</item>
+        <item name="pl_divider">#E3E8EF</item>
+        <item name="pl_error">#B4232C</item>
+        <item name="pl_header_bg">#1A1A1A</item>
+        <item name="pl_header_bg2">#2E3C4D</item>
+        <item name="pl_header_text">#FFFFFF</item>
+        <item name="pl_header_muted">#B5BFCB</item>
+        <item name="pl_header_field">#33FFFFFF</item>
+        <item name="pl_brand_line">#009FE3</item>
+        <item name="pl_light_bars">false</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:statusBarColor">#1A1A1A</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+    </style>
+
+    <style name="Dialog.Scribe" parent="@android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">?attr/pl_accent</item>
+    </style>
+
+
+    <style name="Button.Primary" parent="@android:style/Widget.Material.Button">
+        <item name="android:background">@drawable/btn_primary</item>
+        <item name="android:textColor">?attr/pl_on_accent</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:paddingStart">22dp</item>
+        <item name="android:paddingEnd">22dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+    <style name="Button.Secondary" parent="@android:style/Widget.Material.Button">
+        <item name="android:background">@drawable/btn_secondary</item>
+        <item name="android:textColor">?attr/pl_accent</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">18dp</item>
+        <item name="android:paddingEnd">18dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+    <style name="HeaderIconButton">
+        <item name="android:layout_width">44dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:background">?android:attr/selectableItemBackgroundBorderless</item>
+        <item name="android:tint">?attr/pl_header_text</item>
+        <item name="android:scaleType">center</item>
+    </style>
+    <style name="NavItem">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+    <style name="NavText">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">3dp</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+    <style name="SettingsHeader">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingTop">22dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textColor">?attr/pl_accent</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:accessibilityHeading">true</item>
+    </style>
+    <style name="SettingsCard">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:background">@drawable/card</item>
+    </style>
+    <style name="SettingsRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">60dp</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:background">@drawable/settings_row</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+    <style name="SettingsTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">?attr/pl_text</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+    <style name="SettingsSub">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:textColor">?attr/pl_muted</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
+    </style>
+    <style name="SettingsDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_marginStart">16dp</item>
+        <item name="android:background">?attr/pl_divider</item>
+    </style>
+</resources>

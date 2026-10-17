@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Base.Scribe" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:colorPrimary">?attr/pl_accent</item>
+        <item name="android:colorAccent">?attr/pl_accent</item>
+        <item name="android:colorControlActivated">?attr/pl_accent</item>
+        <item name="android:windowBackground">?attr/pl_bg</item>
+        <item name="android:textColorPrimary">?attr/pl_text</item>
+        <item name="android:textColorSecondary">?attr/pl_muted</item>
+        <item name="android:alertDialogTheme">@style/Dialog.Scribe</item>
+    </style>
+
+    <style name="Theme.Scribe" parent="Base.Scribe">
+        <item name="pl_bg">#0E1514</item>
+        <item name="pl_surface">#172120</item>
+        <item name="pl_sunk">#111A19</item>
+        <item name="pl_text">#E6EFED</item>
+        <item name="pl_muted">#9AADAA</item>
+        <item name="pl_accent">#46C9B7</item>
+        <item name="pl_on_accent">#04231F</item>
+        <item name="pl_accent_soft">#1D3A36</item>
+        <item name="pl_divider">#2A3735</item>
+        <item name="pl_error">#FF9A90</item>
+        <item name="pl_header_bg">#0E1514</item>
+        <item name="pl_header_bg2">#0E1514</item>
+        <item name="pl_header_text">#E6EFED</item>
+        <item name="pl_header_muted">#9AADAA</item>
+        <item name="pl_header_field">#172120</item>
+        <item name="pl_brand_line">#00000000</item>
+        <item name="pl_light_bars">false</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:statusBarColor">#0E1514</item>
+        <item name="android:navigationBarColor">#172120</item>
+    </style>
+
+    <style name="Theme.Scribe.Academy" parent="Base.Scribe">
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="pl_bg">#111418</item>
+        <item name="pl_surface">#1B2027</item>
+        <item name="pl_sunk">#151A20</item>
+        <item name="pl_text">#E9EDF2</item>
+        <item name="pl_muted">#9AA6B4</item>
+        <item name="pl_accent">#33B5EC</item>
+        <item name="pl_on_accent">#04202E</item>
+        <item name="pl_accent_soft">#0F2C3C</item>
+        <item name="pl_divider">#2B333D</item>
+        <item name="pl_error">#F2868C</item>
+        <item name="pl_header_bg">#0B0D10</item>
+        <item name="pl_header_bg2">#233244</item>
+        <item name="pl_header_text">#FFFFFF</item>
+        <item name="pl_header_muted">#A9B5C3</item>
+        <item name="pl_header_field">#26FFFFFF</item>
+        <item name="pl_brand_line">#33B5EC</item>
+        <item name="pl_light_bars">false</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:statusBarColor">#0B0D10</item>
+        <item name="android:navigationBarColor">#1B2027</item>
+    </style>
+
+    <style name="Dialog.Scribe" parent="@android:style/Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">?attr/pl_accent</item>
+    </style>
+</resources>

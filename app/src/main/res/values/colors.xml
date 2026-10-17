@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="icon_bg">#0B7F73</color>
+    <color name="icon_mint">#9FE7DC</color>
+    <!-- Sprecherfarben (hell) -->
+    <color name="spk1">#0B7F73</color>
+    <color name="spk2">#6D3FD9</color>
+    <color name="spk3">#C2410C</color>
+    <color name="spk4">#1D63B8</color>
+    <color name="spk5">#B0245A</color>
+    <color name="spk6">#4D7C0F</color>
+</resources>

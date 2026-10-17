@@ -1,0 +1,74 @@
+plugins {
+    id "com.android.application"
+}
+
+// Signierschlüssel kommt nur aus Umgebungsvariablen (GitHub Secrets), nie aus dem Repository.
+def ksFile = System.getenv("SCRIBE_KEYSTORE_FILE")
+def ksPass = System.getenv("SCRIBE_KEYSTORE_PASSWORD")
+def hasReleaseKey = ksFile != null && !ksFile.isEmpty() && ksPass != null && !ksPass.isEmpty() && file(ksFile).exists()
+
+// versionCode steigt mit jedem GitHub-Build, damit Updates über die alte Version installiert werden können.
+def runNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+
+android {
+    namespace "de.mca.pulsascribe"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "de.mca.pulsascribe"
+        minSdk 29
+        targetSdk 35
+        versionCode runNumber
+        versionName "1.0." + runNumber
+    }
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            release {
+                storeFile file(ksFile)
+                storePassword ksPass
+                keyAlias "pulsascribe"
+                keyPassword ksPass
+                storeType "pkcs12"
+                enableV2Signing true
+                enableV3Signing true
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            debuggable false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            if (hasReleaseKey) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds true
+    }
+
+    dependenciesInfo {
+        includeInApk false
+        includeInBundle false
+    }
+}
+
+dependencies {
+    // Keine Bibliotheken in der App. Nur für die Tests:
+    testImplementation "junit:junit:4.13.2"
+}

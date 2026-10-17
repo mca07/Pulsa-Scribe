@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Farben je Design (Pulsa / Academy), hell und dunkel in den Themes gesetzt -->
+    <attr name="pl_bg" format="color" />
+    <attr name="pl_surface" format="color" />
+    <attr name="pl_sunk" format="color" />
+    <attr name="pl_text" format="color" />
+    <attr name="pl_muted" format="color" />
+    <attr name="pl_accent" format="color" />
+    <attr name="pl_on_accent" format="color" />
+    <attr name="pl_accent_soft" format="color" />
+    <attr name="pl_divider" format="color" />
+    <attr name="pl_error" format="color" />
+    <attr name="pl_header_bg" format="color" />
+    <attr name="pl_header_bg2" format="color" />
+    <attr name="pl_header_text" format="color" />
+    <attr name="pl_header_muted" format="color" />
+    <attr name="pl_header_field" format="color" />
+    <attr name="pl_brand_line" format="color" />
+    <attr name="pl_light_bars" format="boolean" />
+</resources>

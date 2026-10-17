@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="?attr/pl_bg" android:fitsSystemWindows="true">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/header_bg"
+        android:paddingStart="18dp" android:paddingEnd="6dp" android:paddingTop="10dp" android:paddingBottom="12dp">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/app_name" android:textSize="22sp" android:textStyle="bold"
+                android:textColor="?attr/pl_header_text" android:accessibilityHeading="true" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/main_subtitle" android:textSize="13sp" android:textColor="?attr/pl_header_muted" />
+        </LinearLayout>
+        <ImageButton android:id="@+id/main_settings" style="@style/HeaderIconButton"
+            android:src="@drawable/ic_settings" android:contentDescription="@string/settings" />
+    </LinearLayout>
+
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <ListView android:id="@+id/main_list" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:divider="@null" android:dividerHeight="0dp" android:clipToPadding="false"
+            android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="8dp" android:paddingBottom="12dp"
+            android:listSelector="@android:color/transparent" />
+        <TextView android:id="@+id/main_empty" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:gravity="center" android:padding="32dp" android:text="@string/empty"
+            android:textColor="?attr/pl_muted" android:textSize="16sp" android:lineSpacingMultiplier="1.2"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:background="?attr/pl_surface"
+        android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingTop="12dp" android:paddingBottom="14dp">
+        <Button android:id="@+id/main_pick" style="@style/Button.Primary"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:drawableStart="@drawable/ic_file" android:drawablePadding="10dp" android:drawableTint="?attr/pl_on_accent"
+            android:gravity="center" android:text="@string/pick_file" />
+    </LinearLayout>
+</LinearLayout>

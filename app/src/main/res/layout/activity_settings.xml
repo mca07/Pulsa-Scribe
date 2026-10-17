@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="?attr/pl_bg" android:fitsSystemWindows="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/header_bg"
+        android:paddingStart="6dp" android:paddingEnd="16dp" android:paddingTop="6dp" android:paddingBottom="9dp">
+        <ImageButton android:id="@+id/settings_back" style="@style/HeaderIconButton"
+            android:src="@drawable/ic_back" android:contentDescription="@string/back" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:layout_marginStart="6dp" android:text="@string/settings" android:textSize="20sp"
+            android:textStyle="bold" android:textColor="?attr/pl_header_text" android:accessibilityHeading="true" />
+    </LinearLayout>
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="24dp">
+            <TextView style="@style/SettingsHeader" android:text="@string/set_sec_key" />
+            <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_key" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/set_key" />
+                        <TextView android:id="@+id/key_status" style="@style/SettingsSub"  />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_key_get" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/set_key_get" />
+                        <TextView style="@style/SettingsSub" android:text="@string/set_key_get_sub" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+            <TextView style="@style/SettingsHeader" android:text="@string/set_sec_defaults" />
+            <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_lang" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/set_lang" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/lang_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_diarize" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/start_diarize" />
+                    </LinearLayout>
+                    <Switch android:id="@+id/sw_diarize" android:layout_width="wrap_content" android:layout_height="48dp"
+                        android:contentDescription="@string/start_diarize" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_clean" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/start_clean" />
+                    </LinearLayout>
+                    <Switch android:id="@+id/sw_clean" android:layout_width="wrap_content" android:layout_height="48dp"
+                        android:contentDescription="@string/start_clean" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_summary" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/start_summary" />
+                    </LinearLayout>
+                    <Switch android:id="@+id/sw_summary" android:layout_width="wrap_content" android:layout_height="48dp"
+                        android:contentDescription="@string/start_summary" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_sum_lang" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/set_sum_lang" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/sum_lang_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_keep" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/set_keep_audio" />
+                        <TextView style="@style/SettingsSub" android:text="@string/set_keep_audio_sub" />
+                    </LinearLayout>
+                    <Switch android:id="@+id/sw_keep" android:layout_width="wrap_content" android:layout_height="48dp"
+                        android:contentDescription="@string/set_keep_audio" />
+                </LinearLayout>
+            </LinearLayout>
+            <TextView style="@style/SettingsHeader" android:text="@string/set_sec_look" />
+            <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_design" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/design_title" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/design_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+            </LinearLayout>
+            <TextView style="@style/SettingsHeader" android:text="@string/set_sec_data" />
+            <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_privacy" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/set_privacy" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_delete_all" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/set_delete_all" />
+                        <TextView style="@style/SettingsSub" android:text="@string/set_delete_all_sub" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_version" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/set_about" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/version_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:paddingTop="5dp" android:paddingBottom="5dp">
+    <LinearLayout android:id="@+id/it_card" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/card"
+        android:foreground="?android:attr/selectableItemBackground"
+        android:paddingStart="16dp" android:paddingEnd="6dp" android:paddingTop="14dp" android:paddingBottom="14dp">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView android:id="@+id/it_title" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:textColor="?attr/pl_text" android:textSize="16sp" android:textStyle="bold"
+                android:maxLines="2" android:ellipsize="end" />
+            <TextView android:id="@+id/it_meta" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="3dp" android:textColor="?attr/pl_muted" android:textSize="13sp" />
+            <TextView android:id="@+id/it_preview" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="6dp" android:textColor="?attr/pl_text" android:textSize="14sp"
+                android:maxLines="2" android:ellipsize="end" />
+            <ProgressBar android:id="@+id/it_progress" style="@android:style/Widget.Material.ProgressBar.Horizontal"
+                android:layout_width="match_parent" android:layout_height="6dp" android:layout_marginTop="10dp"
+                android:max="100" android:progressDrawable="@drawable/progress_bar" />
+            <TextView android:id="@+id/it_status" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="6dp" android:textColor="?attr/pl_muted" android:textSize="13sp" />
+            <Button android:id="@+id/it_retry" style="@style/Button.Secondary"
+                android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:minHeight="44dp" android:text="@string/retry" />
+        </LinearLayout>
+        <ImageButton android:id="@+id/it_action" android:layout_width="48dp" android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:scaleType="center"
+            android:src="@drawable/ic_more" android:contentDescription="@string/more" />
+    </LinearLayout>
+</FrameLayout>

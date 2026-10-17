@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pulsa Scribe</string>
+    <string name="share_target">Mit Pulsa Scribe transkribieren</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="canceled">Abgebrochen</string>
+    <string name="close">Schließen</string>
+    <string name="back">Zurück</string>
+    <string name="more">Mehr</string>
+    <string name="delete">Löschen</string>
+    <string name="save">Speichern</string>
+    <string name="rename">Umbenennen</string>
+    <string name="retry">Erneut versuchen</string>
+    <string name="selected">ausgewählt</string>
+    <string name="settings">Einstellungen</string>
+
+    <!-- Hauptseite -->
+    <string name="main_subtitle">Videos und Gespräche zu Text</string>
+    <string name="pick_file">Datei transkribieren</string>
+    <string name="empty">Noch keine Transkripte.\n\nTippe auf „Datei transkribieren“ und wähle eine Audio- oder Videodatei – oder teile eine Datei aus einer anderen App mit Pulsa Scribe.</string>
+    <string name="item_menu_title">Transkript</string>
+    <string name="delete_title">Transkript löschen?</string>
+    <string name="delete_text">„%1$s“ wird mit Text, Zusammenfassung und Ton vom Handy gelöscht.</string>
+    <string name="speakers_n">%1$d Sprecher</string>
+
+    <!-- Status -->
+    <string name="st_queued">Wartet …</string>
+    <string name="st_prepare">Ton wird vorbereitet</string>
+    <string name="st_transcribe">Wird transkribiert</string>
+    <string name="st_transcribe_part">Teil %1$d von %2$d wird transkribiert</string>
+    <string name="st_summary">Zusammenfassung wird erstellt</string>
+    <string name="st_canceled">Abgebrochen – „Erneut versuchen“ macht weiter</string>
+    <string name="st_error">Fehler</string>
+    <string name="st_incomplete">Ein Teil der Antwort war zu lang und wurde gekürzt übernommen.</string>
+
+    <!-- Start -->
+    <string name="start_title">Transkribieren</string>
+    <string name="start_name">Titel</string>
+    <string name="start_lang">Sprache</string>
+    <string name="start_diarize">Sprecher unterscheiden</string>
+    <string name="start_summary">Zusammenfassung erstellen</string>
+    <string name="start_clean">Füllwörter weglassen (äh, ähm)</string>
+    <string name="start_terms">Namen und Fachbegriffe (optional)</string>
+    <string name="start_terms_hint">z. B. Myfactory, Marcel, KI Manager</string>
+    <string name="start_terms_sub">Hilft bei der richtigen Schreibweise. Max. 300 Zeichen.</string>
+    <string name="start_go">Transkribieren</string>
+    <string name="start_info">Die Tonspur wird als verkleinerte Audiodatei an Google Gemini gesendet. Nur auf diesen Knopfdruck.</string>
+    <string name="start_file_unreadable">Die Datei lässt sich nicht öffnen.</string>
+    <string name="start_need_key">Für die Transkription wird ein Gemini-Schlüssel benötigt.</string>
+    <string name="start_set_key">Schlüssel hinterlegen</string>
+
+    <string name="hint_title">Kurz vorab</string>
+    <string name="hint_text">• Pulsa Scribe sendet die Tonspur zur Transkription an Google Gemini (mit deinem eigenen Schlüssel). Kunden-, Personal- oder andere vertrauliche Gespräche nur, wenn das für dich und die Beteiligten in Ordnung ist.\n\n• Gespräche nur mit Einverständnis aller Beteiligten aufnehmen und transkribieren. Heimliches Aufnehmen nicht-öffentlich gesprochener Worte ist in Deutschland strafbar (§ 201 StGB).\n\n• Mit dem kostenlosen Kontingent gelten die Bedingungen von Google für die Gemini API. Für Kundendaten die bezahlte Variante und eine Vereinbarung zur Auftragsverarbeitung nutzen.\n\n• Transkripte und Ton bleiben auf deinem Handy. Bei Google hochgeladene Daten werden nicht dauerhaft in deinem Konto gespeichert.</string>
+    <string name="hint_ok">Verstanden</string>
+
+    <!-- Transkript -->
+    <string name="tab_text">Transkript</string>
+    <string name="tab_summary">Zusammenfassung</string>
+    <string name="play">Abspielen</string>
+    <string name="pause">Pause</string>
+    <string name="back10">10 Sekunden zurück</string>
+    <string name="no_audio">Ton nicht gespeichert</string>
+    <string name="audio_error">Der Ton kann nicht abgespielt werden.</string>
+    <string name="m_export">Exportieren / Teilen …</string>
+    <string name="m_copy">Text kopieren</string>
+    <string name="m_speakers">Sprecher umbenennen</string>
+    <string name="m_resummary">Zusammenfassung neu erstellen</string>
+    <string name="m_rename">Titel ändern</string>
+    <string name="m_delete_audio">Ton löschen (Text bleibt)</string>
+    <string name="m_delete">Transkript löschen</string>
+    <string name="m_search">Suchen</string>
+    <string name="copied">Text kopiert</string>
+    <string name="speakers_title">Sprecher umbenennen</string>
+    <string name="speakers_none">In diesem Transkript wurden keine Sprecher unterschieden.</string>
+    <string name="edit_segment">Abschnitt bearbeiten</string>
+    <string name="edit_speaker">Sprecher</string>
+    <string name="edit_text">Text</string>
+    <string name="edit_delete_segment">Abschnitt löschen</string>
+    <string name="busy_no_edit">Während der Transkription kann nicht bearbeitet werden.</string>
+    <string name="summary_none">Noch keine Zusammenfassung.</string>
+    <string name="summary_create">Zusammenfassung erstellen</string>
+    <string name="sum_overview">Überblick</string>
+    <string name="sum_points">Kernpunkte</string>
+    <string name="sum_tasks">Aufgaben</string>
+    <string name="sum_decisions">Entscheidungen</string>
+    <string name="sum_questions">Offene Fragen</string>
+    <string name="sum_hint">Von Gemini erstellt – bitte vor dem Weitergeben prüfen.</string>
+    <string name="delete_audio_title">Ton löschen?</string>
+    <string name="delete_audio_text">Text und Zusammenfassung bleiben erhalten. Abspielen und erneutes Transkribieren sind danach nicht mehr möglich.</string>
+    <string name="search_hint">Im Transkript suchen</string>
+    <string name="search_count">%1$d Treffer</string>
+    <string name="not_found">Kein Transkript gefunden.</string>
+
+    <!-- Export -->
+    <string name="exp_title">Exportieren</string>
+    <string name="exp_format">Format</string>
+    <string name="exp_txt">Text (.txt)</string>
+    <string name="exp_docx">Word (.docx)</string>
+    <string name="exp_pdf">PDF</string>
+    <string name="exp_srt">Untertitel (.srt)</string>
+    <string name="exp_times">Zeitstempel</string>
+    <string name="exp_speakers">Sprechernamen</string>
+    <string name="exp_summary">Zusammenfassung voranstellen</string>
+    <string name="exp_share">Teilen</string>
+    <string name="exp_save">Speichern unter …</string>
+    <string name="exp_saved">Gespeichert</string>
+    <string name="exp_failed">Export fehlgeschlagen.</string>
+
+    <!-- Einstellungen -->
+    <string name="set_sec_key">Google Gemini</string>
+    <string name="set_key">Gemini-Schlüssel</string>
+    <string name="set_key_set">Hinterlegt (verschlüsselt auf diesem Gerät)</string>
+    <string name="set_key_missing">Nicht hinterlegt</string>
+    <string name="set_key_get">Schlüssel bei Google AI Studio holen</string>
+    <string name="set_key_get_sub">Öffnet aistudio.google.com im Browser. Kostenlos, keine Zahlungsdaten nötig.</string>
+    <string name="key_title">Gemini-Schlüssel</string>
+    <string name="key_text">Füge deinen API-Schlüssel ein (beginnt mit „AIza…“ oder „AQ.…“). Er wird verschlüsselt im Android-Schlüsselspeicher abgelegt und nur an Google gesendet.</string>
+    <string name="key_hint">AIza…</string>
+    <string name="key_invalid">Das sieht nicht wie ein Gemini-Schlüssel aus.</string>
+    <string name="key_saved">Schlüssel gespeichert</string>
+    <string name="key_save_failed">Schlüssel konnte nicht gespeichert werden.</string>
+    <string name="key_delete">Schlüssel löschen</string>
+    <string name="key_deleted">Schlüssel gelöscht</string>
+    <string name="set_sec_defaults">Standard für neue Transkripte</string>
+    <string name="set_lang">Sprache der Aufnahme</string>
+    <string name="set_sum_lang">Sprache der Zusammenfassung</string>
+    <string name="set_keep_audio">Ton behalten</string>
+    <string name="set_keep_audio_sub">Zum Abspielen und für erneute Versuche. Aus = Ton wird nach der Transkription gelöscht.</string>
+    <string name="set_sec_look">Darstellung</string>
+    <string name="design_title">Design</string>
+    <string name="design_pulsa">Pulsa</string>
+    <string name="design_academy">Academy</string>
+    <string name="set_sec_data">Daten</string>
+    <string name="set_privacy">Datenschutz und Hinweise</string>
+    <string name="set_delete_all">Alle Transkripte löschen</string>
+    <string name="set_delete_all_sub">Löscht Texte, Zusammenfassungen und Ton auf diesem Gerät.</string>
+    <string name="delete_all_title">Alle Transkripte löschen?</string>
+    <string name="delete_all_text">Das kann nicht rückgängig gemacht werden.</string>
+    <string name="deleted_all">Alles gelöscht</string>
+    <string name="set_about">Version</string>
+    <string name="busy_delete_all">Bitte zuerst laufende Transkriptionen abbrechen.</string>
+
+    <!-- Dienst -->
+    <string name="ch_work">Laufende Transkription</string>
+    <string name="ch_done">Transkription fertig</string>
+    <string name="n_starting">Wird vorbereitet …</string>
+    <string name="n_working">Pulsa Scribe transkribiert</string>
+    <string name="n_done">Fertig: %1$s</string>
+    <string name="n_done_text">Das Transkript ist bereit.</string>
+    <string name="n_failed">Nicht fertig: %1$s</string>
+
+    <!-- Fehler -->
+    <string name="err_open_file">Die Datei konnte nicht gelesen werden (Format nicht unterstützt oder geschützt).</string>
+    <string name="err_no_audio">Die Datei enthält keine Tonspur.</string>
+    <string name="err_too_long">Die Aufnahme ist länger als 10 Stunden.</string>
+    <string name="err_codec">Das Tonformat wird auf diesem Gerät nicht unterstützt.</string>
+    <string name="err_audio_broken">Der gespeicherte Ton ist beschädigt. Bitte die Datei neu transkribieren.</string>
+    <string name="err_interrupted">Unterbrochen (App wurde beendet). „Erneut versuchen“ macht weiter.</string>
+    <string name="err_need_file_again">Der Ton ist nicht mehr vorhanden. Bitte die Datei erneut wählen.</string>
+    <string name="err_no_key">Kein Gemini-Schlüssel hinterlegt (Einstellungen).</string>
+    <string name="err_unexpected">Unerwarteter Fehler (%1$s).</string>
+    <string name="err_blocked">Gemini hat die Anfrage abgelehnt (%1$s).</string>
+    <string name="err_key_rejected">Der Gemini-Schlüssel wurde abgelehnt. Bitte in den Einstellungen prüfen. (%1$s)</string>
+    <string name="err_request">Gemini konnte die Anfrage nicht verarbeiten. (%1$s)</string>
+    <string name="err_network">Keine Verbindung zu Google. Bitte Internet prüfen und erneut versuchen.</string>
+    <string name="err_quota">Das Gemini-Kontingent ist gerade ausgeschöpft. Später erneut versuchen – es geht beim offenen Teil weiter. (%1$s)</string>
+    <string name="err_all_models">Gemini ist gerade überlastet oder lieferte keine brauchbare Antwort. Später erneut versuchen. (%1$s)</string>
+    <string name="err_summary_failed">Zusammenfassung fehlgeschlagen – kann im Transkript neu erstellt werden.</string>
+    <string name="err_summary_empty">Kein Text für eine Zusammenfassung vorhanden.</string>
+    <string name="err_no_speech">In der Aufnahme wurde keine Sprache erkannt.</string>
+    <string name="err_notif_denied">Ohne Benachrichtigungen siehst du den Fortschritt nur in der App.</string>
+</resources>
