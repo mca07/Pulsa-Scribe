@@ -6,4 +6,7 @@
     <color name="spk4">#7FB5FF</color>
     <color name="spk5">#FF8DB8</color>
     <color name="spk6">#A6D96A</color>
+    <color name="widget_bg">#172120</color>
+    <color name="widget_btn">#1D3A36</color>
+    <color name="widget_text">#E6EFED</color>
 </resources>

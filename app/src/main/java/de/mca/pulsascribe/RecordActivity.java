@@ -57,7 +57,8 @@ public final class RecordActivity extends Activity {
         level = findViewById(R.id.rec_level);
         LinearLayout col = findViewById(R.id.rec_form);
         String date = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY).format(new Date());
-        form = new OptionsForm(this, col, getString(R.string.rec_default_title, date));
+        String folder = getIntent().getStringExtra(MainActivity.EXTRA_FOLDER);
+        form = new OptionsForm(this, col, getString(R.string.rec_default_title, date), folder, true);
 
         findViewById(R.id.rec_back).setOnClickListener(v -> finish());
         primary.setOnClickListener(v -> {

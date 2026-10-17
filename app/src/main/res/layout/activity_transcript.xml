@@ -58,6 +58,10 @@
             android:layout_marginStart="8dp" android:background="@drawable/chip" android:gravity="center"
             android:paddingStart="16dp" android:paddingEnd="16dp" android:text="@string/tab_summary" android:textSize="14sp"
             android:clickable="true" android:focusable="true" />
+        <TextView android:id="@+id/tr_tab_ask" android:layout_width="wrap_content" android:layout_height="40dp"
+            android:layout_marginStart="8dp" android:background="@drawable/chip" android:gravity="center"
+            android:paddingStart="16dp" android:paddingEnd="16dp" android:text="@string/tab_ask" android:textSize="14sp"
+            android:clickable="true" android:focusable="true" />
     </LinearLayout>
 
     <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
@@ -70,7 +74,38 @@
             <LinearLayout android:id="@+id/tr_summary" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical" android:paddingStart="18dp" android:paddingEnd="18dp" android:paddingBottom="24dp" />
         </ScrollView>
+        <LinearLayout android:id="@+id/tr_ask_box" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:orientation="vertical" android:visibility="gone">
+            <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+                <LinearLayout android:id="@+id/tr_answers" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:paddingStart="18dp" android:paddingEnd="18dp" android:paddingBottom="16dp" />
+            </ScrollView>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"
+                android:gravity="center_vertical" android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingBottom="8dp">
+                <EditText android:id="@+id/tr_ask_input" android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:minHeight="48dp" android:background="@drawable/input_bg"
+                    android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingTop="10dp" android:paddingBottom="10dp"
+                    android:hint="@string/ask_hint" android:inputType="textCapSentences|textMultiLine" android:maxLength="300"
+                    android:maxLines="4" android:textColor="?attr/pl_text" android:textColorHint="?attr/pl_muted" android:textSize="15sp" />
+                <ImageButton android:id="@+id/tr_ask_send" android:layout_width="48dp" android:layout_height="48dp"
+                    android:layout_marginStart="8dp" android:background="@drawable/btn_primary" android:src="@drawable/ic_send"
+                    android:contentDescription="@string/ask_go" />
+            </LinearLayout>
+        </LinearLayout>
     </FrameLayout>
+
+    <!-- Vorlesen -->
+    <LinearLayout android:id="@+id/tr_read_bar" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:background="?attr/pl_accent_soft"
+        android:paddingStart="16dp" android:paddingEnd="8dp" android:visibility="gone">
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_volume"
+            android:importantForAccessibility="no" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:layout_marginStart="10dp" android:text="@string/reading" android:textColor="?attr/pl_text" android:textSize="14sp" />
+        <ImageButton android:id="@+id/tr_read_stop" android:layout_width="48dp" android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_stop"
+            android:contentDescription="@string/read_stop" />
+    </LinearLayout>
 
     <!-- Wiedergabe -->
     <LinearLayout android:id="@+id/tr_player" android:layout_width="match_parent" android:layout_height="wrap_content"

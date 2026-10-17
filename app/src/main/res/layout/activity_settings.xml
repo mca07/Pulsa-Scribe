@@ -64,6 +64,14 @@
                         android:contentDescription="@string/start_summary" />
                 </LinearLayout>
                 <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_template" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/start_template" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/template_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
                 <LinearLayout android:id="@+id/row_sum_lang" style="@style/SettingsRow">
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                         <TextView style="@style/SettingsTitle" android:text="@string/set_sum_lang" />
@@ -79,6 +87,23 @@
                     </LinearLayout>
                     <Switch android:id="@+id/sw_keep" android:layout_width="wrap_content" android:layout_height="48dp"
                         android:contentDescription="@string/set_keep_audio" />
+                </LinearLayout>
+            </LinearLayout>
+            <TextView style="@style/SettingsHeader" android:text="@string/m_read" />
+            <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_rate" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/set_rate" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/rate_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_tts" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/set_tts" />
+                        <TextView style="@style/SettingsSub" android:text="@string/set_tts_sub" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
             <TextView style="@style/SettingsHeader" android:text="@string/set_sec_look" />

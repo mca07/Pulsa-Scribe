@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import de.mca.pulsascribe.core.Folders;
 import de.mca.pulsascribe.core.Text;
 import de.mca.pulsascribe.core.Transcript;
 
@@ -47,6 +48,11 @@ final class Store {
         return new File(dir(c), id + ".aac");
     }
 
+    static File imageFile(Context c, String id) {
+        if (!Text.isId(id)) throw new IllegalArgumentException("id");
+        return new File(dir(c), id + ".jpg");
+    }
+
     private static File jsonFile(Context c, String id) {
         if (!Text.isId(id)) throw new IllegalArgumentException("id");
         return new File(dir(c), id + ".json");
@@ -59,9 +65,22 @@ final class Store {
         return b.toString();
     }
 
+    private static Folders folders;
+
+    private static File foldersFile(Context c) {
+        return new File(c.getApplicationContext().getFilesDir(), "folders.json");
+    }
+
     private static synchronized void ensureLoaded(Context c) {
         if (loaded) return;
         loaded = true;
+        File ff = foldersFile(c);
+        folders = new Folders();
+        if (ff.isFile() && ff.length() < MAX_FILE) {
+            try {
+                folders = Folders.fromJson(new String(Files.readAllBytes(ff.toPath()), StandardCharsets.UTF_8));
+            } catch (IOException | RuntimeException ignored) { }
+        }
         File[] files = dir(c).listFiles();
         if (files == null) return;
         for (File f : files) {
@@ -73,6 +92,7 @@ final class Store {
                 Transcript t = Transcript.fromJson(new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
                 if (t == null || !id.equals(t.id)) continue;
                 if (t.audioReady && !audioFile(c, id).isFile()) t.audioReady = false;
+                if (!folders.exists(t.folder)) t.folder = Folders.ROOT; // Ordner gibt es nicht mehr
                 // Beim Start kann nichts mehr laufen: ein voriger Lauf wurde unterbrochen.
                 if (Transcript.RECORDING.equals(t.status)) {
                     // Aufnahme abgebrochen (App beendet): Bisheriger Ton bleibt nutzbar
@@ -142,6 +162,7 @@ final class Store {
         Transcript cur = get(c, t.id);
         if (cur == null) return false;
         t.title = cur.title;
+        t.folder = cur.folder; // darf während der Arbeit verschoben werden
         save(c, t);
         return true;
     }
@@ -160,7 +181,77 @@ final class Store {
         jsonFile(c, id).delete();
         //noinspection ResultOfMethodCallIgnored
         audioFile(c, id).delete();
+        //noinspection ResultOfMethodCallIgnored
+        imageFile(c, id).delete();
         changed();
+    }
+
+    // ------------------------------------------------------------------ Ordner
+
+    /** Kopie des Ordnerbaums (nur lesen). */
+    static synchronized Folders folders(Context c) {
+        ensureLoaded(c);
+        return folders.copy();
+    }
+
+    private static void writeFolders(Context c) throws IOException {
+        File f = foldersFile(c);
+        File tmp = new File(f.getPath() + ".tmp");
+        try (FileOutputStream os = new FileOutputStream(tmp)) {
+            os.write(folders.toJson().getBytes(StandardCharsets.UTF_8));
+            os.getFD().sync();
+        }
+        if (!tmp.renameTo(f)) {
+            //noinspection ResultOfMethodCallIgnored
+            tmp.delete();
+            throw new IOException("rename");
+        }
+    }
+
+    /** Änderung am Ordnerbaum: wird auf einer Kopie geprüft und nur bei Erfolg übernommen. */
+    interface FolderEdit {
+        int apply(Folders f);
+    }
+
+    static synchronized int editFolders(Context c, FolderEdit edit) {
+        ensureLoaded(c);
+        Folders work = folders.copy();
+        int r = edit.apply(work);
+        if (r != Folders.OK) return r;
+        folders = work;
+        try {
+            writeFolders(c);
+        } catch (IOException ignored) { }
+        changed();
+        return r;
+    }
+
+    /** Ordner löschen: Inhalt (Transkripte) wandert in den Elternordner. */
+    static synchronized void deleteFolder(Context c, String id) {
+        ensureLoaded(c);
+        Folders work = folders.copy();
+        String parent = work.delete(id);
+        if (parent == null) return;
+        folders = work;
+        try {
+            writeFolders(c);
+        } catch (IOException ignored) { }
+        for (Transcript t : new ArrayList<>(cache.values())) {
+            if (!id.equals(t.folder)) continue;
+            Transcript n = copy(t);
+            n.folder = parent;
+            cache.put(n.id, n);
+            try { write(c, n); } catch (IOException ignored) { }
+        }
+        changed();
+    }
+
+    static synchronized void moveTranscript(Context c, String id, String folder) {
+        Transcript t = get(c, id);
+        if (t == null) return;
+        Transcript n = copy(t);
+        n.folder = folders.clean(folder);
+        save(c, n);
     }
 
     static synchronized void deleteAudio(Context c, String id) {

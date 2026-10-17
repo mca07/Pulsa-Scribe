@@ -49,6 +49,32 @@ public final class SettingsActivity extends Activity {
                     d.dismiss();
                 }).setNegativeButton(R.string.cancel, null).show());
 
+        TextView tpl = findViewById(R.id.template_value);
+        tpl.setText(de.mca.pulsascribe.core.Templates.label(Settings.template(this)));
+        findViewById(R.id.row_template).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.start_template)
+                .setSingleChoiceItems(de.mca.pulsascribe.core.Templates.LABELS,
+                        de.mca.pulsascribe.core.Templates.index(Settings.template(this)), (d, w) -> {
+                    Settings.setTemplate(this, de.mca.pulsascribe.core.Templates.IDS[w]);
+                    tpl.setText(de.mca.pulsascribe.core.Templates.LABELS[w]);
+                    d.dismiss();
+                }).setNegativeButton(R.string.cancel, null).show());
+
+        TextView rate = findViewById(R.id.rate_value);
+        rate.setText(Settings.SPEECH_LABELS[rateIndex()]);
+        findViewById(R.id.row_rate).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.set_rate)
+                .setSingleChoiceItems(Settings.SPEECH_LABELS, rateIndex(), (d, w) -> {
+                    Settings.setSpeechRate(this, Settings.SPEECH_RATES[w]);
+                    rate.setText(Settings.SPEECH_LABELS[w]);
+                    d.dismiss();
+                }).setNegativeButton(R.string.cancel, null).show());
+        findViewById(R.id.row_tts).setOnClickListener(v -> {
+            try {
+                startActivity(new Intent("com.android.settings.TTS_SETTINGS"));
+            } catch (RuntimeException e) {
+                Toast.makeText(this, R.string.no_app, Toast.LENGTH_SHORT).show();
+            }
+        });
+
         bindSwitch(R.id.row_diarize, R.id.sw_diarize, Settings.diarize(this), on -> Settings.setDiarize(this, on));
         bindSwitch(R.id.row_clean, R.id.sw_clean, Settings.cleanFillers(this), on -> Settings.setCleanFillers(this, on));
         bindSwitch(R.id.row_summary, R.id.sw_summary, Settings.summarize(this), on -> Settings.setSummarize(this, on));
@@ -90,6 +116,12 @@ public final class SettingsActivity extends Activity {
             version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
         } catch (Exception ignored) { }
         ((TextView) findViewById(R.id.version_value)).setText(version);
+    }
+
+    private int rateIndex() {
+        float r = Settings.speechRate(this);
+        for (int i = 0; i < Settings.SPEECH_RATES.length; i++) if (Settings.SPEECH_RATES[i] == r) return i;
+        return 1;
     }
 
     private interface OnToggle {

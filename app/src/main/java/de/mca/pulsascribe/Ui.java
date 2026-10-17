@@ -114,6 +114,8 @@ final class Ui {
     /** "17.10.2026, 14:05 · 42 Min · 3 Sprecher" */
     static String meta(Context c, Transcript t) {
         StringBuilder b = new StringBuilder(date(t.createdMs));
+        if (Transcript.KIND_TEXT.equals(t.kind)) b.append(" · ").append(c.getString(R.string.kind_text));
+        else if (Transcript.KIND_IMAGE.equals(t.kind)) b.append(" · ").append(c.getString(R.string.kind_image));
         if (t.durationMs > 0) b.append(" · ").append(Times.duration(t.durationMs));
         int sp = t.speakers().size();
         if (sp > 0) b.append(" · ").append(c.getString(R.string.speakers_n, sp));
@@ -136,12 +138,16 @@ final class Ui {
             case Transcript.PREPARE:
                 return c.getString(R.string.st_prepare) + (live != null ? " · " + live[1] + " %" : " …");
             case Transcript.TRANSCRIBE: {
+                if (!t.isAudio()) return c.getString(R.string.st_ocr) + " …";
                 int n = t.chunks();
                 String s = n > 1 ? c.getString(R.string.st_transcribe_part, Math.min(t.chunksDone + 1, n), n)
                         : c.getString(R.string.st_transcribe);
                 return s + " …";
             }
-            case Transcript.SUMMARY: return c.getString(R.string.st_summary) + " …";
+            case Transcript.SUMMARY: {
+                int res = live != null && live[0] != 0 ? live[0] : R.string.st_summary;
+                return c.getString(res) + (live != null && live[1] >= 0 && res != R.string.st_summary ? " · " + live[1] + " %" : " …");
+            }
             case Transcript.CANCELED: return c.getString(R.string.st_canceled);
             case Transcript.ERROR: return t.error.isEmpty() ? c.getString(R.string.st_error) : t.error;
             default: return t.error.isEmpty() ? null : t.error;

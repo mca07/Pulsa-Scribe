@@ -9,4 +9,7 @@
     <color name="spk4">#1D63B8</color>
     <color name="spk5">#B0245A</color>
     <color name="spk6">#4D7C0F</color>
+    <color name="widget_bg">#0B7F73</color>
+    <color name="widget_btn">#14988A</color>
+    <color name="widget_text">#FFFFFF</color>
 </resources>

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -11,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.provider.CalendarContract;
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -26,6 +28,7 @@ import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupMenu;
@@ -42,17 +45,27 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
 import de.mca.pulsascribe.core.Export;
+import de.mca.pulsascribe.core.Languages;
+import de.mca.pulsascribe.core.Search;
+import de.mca.pulsascribe.core.Templates;
 import de.mca.pulsascribe.core.Text;
 import de.mca.pulsascribe.core.Times;
 import de.mca.pulsascribe.core.Transcript;
 
-/** Ein Transkript: lesen, anhören (Tippen springt zur Stelle), bearbeiten, zusammenfassen, exportieren. */
+/**
+ * Ein Transkript: lesen, anhören (Tippen springt zur Stelle), bearbeiten, zusammenfassen, Fragen stellen,
+ * übersetzen, vorlesen, exportieren, Aufgaben weitergeben.
+ */
 public final class TranscriptActivity extends Activity {
+    static final String EXTRA_READ_WHEN_DONE = "read_when_done";
+    static final String EXTRA_QUERY = "query";
     private static final int REQ_SAVE = 5;
+    private static final int TAB_TEXT = 0, TAB_SUMMARY = 1, TAB_ASK = 2;
 
     private String id;
     private Transcript t;
@@ -62,14 +75,18 @@ public final class TranscriptActivity extends Activity {
     private SegAdapter adapter;
     private ListView list;
     private ScrollView summaryScroll;
-    private LinearLayout summaryBox;
-    private TextView title, meta, note, tabText, tabSummary, time, searchCount;
+    private LinearLayout summaryBox, answersBox;
+    private View askBox, readBar;
+    private TextView title, meta, note, tabText, tabSummary, tabAsk, time, searchCount;
     private View retry, searchBar;
-    private EditText searchInput;
+    private EditText searchInput, askInput;
     private ImageButton play;
     private SeekBar seek;
-    private boolean showSummary;
+    private ImageView imageHeader;
+    private int tab = TAB_TEXT;
     private String query = "";
+    private String viewLang = null; // null = Original, sonst Sprachcode einer Übersetzung
+    private String wantLang = null; // nach fertiger Übersetzung automatisch anzeigen
 
     private MediaPlayer player;
     private boolean playerReady;
@@ -79,6 +96,8 @@ public final class TranscriptActivity extends Activity {
     private final Runnable tick = this::tick;
     private final Runnable onChange = this::reload;
     private String themeName;
+    private Reader reader;
+    private boolean readWhenDone;
 
     // Export, der auf die Speicherortwahl wartet
     private byte[] pendingExport;
@@ -101,15 +120,28 @@ public final class TranscriptActivity extends Activity {
         retry = findViewById(R.id.tr_retry);
         tabText = findViewById(R.id.tr_tab_text);
         tabSummary = findViewById(R.id.tr_tab_summary);
+        tabAsk = findViewById(R.id.tr_tab_ask);
         list = findViewById(R.id.tr_list);
         summaryScroll = findViewById(R.id.tr_summary_scroll);
         summaryBox = findViewById(R.id.tr_summary);
+        askBox = findViewById(R.id.tr_ask_box);
+        answersBox = findViewById(R.id.tr_answers);
+        askInput = findViewById(R.id.tr_ask_input);
+        readBar = findViewById(R.id.tr_read_bar);
         play = findViewById(R.id.tr_play);
         seek = findViewById(R.id.tr_seek);
         time = findViewById(R.id.tr_time);
         searchBar = findViewById(R.id.tr_search_bar);
         searchInput = findViewById(R.id.tr_search_input);
         searchCount = findViewById(R.id.tr_search_count);
+
+        imageHeader = new ImageView(this);
+        imageHeader.setAdjustViewBounds(true);
+        imageHeader.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        imageHeader.setPadding(Ui.dp(this, 10), Ui.dp(this, 4), Ui.dp(this, 10), Ui.dp(this, 8));
+        imageHeader.setMaxHeight(Ui.dp(this, 320));
+        imageHeader.setContentDescription(getString(R.string.kind_image));
+        list.addHeaderView(imageHeader, null, false);
 
         adapter = new SegAdapter();
         list.setAdapter(adapter);
@@ -123,6 +155,19 @@ public final class TranscriptActivity extends Activity {
             public void onScroll(AbsListView v, int first, int visible, int total) { }
         });
 
+        reader = new Reader(this, new Reader.Listener() {
+            @Override
+            public void onState(boolean speaking, int index) {
+                readBar.setVisibility(speaking ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void onError(int res) {
+                Toast.makeText(TranscriptActivity.this, res, Toast.LENGTH_LONG).show();
+            }
+        });
+        findViewById(R.id.tr_read_stop).setOnClickListener(v -> reader.stop());
+
         findViewById(R.id.tr_back).setOnClickListener(v -> finish());
         title.setOnClickListener(v -> MainActivity.rename(this, id));
         findViewById(R.id.tr_more).setOnClickListener(this::menu);
@@ -133,14 +178,17 @@ public final class TranscriptActivity extends Activity {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
             @Override public void afterTextChanged(Editable s) {
-                query = Text.line(s.toString(), 60).toLowerCase(Locale.GERMANY);
+                query = Search.normalize(s.toString());
                 filter();
             }
         });
-        tabText.setOnClickListener(v -> setTab(false));
-        tabSummary.setOnClickListener(v -> setTab(true));
+        tabText.setOnClickListener(v -> setTab(TAB_TEXT));
+        tabSummary.setOnClickListener(v -> setTab(TAB_SUMMARY));
+        tabAsk.setOnClickListener(v -> setTab(TAB_ASK));
+        findViewById(R.id.tr_ask_send).setOnClickListener(v -> sendQuestion());
         retry.setOnClickListener(v -> {
             if (t.isWorking()) TranscribeService.cancel(this, id);
+            else if (t.aggregate) TranscribeService.folder(this, id, t.folder, "");
             else TranscribeService.start(this, id, null);
         });
         play.setOnClickListener(v -> togglePlay());
@@ -160,9 +208,22 @@ public final class TranscriptActivity extends Activity {
             @Override public void onStartTrackingTouch(SeekBar s) { }
             @Override public void onStopTrackingTouch(SeekBar s) { }
         });
-        if (state != null) showSummary = state.getBoolean("summary", false);
+        Transcript first = Store.get(this, id);
+        int startTab = first.aggregate || (!first.isAudio() && first.summary != null) ? TAB_SUMMARY : TAB_TEXT;
+        if (state != null) {
+            startTab = state.getInt("tab", startTab);
+            viewLang = state.getString("lang");
+        } else {
+            readWhenDone = getIntent().getBooleanExtra(EXTRA_READ_WHEN_DONE, false);
+            if (!first.isAudio() && readWhenDone) startTab = TAB_SUMMARY;
+        }
         reload();
-        setTab(showSummary);
+        setTab(startTab);
+        String q = getIntent().getStringExtra(EXTRA_QUERY);
+        if (state == null && q != null && !q.isEmpty()) {
+            openSearch();
+            searchInput.setText(Text.line(q, 60));
+        }
     }
 
     @Override
@@ -192,46 +253,91 @@ public final class TranscriptActivity extends Activity {
             player.release();
             player = null;
         }
+        if (reader != null) reader.release();
         super.onDestroy();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
-        out.putBoolean("summary", showSummary);
+        out.putInt("tab", tab);
+        if (viewLang != null) out.putString("lang", viewLang);
     }
 
     // ------------------------------------------------------------------ Anzeige
+
+    private Transcript.Translation translation() {
+        return viewLang == null ? null : t.translations.get(viewLang);
+    }
+
+    private String segText(int index) {
+        Transcript.Translation tr = translation();
+        if (tr != null && index < tr.segments.size() && !tr.segments.get(index).isEmpty()) return tr.segments.get(index);
+        return t.segments.get(index).text;
+    }
+
+    private Transcript.Summary shownSummary() {
+        Transcript.Translation tr = translation();
+        return tr != null && tr.summary != null ? tr.summary : t.summary;
+    }
 
     private void reload() {
         Transcript cur = Store.get(this, id);
         if (cur == null) { finish(); return; }
         t = cur;
+        if (wantLang != null && t.translations.containsKey(wantLang)) { viewLang = wantLang; wantLang = null; }
+        if (wantLang != null && !t.isWorking()) wantLang = null; // Übersetzung fehlgeschlagen
+        if (viewLang != null && !t.translations.containsKey(viewLang)) viewLang = null;
         speakerOrder = t.speakers();
         title.setText(t.title);
-        meta.setText(Ui.meta(this, t));
+        StringBuilder m = new StringBuilder(Ui.meta(this, t));
+        String path = OptionsForm.folderLabel(this, Store.folders(this), t.folder);
+        if (!t.folder.isEmpty()) m.insert(0, path + " · ");
+        for (String tag : t.tags) m.append("  #").append(tag);
+        meta.setText(m);
         String status = Ui.status(this, t);
         if (status == null && t.incomplete) status = getString(R.string.st_incomplete);
+        if (status == null && viewLang != null) status = getString(R.string.translated_note, Languages.label(viewLang));
         note.setText(status == null ? "" : status);
         note.setVisibility(status == null ? View.GONE : View.VISIBLE);
         note.setTextColor(Design.color(this, Transcript.ERROR.equals(t.status) ? R.attr.pl_error : R.attr.pl_text));
         boolean failed = Transcript.ERROR.equals(t.status) || Transcript.CANCELED.equals(t.status);
-        retry.setVisibility(failed || t.isWorking() ? View.VISIBLE : View.GONE);
+        boolean canRetry = failed && (t.isAudio() || t.aggregate || Transcript.KIND_IMAGE.equals(t.kind) || !t.segments.isEmpty());
+        retry.setVisibility(canRetry || t.isWorking() ? View.VISIBLE : View.GONE);
         ((TextView) retry).setText(t.isWorking() ? R.string.cancel : R.string.retry);
-        boolean hasAudio = t.audioReady && Store.audioFile(this, id).isFile();
+        boolean hasAudio = t.isAudio() && t.audioReady && Store.audioFile(this, id).isFile();
         findViewById(R.id.tr_player).setVisibility(hasAudio && !Transcript.PREPARE.equals(t.status) ? View.VISIBLE : View.GONE);
         if (!hasAudio && player != null) {
             player.release();
             player = null;
             playerReady = false;
         }
+        tabText.setText(t.isAudio() ? R.string.tab_text : R.string.kind_text);
+        File img = Store.imageFile(this, id);
+        if (Transcript.KIND_IMAGE.equals(t.kind) && img.isFile()) {
+            if (imageHeader.getDrawable() == null) {
+                Bitmap b = ImagePrep.thumb(img, 1080);
+                if (b != null) imageHeader.setImageBitmap(b);
+            }
+            imageHeader.setVisibility(View.VISIBLE);
+        } else {
+            imageHeader.setVisibility(View.GONE);
+        }
         filter();
-        if (showSummary) buildSummary();
+        if (tab == TAB_SUMMARY) buildSummary();
+        if (tab == TAB_ASK) buildAnswers();
         if (!seekMaxSet && t.durationMs > 0) {
             seek.setMax((int) Math.min(Integer.MAX_VALUE, t.durationMs));
             seekMaxSet = true;
         }
         updateTime(player != null && playerReady ? player.getCurrentPosition() : 0);
+        if (readWhenDone && Transcript.DONE.equals(t.status)) {
+            readWhenDone = false;
+            if (t.summary != null) reader.speak(Export.speechSummary(t, t.summary), speechLang(true));
+            else if (!t.segments.isEmpty()) readText(0);
+        } else if (readWhenDone && Transcript.ERROR.equals(t.status)) {
+            readWhenDone = false;
+        }
     }
 
     private void filter() {
@@ -239,7 +345,7 @@ public final class TranscriptActivity extends Activity {
         int hits = 0;
         for (int i = 0; i < t.segments.size(); i++) {
             Transcript.Segment s = t.segments.get(i);
-            if (query.isEmpty() || s.text.toLowerCase(Locale.GERMANY).contains(query)
+            if (query.isEmpty() || segText(i).toLowerCase(Locale.GERMANY).contains(query)
                     || t.speakerName(s.speaker).toLowerCase(Locale.GERMANY).contains(query)) {
                 rows.add(i);
                 if (!query.isEmpty()) hits++;
@@ -249,65 +355,103 @@ public final class TranscriptActivity extends Activity {
         adapter.notifyDataSetChanged();
     }
 
-    private void setTab(boolean summary) {
-        showSummary = summary;
-        tabText.setSelected(!summary);
-        tabSummary.setSelected(summary);
-        tabText.setTextColor(Design.color(this, !summary ? R.attr.pl_on_accent : R.attr.pl_text));
-        tabSummary.setTextColor(Design.color(this, summary ? R.attr.pl_on_accent : R.attr.pl_text));
-        list.setVisibility(summary ? View.GONE : View.VISIBLE);
-        summaryScroll.setVisibility(summary ? View.VISIBLE : View.GONE);
-        if (summary) {
-            closeSearch();
-            buildSummary();
+    private void setTab(int which) {
+        tab = which;
+        TextView[] tabs = {tabText, tabSummary, tabAsk};
+        for (int i = 0; i < tabs.length; i++) {
+            tabs[i].setSelected(i == which);
+            tabs[i].setTextColor(Design.color(this, i == which ? R.attr.pl_on_accent : R.attr.pl_text));
         }
+        list.setVisibility(which == TAB_TEXT ? View.VISIBLE : View.GONE);
+        summaryScroll.setVisibility(which == TAB_SUMMARY ? View.VISIBLE : View.GONE);
+        askBox.setVisibility(which == TAB_ASK ? View.VISIBLE : View.GONE);
+        if (which != TAB_TEXT) closeSearch();
+        if (which == TAB_SUMMARY) buildSummary();
+        if (which == TAB_ASK) buildAnswers();
     }
+
+    // ------------------------------------------------------------------ Zusammenfassung
 
     private void buildSummary() {
         summaryBox.removeAllViews();
-        Transcript.Summary s = t.summary;
+        Transcript.Summary s = shownSummary();
         if (s == null || s.isEmpty()) {
             TextView none = Ui.body(this, getString(R.string.summary_none));
             none.setTextColor(Design.color(this, R.attr.pl_muted));
             none.setPadding(0, Ui.dp(this, 16), 0, Ui.dp(this, 10));
             summaryBox.addView(none);
             if (!t.isWorking() && !t.segments.isEmpty()) {
-                TextView b = new TextView(this);
-                b.setText(R.string.summary_create);
-                b.setTextSize(16);
-                b.setTextColor(Design.color(this, R.attr.pl_on_accent));
-                b.setBackgroundResource(R.drawable.btn_primary);
-                b.setGravity(Gravity.CENTER);
-                b.setMinHeight(Ui.dp(this, 48));
-                int p = Ui.dp(this, 18);
-                b.setPadding(p, 0, p, 0);
-                b.setClickable(true);
-                b.setFocusable(true);
-                b.setOnClickListener(v -> TranscribeService.summary(this, id));
-                summaryBox.addView(b, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                summaryBox.addView(primaryButton(R.string.summary_create, v -> TranscribeService.summary(this, id)),
+                        new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             }
             return;
         }
-        section(R.string.sum_overview);
+        String[] h = Templates.headings(t.template);
+        TextView tpl = Ui.body(this, Templates.label(t.template));
+        tpl.setTextSize(12);
+        tpl.setTextColor(Design.color(this, R.attr.pl_muted));
+        tpl.setPadding(0, Ui.dp(this, 8), 0, 0);
+        summaryBox.addView(tpl);
+        section(h[0]);
         if (!s.overview.isEmpty()) summaryBox.addView(Ui.body(this, s.overview));
-        bullets(R.string.sum_points, s.points);
+        bullets(h[1], s.points);
         if (!s.tasks.isEmpty()) {
-            List<String> l = new ArrayList<>();
-            for (Transcript.Task k : s.tasks) l.add(k.who.isEmpty() ? k.what : k.what + " — " + k.who);
-            bullets(R.string.sum_tasks, l);
+            section(h[2]);
+            for (Transcript.Task k : s.tasks) {
+                TextView v = Ui.body(this, "☐  " + (k.who.isEmpty() ? k.what : k.what + " — " + k.who));
+                v.setTextSize(15);
+                v.setBackgroundResource(R.drawable.crumb_bg);
+                v.setClickable(true);
+                v.setFocusable(true);
+                v.setOnClickListener(x -> taskMenu(x, k));
+                summaryBox.addView(v);
+            }
+            TextView all = new TextView(this);
+            all.setText(R.string.tasks_mail_all);
+            all.setTextColor(Design.color(this, R.attr.pl_accent));
+            all.setTextSize(14);
+            all.setMinHeight(Ui.dp(this, 44));
+            all.setGravity(Gravity.CENTER_VERTICAL);
+            all.setOnClickListener(x -> mailTasks(s.tasks));
+            summaryBox.addView(all);
         }
-        bullets(R.string.sum_decisions, s.decisions);
-        bullets(R.string.sum_questions, s.questions);
+        bullets(h[3], s.decisions);
+        bullets(h[4], s.questions);
         TextView hint = Ui.body(this, getString(R.string.sum_hint));
         hint.setTextSize(12);
         hint.setTextColor(Design.color(this, R.attr.pl_muted));
-        hint.setPadding(0, Ui.dp(this, 18), 0, 0);
+        hint.setPadding(0, Ui.dp(this, 18), 0, Ui.dp(this, 6));
         summaryBox.addView(hint);
+        summaryBox.addView(secondaryButton(R.string.read_summary, v -> reader.speak(Export.speechSummary(t, s), speechLang(true))),
+                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     }
 
-    private void section(int res) {
+    private TextView primaryButton(int res, View.OnClickListener l) {
+        TextView b = new TextView(this);
+        b.setText(res);
+        b.setTextSize(16);
+        b.setTextColor(Design.color(this, R.attr.pl_on_accent));
+        b.setBackgroundResource(R.drawable.btn_primary);
+        b.setGravity(Gravity.CENTER);
+        b.setMinHeight(Ui.dp(this, 48));
+        int p = Ui.dp(this, 18);
+        b.setPadding(p, 0, p, 0);
+        b.setClickable(true);
+        b.setFocusable(true);
+        b.setOnClickListener(l);
+        return b;
+    }
+
+    private TextView secondaryButton(int res, View.OnClickListener l) {
+        TextView b = primaryButton(res, l);
+        b.setTextColor(Design.color(this, R.attr.pl_accent));
+        b.setBackgroundResource(R.drawable.btn_secondary);
+        return b;
+    }
+
+    private void section(String text) {
         TextView h = new TextView(this);
-        h.setText(res);
+        h.setText(text);
         h.setTextSize(13);
         h.setAllCaps(true);
         h.setLetterSpacing(0.06f);
@@ -318,9 +462,9 @@ public final class TranscriptActivity extends Activity {
         summaryBox.addView(h);
     }
 
-    private void bullets(int res, List<String> items) {
+    private void bullets(String heading, List<String> items) {
         if (items.isEmpty()) return;
-        section(res);
+        section(heading);
         for (String i : items) {
             TextView v = Ui.body(this, "•  " + i);
             v.setTextSize(15);
@@ -328,10 +472,146 @@ public final class TranscriptActivity extends Activity {
         }
     }
 
+    private void taskMenu(View anchor, Transcript.Task k) {
+        PopupMenu m = new PopupMenu(this, anchor);
+        m.getMenu().add(0, 1, 0, R.string.m_task_calendar);
+        m.getMenu().add(0, 2, 0, R.string.m_task_mail);
+        m.setOnMenuItemClickListener(mi -> {
+            if (mi.getItemId() == 1) addToCalendar(k);
+            else mailTasks(java.util.Collections.singletonList(k));
+            return true;
+        });
+        m.show();
+    }
+
+    /** Kalender-App mit vorausgefülltem Termin öffnen (keine Kalender-Berechtigung nötig). */
+    private void addToCalendar(Transcript.Task k) {
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.DAY_OF_YEAR, 1);
+        c.set(Calendar.HOUR_OF_DAY, 9);
+        c.set(Calendar.MINUTE, 0);
+        Intent i = new Intent(Intent.ACTION_INSERT).setData(CalendarContract.Events.CONTENT_URI)
+                .putExtra(CalendarContract.Events.TITLE, Text.line(k.what, 200))
+                .putExtra(CalendarContract.Events.DESCRIPTION, (k.who.isEmpty() ? "" : k.who + "\n") + t.title)
+                .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, c.getTimeInMillis())
+                .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, c.getTimeInMillis() + 30 * 60_000L);
+        launch(i);
+    }
+
+    private void mailTasks(List<Transcript.Task> tasks) {
+        StringBuilder b = new StringBuilder();
+        for (Transcript.Task k : tasks) b.append("• ").append(k.what).append(k.who.isEmpty() ? "" : " (" + k.who + ")").append('\n');
+        b.append('\n').append(t.title).append(", ").append(Ui.date(t.createdMs));
+        Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+                .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.tasks_mail_subject, t.title))
+                .putExtra(Intent.EXTRA_TEXT, b.toString());
+        launch(i);
+    }
+
+    private void launch(Intent i) {
+        try {
+            startActivity(i);
+        } catch (RuntimeException e) {
+            Toast.makeText(this, R.string.no_app, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // ------------------------------------------------------------------ Fragen
+
+    private void buildAnswers() {
+        answersBox.removeAllViews();
+        if (t.answers.isEmpty()) {
+            TextView none = Ui.body(this, getString(R.string.ask_empty));
+            none.setTextColor(Design.color(this, R.attr.pl_muted));
+            none.setPadding(0, Ui.dp(this, 16), 0, 0);
+            answersBox.addView(none);
+            return;
+        }
+        for (Transcript.Answer a : t.answers) {
+            TextView q = new TextView(this);
+            q.setText(a.question);
+            q.setTextSize(15);
+            q.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            q.setTextColor(Design.color(this, R.attr.pl_text));
+            q.setPadding(0, Ui.dp(this, 16), 0, Ui.dp(this, 2));
+            answersBox.addView(q);
+            TextView ans = Ui.body(this, a.answer);
+            ans.setTextSize(15);
+            ans.setOnLongClickListener(v -> { answerMenu(v, a); return true; });
+            answersBox.addView(ans);
+            if (!a.refs.isEmpty() && t.isAudio()) {
+                LinearLayout chips = new LinearLayout(this);
+                chips.setOrientation(LinearLayout.HORIZONTAL);
+                for (long ms : a.refs) {
+                    TextView c = new TextView(this);
+                    c.setText("▶ " + Times.clock(ms));
+                    c.setTextSize(13);
+                    c.setTextColor(Design.color(this, R.attr.pl_accent));
+                    c.setBackgroundResource(R.drawable.tag_bg);
+                    c.setGravity(Gravity.CENTER);
+                    c.setMinHeight(Ui.dp(this, 36));
+                    int p = Ui.dp(this, 10);
+                    c.setPadding(p, 0, p, 0);
+                    c.setContentDescription(getString(R.string.ask_jump, Times.clock(ms)));
+                    c.setOnClickListener(v -> jumpTo(ms));
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    lp.setMarginEnd(Ui.dp(this, 8));
+                    chips.addView(c, lp);
+                }
+                answersBox.addView(chips);
+            }
+        }
+    }
+
+    private void answerMenu(View anchor, Transcript.Answer a) {
+        PopupMenu m = new PopupMenu(this, anchor);
+        m.getMenu().add(0, 1, 0, R.string.read_answer);
+        m.getMenu().add(0, 2, 0, R.string.ask_delete);
+        m.setOnMenuItemClickListener(mi -> {
+            if (mi.getItemId() == 1) {
+                reader.speak(Reader.of(a.question, a.answer), speechLang(true));
+            } else if (!t.isWorking()) {
+                Transcript n = Store.copy(t);
+                for (int i = 0; i < n.answers.size(); i++) {
+                    Transcript.Answer x = n.answers.get(i);
+                    if (x.askedMs == a.askedMs && x.question.equals(a.question)) { n.answers.remove(i); break; }
+                }
+                Store.save(this, n);
+            }
+            return true;
+        });
+        m.show();
+    }
+
+    private void sendQuestion() {
+        String q = Text.line(askInput.getText().toString(), 300);
+        if (q.isEmpty()) return;
+        if (t.isWorking()) {
+            Toast.makeText(this, R.string.ask_busy, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!GeminiKey.has(this)) {
+            KeyDialog.show(this, null);
+            return;
+        }
+        askInput.setText("");
+        InputMethodManager im = getSystemService(InputMethodManager.class);
+        if (im != null) im.hideSoftInputFromWindow(askInput.getWindowToken(), 0);
+        TranscribeService.ask(this, id, q);
+    }
+
+    private void jumpTo(long ms) {
+        setTab(TAB_TEXT);
+        int seg = segmentAt(ms);
+        int row = rows.indexOf(seg);
+        if (row >= 0) list.setSelectionFromTop(row + list.getHeaderViewsCount(), Ui.dp(this, 40));
+        if (t.audioReady) playFrom(ms);
+    }
+
     // ------------------------------------------------------------------ Suche
 
     private void openSearch() {
-        if (showSummary) setTab(false);
+        if (tab != TAB_TEXT) setTab(TAB_TEXT);
         searchBar.setVisibility(View.VISIBLE);
         searchInput.requestFocus();
         InputMethodManager im = getSystemService(InputMethodManager.class);
@@ -350,7 +630,46 @@ public final class TranscriptActivity extends Activity {
     @SuppressWarnings("deprecation")
     public void onBackPressed() {
         if (searchBar.getVisibility() == View.VISIBLE) closeSearch();
+        else if (reader != null && reader.isSpeaking()) reader.stop();
         else super.onBackPressed();
+    }
+
+    // ------------------------------------------------------------------ Vorlesen
+
+    /** Sprache für die Sprachausgabe: Zusammenfassung ggf. in ihrer eingestellten Sprache. */
+    private String speechLang(boolean summary) {
+        if (viewLang != null) return viewLang;
+        if (summary) {
+            String sl = Settings.summaryLanguage(this);
+            if (!Languages.SUM_SAME.equals(sl)) return sl;
+        }
+        return t.language;
+    }
+
+    private void readText(int fromSegment) {
+        List<String> items = new ArrayList<>();
+        String last = null;
+        for (int i = Math.max(0, fromSegment); i < t.segments.size(); i++) {
+            String name = t.speakerName(t.segments.get(i).speaker);
+            String text = segText(i);
+            items.add(!name.isEmpty() && !name.equals(last) ? name + ": " + text : text);
+            last = name;
+        }
+        reader.speak(items, speechLang(false));
+    }
+
+    private void readMenu() {
+        String[] opts = {getString(R.string.read_summary), getString(R.string.read_text)};
+        Ui.dialog(this).setTitle(R.string.m_read).setItems(opts, (d, w) -> {
+            if (w == 0) {
+                Transcript.Summary s = shownSummary();
+                if (s == null) Toast.makeText(this, R.string.summary_none, Toast.LENGTH_SHORT).show();
+                else reader.speak(Export.speechSummary(t, s), speechLang(true));
+            } else {
+                int from = currentRow >= 0 && currentRow < rows.size() ? rows.get(currentRow) : 0;
+                readText(from);
+            }
+        }).show();
     }
 
     // ------------------------------------------------------------------ Wiedergabe
@@ -392,6 +711,7 @@ public final class TranscriptActivity extends Activity {
             play.setContentDescription(getString(R.string.play));
             handler.removeCallbacks(tick);
         } else {
+            if (reader.isSpeaking()) reader.stop();
             player.start();
             play.setImageResource(R.drawable.ic_pause);
             play.setContentDescription(getString(R.string.pause));
@@ -402,6 +722,7 @@ public final class TranscriptActivity extends Activity {
 
     private void playFrom(long ms) {
         if (!ensurePlayer()) return;
+        if (reader.isSpeaking()) reader.stop();
         player.seekTo(ms, MediaPlayer.SEEK_CLOSEST);
         if (!player.isPlaying()) {
             player.start();
@@ -425,9 +746,10 @@ public final class TranscriptActivity extends Activity {
             currentRow = row;
             adapter.notifyDataSetChanged();
             boolean follow = SystemClock.elapsedRealtime() - lastUserScroll > 4000;
+            int lp = row + list.getHeaderViewsCount();
             if (follow && row >= 0 && player.isPlaying()
-                    && (row < list.getFirstVisiblePosition() || row > list.getLastVisiblePosition() - 1)) {
-                list.smoothScrollToPositionFromTop(row, Ui.dp(this, 40), 250);
+                    && (lp < list.getFirstVisiblePosition() || lp > list.getLastVisiblePosition() - 1)) {
+                list.smoothScrollToPositionFromTop(lp, Ui.dp(this, 40), 250);
             }
         }
         if (player.isPlaying()) handler.postDelayed(tick, 250);
@@ -464,11 +786,9 @@ public final class TranscriptActivity extends Activity {
         LinearLayout col = Ui.column(this);
         List<String> labels = t.speakers();
         final String[] speaker = {s.speaker};
-        TextView sp = null;
         if (!labels.isEmpty()) {
             Ui.add(col, Ui.label(this, R.string.edit_speaker));
-            sp = Ui.choiceRow(this, t.speakerName(s.speaker));
-            final TextView spRow = sp;
+            TextView spRow = Ui.choiceRow(this, t.speakerName(s.speaker));
             spRow.setOnClickListener(v -> {
                 String[] names = new String[labels.size()];
                 for (int i = 0; i < names.length; i++) names[i] = t.speakerName(labels.get(i));
@@ -479,7 +799,7 @@ public final class TranscriptActivity extends Activity {
                             d.dismiss();
                         }).show();
             });
-            Ui.add(col, sp);
+            Ui.add(col, spRow);
         }
         Ui.add(col, Ui.label(this, R.string.edit_text));
         EditText e = Ui.input(this, s.text, Transcript.MAX_TEXT, true);
@@ -488,12 +808,13 @@ public final class TranscriptActivity extends Activity {
         Ui.add(col, e);
         ScrollView sc = new ScrollView(this);
         sc.addView(col);
-        Ui.dialog(this).setTitle(getString(R.string.edit_segment) + " · " + Times.clock(s.startMs)).setView(sc)
+        String head = getString(R.string.edit_segment) + (t.isAudio() ? " · " + Times.clock(s.startMs) : "");
+        Ui.dialog(this).setTitle(head).setView(sc)
                 .setPositiveButton(R.string.save, (d, w) -> {
                     String txt = Text.block(e.getText().toString(), Transcript.MAX_TEXT);
                     Transcript n = Store.copy(t);
                     if (index >= n.segments.size()) return;
-                    if (txt.isEmpty()) n.segments.remove(index);
+                    if (txt.isEmpty()) removeSegment(n, index);
                     else {
                         n.segments.get(index).text = txt;
                         n.segments.get(index).speaker = speaker[0];
@@ -502,10 +823,18 @@ public final class TranscriptActivity extends Activity {
                 })
                 .setNeutralButton(R.string.edit_delete_segment, (d, w) -> {
                     Transcript n = Store.copy(t);
-                    if (index < n.segments.size()) n.segments.remove(index);
+                    if (index < n.segments.size()) removeSegment(n, index);
                     Store.save(this, n);
                 })
                 .setNegativeButton(R.string.cancel, null).show();
+    }
+
+    /** Abschnitt löschen; Übersetzungen behalten die gleiche Reihenfolge. */
+    private static void removeSegment(Transcript n, int index) {
+        n.segments.remove(index);
+        for (Transcript.Translation tr : n.translations.values()) {
+            if (index < tr.segments.size()) tr.segments.remove(index);
+        }
     }
 
     private void renameSpeakers() {
@@ -547,12 +876,69 @@ public final class TranscriptActivity extends Activity {
                 .setNegativeButton(R.string.cancel, null).show();
     }
 
+    private void chooseTemplate() {
+        if (!editable()) return;
+        Ui.dialog(this).setTitle(R.string.template_title)
+                .setSingleChoiceItems(Templates.LABELS, Templates.index(t.template), (d, w) -> {
+                    d.dismiss();
+                    String tpl = Templates.IDS[w];
+                    if (tpl.equals(t.template)) return;
+                    Transcript n = Store.copy(t);
+                    n.template = tpl;
+                    Store.save(this, n);
+                    if (!n.segments.isEmpty()) {
+                        Ui.dialog(this).setMessage(R.string.template_resummary)
+                                .setPositiveButton(R.string.summary_create, (d2, w2) -> {
+                                    TranscribeService.summary(this, id);
+                                    setTab(TAB_SUMMARY);
+                                })
+                                .setNegativeButton(R.string.cancel, null).show();
+                    }
+                }).show();
+    }
+
+    private void chooseTranslation() {
+        if (!editable() || t.segments.isEmpty()) return;
+        // Ohne "Automatisch"
+        String[] labels = new String[Languages.CODES.length - 1];
+        System.arraycopy(Languages.LABELS, 1, labels, 0, labels.length);
+        Ui.dialog(this).setTitle(R.string.translate_title)
+                .setItems(labels, (d, w) -> {
+                    if (!GeminiKey.has(this)) { KeyDialog.show(this, null); return; }
+                    String code = Languages.CODES[w + 1];
+                    wantLang = code;
+                    TranscribeService.translate(this, id, code);
+                }).show();
+    }
+
+    private void chooseView() {
+        List<String> codes = new ArrayList<>(t.translations.keySet());
+        String[] labels = new String[codes.size() + 1];
+        labels[0] = getString(R.string.show_original);
+        for (int i = 0; i < codes.size(); i++) labels[i + 1] = Languages.label(codes.get(i));
+        int sel = viewLang == null ? 0 : codes.indexOf(viewLang) + 1;
+        Ui.dialog(this).setTitle(R.string.m_show_lang)
+                .setSingleChoiceItems(labels, sel, (d, w) -> {
+                    d.dismiss();
+                    viewLang = w == 0 ? null : codes.get(w - 1);
+                    reload();
+                }).show();
+    }
+
     private void menu(View anchor) {
         PopupMenu m = new PopupMenu(this, anchor);
         m.getMenu().add(0, 1, 0, R.string.m_export);
+        m.getMenu().add(0, 8, 0, R.string.m_read);
         m.getMenu().add(0, 2, 0, R.string.m_copy);
-        m.getMenu().add(0, 3, 0, R.string.m_speakers);
-        if (!t.isWorking() && !t.segments.isEmpty()) m.getMenu().add(0, 4, 0, R.string.m_resummary);
+        if (t.isAudio()) m.getMenu().add(0, 3, 0, R.string.m_speakers);
+        if (!t.isWorking() && !t.segments.isEmpty()) {
+            m.getMenu().add(0, 9, 0, R.string.m_template);
+            m.getMenu().add(0, 4, 0, R.string.m_resummary);
+            m.getMenu().add(0, 10, 0, R.string.m_translate);
+        }
+        if (!t.translations.isEmpty()) m.getMenu().add(0, 11, 0, R.string.m_show_lang);
+        m.getMenu().add(0, 12, 0, R.string.folder_move);
+        m.getMenu().add(0, 13, 0, R.string.m_tags);
         m.getMenu().add(0, 5, 0, R.string.m_rename);
         if (t.audioReady && !t.isWorking()) m.getMenu().add(0, 6, 0, R.string.m_delete_audio);
         m.getMenu().add(0, 7, 0, R.string.m_delete);
@@ -561,7 +947,7 @@ public final class TranscriptActivity extends Activity {
                 case 1: exportDialog(); return true;
                 case 2: copyText(); return true;
                 case 3: renameSpeakers(); return true;
-                case 4: TranscribeService.summary(this, id); setTab(true); return true;
+                case 4: TranscribeService.summary(this, id); setTab(TAB_SUMMARY); return true;
                 case 5: MainActivity.rename(this, id); return true;
                 case 6:
                     Ui.dialog(this).setTitle(R.string.delete_audio_title).setMessage(R.string.delete_audio_text)
@@ -572,6 +958,12 @@ public final class TranscriptActivity extends Activity {
                             .setNegativeButton(R.string.cancel, null).show();
                     return true;
                 case 7: MainActivity.confirmDelete(this, id, this::finish); return true;
+                case 8: readMenu(); return true;
+                case 9: chooseTemplate(); return true;
+                case 10: chooseTranslation(); return true;
+                case 11: chooseView(); return true;
+                case 12: MainActivity.moveTranscript(this, id); return true;
+                case 13: MainActivity.editTags(this, id); return true;
                 default: return false;
             }
         });
@@ -583,9 +975,21 @@ public final class TranscriptActivity extends Activity {
         o.summary = false;
         ClipboardManager cm = getSystemService(ClipboardManager.class);
         if (cm != null) {
-            cm.setPrimaryClip(ClipData.newPlainText(t.title, Export.txt(t, o)));
+            cm.setPrimaryClip(ClipData.newPlainText(t.title, Export.txt(shownCopy(), o)));
             Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    /** Für Kopieren/Export: Transkript in der gerade angezeigten Sprache. */
+    private Transcript shownCopy() {
+        Transcript.Translation tr = translation();
+        if (tr == null) return t;
+        Transcript c = Store.copy(t);
+        for (int i = 0; i < c.segments.size() && i < tr.segments.size(); i++) {
+            if (!tr.segments.get(i).isEmpty()) c.segments.get(i).text = tr.segments.get(i);
+        }
+        if (tr.summary != null) c.summary = tr.summary;
+        return c;
     }
 
     // ------------------------------------------------------------------ Export
@@ -596,6 +1000,7 @@ public final class TranscriptActivity extends Activity {
         RadioGroup g = new RadioGroup(this);
         int[] labels = {R.string.exp_pdf, R.string.exp_docx, R.string.exp_txt, R.string.exp_srt};
         for (int i = 0; i < labels.length; i++) {
+            if (i == 3 && !t.isAudio()) continue;
             RadioButton rb = new RadioButton(this);
             rb.setId(100 + i);
             rb.setText(labels[i]);
@@ -606,16 +1011,17 @@ public final class TranscriptActivity extends Activity {
         }
         g.check(100);
         Ui.add(col, g);
-        CheckBox times = check(R.string.exp_times, true);
+        CheckBox times = check(R.string.exp_times, t.isAudio());
+        times.setEnabled(t.isAudio());
         CheckBox speakers = check(R.string.exp_speakers, true);
         CheckBox summary = check(R.string.exp_summary, t.summary != null);
         summary.setEnabled(t.summary != null);
-        Ui.add(col, times);
-        Ui.add(col, speakers);
+        if (t.isAudio()) Ui.add(col, times);
+        if (!t.speakers().isEmpty()) Ui.add(col, speakers);
         Ui.add(col, summary);
         g.setOnCheckedChangeListener((gr, cid) -> {
             boolean srt = cid == 103;
-            times.setEnabled(!srt);
+            times.setEnabled(!srt && t.isAudio());
             summary.setEnabled(!srt && t.summary != null);
         });
         ScrollView sc = new ScrollView(this);
@@ -644,22 +1050,23 @@ public final class TranscriptActivity extends Activity {
 
     private void doExport(int format, boolean times, boolean speakers, boolean summary, boolean share) {
         if (format < 0 || format >= EXT.length) return;
+        Transcript src = shownCopy();
         Export.Options o = new Export.Options();
-        o.times = times;
+        o.times = times && t.isAudio();
         o.speakers = speakers;
-        o.summary = summary && t.summary != null;
+        o.summary = summary && src.summary != null;
         byte[] data;
         try {
             switch (format) {
                 case 0: {
                     java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
-                    PdfExport.write(t, o, bos);
+                    PdfExport.write(src, o, bos);
                     data = bos.toByteArray();
                     break;
                 }
-                case 1: data = Export.docx(t, o); break;
-                case 2: data = Export.txt(t, o).getBytes(StandardCharsets.UTF_8); break;
-                default: data = Export.srt(t, speakers).getBytes(StandardCharsets.UTF_8);
+                case 1: data = Export.docx(src, o); break;
+                case 2: data = Export.txt(src, o).getBytes(StandardCharsets.UTF_8); break;
+                default: data = Export.srt(src, speakers).getBytes(StandardCharsets.UTF_8);
             }
         } catch (IOException | RuntimeException e) {
             Toast.makeText(this, R.string.exp_failed, Toast.LENGTH_SHORT).show();
@@ -700,7 +1107,7 @@ public final class TranscriptActivity extends Activity {
     }
 
     /** Alte Exporte (älter als 1 Stunde) aus dem Cache entfernen. */
-    private static void deleteOld(File root) {
+    static void deleteOld(File root) {
         File[] dirs = root.listFiles();
         if (dirs == null) return;
         long limit = System.currentTimeMillis() - 3_600_000L;
@@ -751,29 +1158,31 @@ public final class TranscriptActivity extends Activity {
             sp.setText(name);
             sp.setTextColor(Ui.speakerColor(TranscriptActivity.this, speakerOrder.indexOf(s.speaker)));
             tm.setText(Times.clock(s.startMs));
+            tm.setVisibility(t.isAudio() ? View.VISIBLE : View.GONE);
+            String text = segText(index);
             if (!query.isEmpty()) {
-                SpannableString span = new SpannableString(s.text);
-                String low = s.text.toLowerCase(Locale.GERMANY);
+                SpannableString span = new SpannableString(text);
+                String low = text.toLowerCase(Locale.GERMANY);
                 int from = 0, at;
                 int col = Design.color(TranscriptActivity.this, R.attr.pl_accent_soft);
-                while ((at = low.indexOf(query, from)) >= 0 && from < low.length()) {
+                while (from < low.length() && (at = low.indexOf(query, from)) >= 0) {
                     span.setSpan(new BackgroundColorSpan(col), at, at + query.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     from = at + Math.max(1, query.length());
                 }
                 tx.setText(span);
             } else {
-                tx.setText(s.text);
+                tx.setText(text);
             }
             View root = v.findViewById(R.id.sg_root);
             root.setBackgroundResource(pos == currentRow ? R.drawable.seg_now : 0);
             root.setOnClickListener(x -> {
-                if (t.audioReady) playFrom(s.startMs);
+                if (t.isAudio() && t.audioReady) playFrom(s.startMs);
             });
             root.setOnLongClickListener(x -> {
                 editSegment(index);
                 return true;
             });
-            root.setContentDescription(Times.clock(s.startMs) + (name.isEmpty() ? "" : ", " + name) + ": " + s.text);
+            root.setContentDescription((t.isAudio() ? Times.clock(s.startMs) + ", " : "") + (name.isEmpty() ? "" : name + ": ") + text);
             return v;
         }
     }

@@ -37,6 +37,13 @@
                 <data android:mimeType="audio/*" />
                 <data android:mimeType="video/*" />
             </intent-filter>
+            <!-- Text oder Screenshot teilen: wird zusammengefasst und auf Wunsch vorgelesen -->
+            <intent-filter android:label="@string/share_title">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
         </activity>
 
         <activity
@@ -63,6 +70,29 @@
             android:name=".RecordService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
+
+        <!-- Schnelleinstellungs-Kachel „Aufnehmen“: öffnet nur die Aufnahme-Ansicht -->
+        <service
+            android:name=".RecordTile"
+            android:exported="true"
+            android:icon="@drawable/ic_mic"
+            android:label="@string/tile_record"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- Startbildschirm-Widget: zwei Knöpfe, öffnen nur App-Ansichten -->
+        <receiver
+            android:name=".QuickWidget"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/quick_widget" />
+        </receiver>
 
         <provider
             android:name=".ExportProvider"

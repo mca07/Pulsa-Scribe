@@ -40,6 +40,27 @@ final class Settings {
     static boolean askedNotifications(Context c) { return p(c).getBoolean("asked_notif", false); }
     static void setAskedNotifications(Context c) { p(c).edit().putBoolean("asked_notif", true).apply(); }
 
+    /** Standardtitel geteilter Bilder ("Geteiltes Bild …"): wird durch den erkannten Titel ersetzt. */
+    static boolean isDefaultImageTitle(Context c, String title) {
+        return title != null && title.startsWith(c.getString(R.string.share_image_prefix));
+    }
+
+    static float speechRate(Context c) {
+        float r = p(c).getFloat("tts_rate", 1.0f);
+        for (float x : SPEECH_RATES) if (x == r) return r;
+        return 1.0f;
+    }
+
+    static void setSpeechRate(Context c, float r) {
+        for (float x : SPEECH_RATES) if (x == r) { p(c).edit().putFloat("tts_rate", r).apply(); return; }
+    }
+
+    static final float[] SPEECH_RATES = {0.8f, 1.0f, 1.2f, 1.5f, 1.8f};
+    static final String[] SPEECH_LABELS = {"Langsam (0,8×)", "Normal", "Etwas schneller (1,2×)", "Schnell (1,5×)", "Sehr schnell (1,8×)"};
+
+    static String template(Context c) { return de.mca.pulsascribe.core.Templates.clean(p(c).getString("template", "standard")); }
+    static void setTemplate(Context c, String v) { p(c).edit().putString("template", de.mca.pulsascribe.core.Templates.clean(v)).apply(); }
+
     /** Zuletzt erfolgreiches Modell (Index in der festen Liste), damit nicht jedes Mal von vorn probiert wird. */
     static int modelIndex(Context c) {
         int i = p(c).getInt("model_idx", 0);

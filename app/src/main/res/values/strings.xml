@@ -200,4 +200,105 @@
     <string name="err_rec_interrupted">Die Aufnahme wurde unterbrochen. Der bisherige Ton ist gesichert – „Erneut versuchen“ transkribiert ihn.</string>
     <string name="err_rec_lost">Die Aufnahme wurde unterbrochen, bevor Ton gespeichert war.</string>
     <string name="rec_busy">Es läuft bereits eine Aufnahme.</string>
+    <!-- 1.2/1.3: Ordner, Teilen, Vorlesen, Fragen, Übersetzen -->
+    <string name="st_ask">Frage wird beantwortet</string>
+    <string name="st_translate">Wird übersetzt</string>
+    <string name="st_ocr">Text wird gelesen</string>
+    <string name="st_folder">Ordner wird ausgewertet</string>
+    <string name="err_no_text">Es wurde kein lesbarer Text gefunden.</string>
+    <string name="err_image_missing">Das Bild ist nicht mehr vorhanden. Bitte erneut teilen.</string>
+    <string name="err_ask_failed">Die Frage konnte nicht beantwortet werden.</string>
+    <string name="err_translate_failed">Die Übersetzung ist fehlgeschlagen.</string>
+    <string name="err_translate_changed">Das Transkript wurde während der Übersetzung geändert. Bitte erneut übersetzen.</string>
+    <string name="err_folder_empty">In diesem Ordner gibt es noch nichts zum Auswerten.</string>
+    <string name="kind_text">Text</string>
+    <string name="kind_image">Bild</string>
+    <string name="share_image_prefix">Geteiltes Bild</string>
+    <string name="share_image_title">Geteiltes Bild %1$s</string>
+    <string name="share_text_title">Geteilter Text %1$s</string>
+
+    <string name="folder_all">Alle</string>
+    <string name="folder_new">Neuer Ordner</string>
+    <string name="folder_name">Name</string>
+    <string name="folder_rename">Ordner umbenennen</string>
+    <string name="folder_move">Verschieben …</string>
+    <string name="folder_move_to">Verschieben nach</string>
+    <string name="folder_top">Oberste Ebene</string>
+    <string name="folder_delete">Ordner löschen</string>
+    <string name="folder_delete_title">Ordner „%1$s“ löschen?</string>
+    <string name="folder_delete_text">Der Ordner wird entfernt. Transkripte und Unterordner darin bleiben erhalten und wandern eine Ebene nach oben.</string>
+    <string name="folder_summary">Ordner auswerten …</string>
+    <string name="folder_summary_title">Ordner auswerten</string>
+    <string name="folder_summary_text">Gemini fasst alle Transkripte in „%1$s“ (mit Unterordnern) gemeinsam zusammen. Das Ergebnis erscheint als neuer Eintrag im Ordner.</string>
+    <string name="folder_summary_focus">Worauf achten? (optional)</string>
+    <string name="folder_summary_focus_hint">z. B. Prüfungsrelevantes, offene Kundenwünsche</string>
+    <string name="folder_summary_go">Auswerten</string>
+    <string name="folder_summary_item">Auswertung: %1$s</string>
+    <string name="folder_count">%1$d Einträge</string>
+    <string name="folder_count_sub">%1$d Einträge · %2$d Ordner</string>
+    <string name="folder_err_name">Bitte einen Namen eingeben.</string>
+    <string name="folder_err_dup">Diesen Namen gibt es hier schon.</string>
+    <string name="folder_err_depth">Höchstens 4 Ebenen sind möglich.</string>
+    <string name="folder_err_limit">Es sind höchstens 300 Ordner möglich.</string>
+    <string name="folder_err_cycle">Ein Ordner kann nicht in sich selbst verschoben werden.</string>
+    <string name="folder_empty">Dieser Ordner ist leer.\n\nNeue Aufnahmen und Dateien landen automatisch hier.</string>
+    <string name="folder_moved">Verschoben nach %1$s</string>
+
+    <string name="m_tags">Schlagwörter …</string>
+    <string name="tags_title">Schlagwörter</string>
+    <string name="tags_hint">Durch Komma getrennt, z. B. Vertrieb, KI</string>
+    <string name="m_template">Vorlage der Zusammenfassung …</string>
+    <string name="template_title">Vorlage</string>
+    <string name="template_resummary">Mit der neuen Vorlage neu zusammenfassen?</string>
+    <string name="start_template">Vorlage für die Zusammenfassung</string>
+
+    <string name="m_read">Vorlesen …</string>
+    <string name="read_summary">Zusammenfassung vorlesen</string>
+    <string name="read_text">Transkript vorlesen (ab der markierten Stelle)</string>
+    <string name="read_answer">Antwort vorlesen</string>
+    <string name="reading">Wird vorgelesen …</string>
+    <string name="read_stop">Stopp</string>
+    <string name="read_unavailable">Die Sprachausgabe von Android ist nicht verfügbar. Bitte in den Android-Einstellungen unter „Sprachausgabe“ eine Stimme installieren.</string>
+    <string name="read_lang_missing">Für diese Sprache ist keine Stimme installiert – es wird die Standardstimme verwendet.</string>
+    <string name="set_rate">Vorlesegeschwindigkeit</string>
+    <string name="set_tts">Stimme und Sprache (Android)</string>
+    <string name="set_tts_sub">Öffnet die Einstellungen der Android-Sprachausgabe.</string>
+    <string name="share_read_after">Danach vorlesen</string>
+
+    <string name="share_title">Zusammenfassen</string>
+    <string name="share_text_info">Der Text wird an Google Gemini gesendet und zusammengefasst.</string>
+    <string name="share_image_info">Das Bild wird verkleinert an Google Gemini gesendet; Gemini liest den Text und fasst ihn zusammen.</string>
+    <string name="share_link_only">Es wurde nur ein Link geteilt. Links kann Pulsa Scribe nicht selbst öffnen – bitte den Text markieren und teilen oder einen Screenshot teilen.</string>
+    <string name="share_empty">Der geteilte Inhalt ist leer.</string>
+    <string name="share_go">Zusammenfassen</string>
+
+    <string name="tab_ask">Fragen</string>
+    <string name="ask_hint">Frage zum Inhalt, z. B. „Was wurde zum Preis gesagt?“</string>
+    <string name="ask_go">Fragen</string>
+    <string name="ask_empty">Stell eine Frage – die Antwort kommt nur aus diesem Transkript, mit Sprung zur Stelle im Ton.</string>
+    <string name="ask_busy">Bitte warten, bis die Bearbeitung fertig ist.</string>
+    <string name="ask_delete">Antwort löschen</string>
+    <string name="ask_jump">Zur Stelle %1$s</string>
+
+    <string name="m_translate">Übersetzen …</string>
+    <string name="translate_title">Übersetzen in</string>
+    <string name="m_show_lang">Anzeigen in …</string>
+    <string name="show_original">Original</string>
+    <string name="translated_note">Übersetzt (%1$s) – Original unter ⋮ → „Anzeigen in …“</string>
+
+    <string name="m_task_calendar">In den Kalender</string>
+    <string name="m_task_mail">Per E-Mail senden</string>
+    <string name="tasks_mail_all">Alle Aufgaben per E-Mail</string>
+    <string name="tasks_mail_subject">Aufgaben: %1$s</string>
+    <string name="no_app">Keine passende App gefunden.</string>
+
+    <string name="search_all_hint">In allen Transkripten suchen</string>
+    <string name="search_results">%1$d Treffer</string>
+    <string name="search_none">Keine Treffer.</string>
+    <string name="search_tag">Schlagwort</string>
+
+    <string name="tile_record">Aufnehmen</string>
+    <string name="error_generic">Etwas ist schiefgelaufen.</string>
+    <string name="widget_name">Pulsa Scribe: Schnellstart</string>
+    <string name="widget_desc">Aufnehmen oder Datei wählen mit einem Tipp</string>
 </resources>

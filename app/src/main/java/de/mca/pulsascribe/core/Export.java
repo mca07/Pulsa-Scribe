@@ -51,25 +51,26 @@ public final class Export {
         out.add(new Block(META, "", "", meta(t)));
         if (o.summary && t.summary != null && !t.summary.isEmpty()) {
             Transcript.Summary s = t.summary;
+            String[] h = Templates.headings(t.template);
             out.add(new Block(H2, "", "", "Zusammenfassung"));
             if (!s.overview.isEmpty()) out.add(new Block(PARA, "", "", s.overview));
-            list(out, "Kernpunkte", s.points);
+            list(out, h[1], s.points);
             if (!s.tasks.isEmpty()) {
-                out.add(new Block(H2, "", "", "Aufgaben"));
+                out.add(new Block(H2, "", "", h[2]));
                 for (Transcript.Task k : s.tasks) {
                     out.add(new Block(BULLET, "", "", k.who.isEmpty() ? k.what : k.what + " (" + k.who + ")"));
                 }
             }
-            list(out, "Entscheidungen", s.decisions);
-            list(out, "Offene Fragen", s.questions);
-            out.add(new Block(H2, "", "", "Transkript"));
+            list(out, h[3], s.decisions);
+            list(out, h[4], s.questions);
+            out.add(new Block(H2, "", "", t.isAudio() ? "Transkript" : "Text"));
         }
         String lastSpeaker = null;
         for (Transcript.Segment s : t.segments) {
             String name = o.speakers ? t.speakerName(s.speaker) : "";
             // Sprecher nur nennen, wenn er wechselt (lesbarer), Zeit immer
             String show = name.equals(lastSpeaker) && !o.times ? "" : name;
-            out.add(new Block(LINE, o.times ? Times.clock(s.startMs) : "", show, s.text));
+            out.add(new Block(LINE, o.times && t.isAudio() ? Times.clock(s.startMs) : "", show, s.text));
             lastSpeaker = name;
         }
         return out;
@@ -155,6 +156,52 @@ public final class Export {
         }
         if (!rest.isEmpty()) out.add(rest);
         return out;
+    }
+
+    // ------------------------------------------------------------------ Vorlesen
+
+    /** Teilt Text für die Sprachausgabe an Satzgrenzen in Stücke von höchstens max Zeichen. */
+    public static List<String> splitForSpeech(String text, int max) {
+        List<String> out = new ArrayList<>();
+        if (text == null) return out;
+        String rest = text.replace('\n', ' ').replaceAll("\\s+", " ").trim();
+        while (rest.length() > max) {
+            int cut = -1;
+            for (int i = max - 1; i > max / 3; i--) {
+                char c = rest.charAt(i);
+                if (c == '.' || c == '!' || c == '?' || c == ';' || c == ':') { cut = i + 1; break; }
+            }
+            if (cut < 0) cut = rest.lastIndexOf(' ', max - 1);
+            if (cut <= 0) cut = max;
+            out.add(rest.substring(0, cut).trim());
+            rest = rest.substring(cut).trim();
+        }
+        if (!rest.isEmpty()) out.add(rest);
+        return out;
+    }
+
+    /** Zusammenfassung als Vorlesetext mit Überschriften der Vorlage. */
+    public static List<String> speechSummary(Transcript t, Transcript.Summary s) {
+        List<String> out = new ArrayList<>();
+        if (s == null) return out;
+        String[] h = Templates.headings(t.template);
+        out.add(t.title + ".");
+        if (!s.overview.isEmpty()) out.add(s.overview);
+        speechList(out, h[1], s.points);
+        if (!s.tasks.isEmpty()) {
+            List<String> l = new ArrayList<>();
+            for (Transcript.Task k : s.tasks) l.add(k.who.isEmpty() ? k.what : k.what + ", zuständig: " + k.who);
+            speechList(out, h[2], l);
+        }
+        speechList(out, h[3], s.decisions);
+        speechList(out, h[4], s.questions);
+        return out;
+    }
+
+    private static void speechList(List<String> out, String heading, List<String> items) {
+        if (items.isEmpty()) return;
+        out.add(heading + ":");
+        for (String i : items) out.add(i.endsWith(".") || i.endsWith("?") || i.endsWith("!") ? i : i + ".");
     }
 
     // ------------------------------------------------------------------ Word

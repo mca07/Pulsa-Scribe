@@ -10,7 +10,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -20,31 +19,44 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.mca.pulsascribe.core.Adts;
 import de.mca.pulsascribe.core.Chunker;
+import de.mca.pulsascribe.core.Folders;
 import de.mca.pulsascribe.core.Gemini;
+import de.mca.pulsascribe.core.Languages;
 import de.mca.pulsascribe.core.Text;
 import de.mca.pulsascribe.core.Transcript;
 
 /**
- * Vordergrund-Dienst: bereitet die Tonspur auf, transkribiert Teil für Teil mit Gemini und erstellt
- * die Zusammenfassung. Ein Auftrag nach dem anderen; jeder Schritt wird gespeichert, damit ein
- * erneuter Versuch beim nächsten offenen Teil weitermacht.
+ * Vordergrund-Dienst für alles, was mit Gemini spricht: Ton aufbereiten und Teil für Teil
+ * transkribieren, Bilder lesen, Zusammenfassungen, Fragen, Übersetzungen, Ordner-Auswertungen.
+ * Ein Auftrag nach dem anderen; jeder Schritt wird gespeichert, damit „Erneut versuchen“ weitermacht.
  */
 public final class TranscribeService extends Service {
     static final String ACTION_START = "de.mca.pulsascribe.START";
     static final String ACTION_SUMMARY = "de.mca.pulsascribe.SUMMARY";
+    static final String ACTION_ASK = "de.mca.pulsascribe.ASK";
+    static final String ACTION_TRANSLATE = "de.mca.pulsascribe.TRANSLATE";
+    static final String ACTION_FOLDER = "de.mca.pulsascribe.FOLDER";
     static final String ACTION_CANCEL = "de.mca.pulsascribe.CANCEL";
     static final String EXTRA_ID = "id";
+    static final String EXTRA_ARG = "arg";
+    static final String EXTRA_ARG2 = "arg2";
 
     private static final String CH_WORK = "work", CH_DONE = "done";
     private static final int NOTIF_WORK = 1;
     static final int CHUNK_SEC = 15 * 60;      // Ziel je Teil
     static final int CHUNK_WINDOW_SEC = 60;    // Suchfenster für leise Stelle
     static final int MIN_SPLIT_FRAMES_SEC = 120;
+    static final int MAX_FOLDER_ITEMS = 60;
+
+    private static final int T_FULL = 0, T_SUMMARY = 1, T_ASK = 2, T_TRANSLATE = 3, T_FOLDER = 4;
 
     /** Fortschritt nur im Speicher (für die Anzeige): id → {Schritt-Text-Res, Prozent}. */
     private static final Map<String, int[]> live = new HashMap<>();
@@ -77,6 +89,22 @@ public final class TranscribeService extends Service {
         c.startForegroundService(new Intent(c, TranscribeService.class).setAction(ACTION_SUMMARY).putExtra(EXTRA_ID, id));
     }
 
+    static void ask(Context c, String id, String question) {
+        c.startForegroundService(new Intent(c, TranscribeService.class).setAction(ACTION_ASK).putExtra(EXTRA_ID, id)
+                .putExtra(EXTRA_ARG, Text.line(question, 300)));
+    }
+
+    static void translate(Context c, String id, String lang) {
+        c.startForegroundService(new Intent(c, TranscribeService.class).setAction(ACTION_TRANSLATE).putExtra(EXTRA_ID, id)
+                .putExtra(EXTRA_ARG, Languages.clean(lang)));
+    }
+
+    /** id = neu angelegtes Ergebnis-Transkript, folder = auszuwertender Ordner. */
+    static void folder(Context c, String id, String folder, String focus) {
+        c.startForegroundService(new Intent(c, TranscribeService.class).setAction(ACTION_FOLDER).putExtra(EXTRA_ID, id)
+                .putExtra(EXTRA_ARG, folder).putExtra(EXTRA_ARG2, Text.line(focus, 300)));
+    }
+
     static void cancel(Context c, String id) {
         Intent i = new Intent(c, TranscribeService.class).setAction(ACTION_CANCEL).putExtra(EXTRA_ID, id);
         c.startService(i);
@@ -87,12 +115,16 @@ public final class TranscribeService extends Service {
     private static final class Job {
         final String id;
         final Uri source;
-        final boolean summaryOnly;
+        final int type;
+        final String arg, arg2;
+        String prevStatus = Transcript.DONE;
 
-        Job(String id, Uri source, boolean summaryOnly) {
+        Job(String id, Uri source, int type, String arg, String arg2) {
             this.id = id;
             this.source = source;
-            this.summaryOnly = summaryOnly;
+            this.type = type;
+            this.arg = arg == null ? "" : arg;
+            this.arg2 = arg2 == null ? "" : arg2;
         }
     }
 
@@ -112,15 +144,13 @@ public final class TranscribeService extends Service {
     public void onCreate() {
         super.onCreate();
         NotificationManager nm = getSystemService(NotificationManager.class);
-        NotificationChannel work = new NotificationChannel(CH_WORK, getString(R.string.ch_work), NotificationManager.IMPORTANCE_LOW);
-        NotificationChannel done = new NotificationChannel(CH_DONE, getString(R.string.ch_done), NotificationManager.IMPORTANCE_DEFAULT);
-        nm.createNotificationChannel(work);
-        nm.createNotificationChannel(done);
+        nm.createNotificationChannel(new NotificationChannel(CH_WORK, getString(R.string.ch_work), NotificationManager.IMPORTANCE_LOW));
+        nm.createNotificationChannel(new NotificationChannel(CH_DONE, getString(R.string.ch_done), NotificationManager.IMPORTANCE_DEFAULT));
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        goForeground(getString(R.string.n_starting), 0, true);
+        goForeground(getString(R.string.n_starting));
         if (intent == null) {
             stopIfIdle();
             return START_NOT_STICKY;
@@ -131,14 +161,25 @@ public final class TranscribeService extends Service {
             return START_NOT_STICKY;
         }
         String action = intent.getAction();
+        String arg = intent.getStringExtra(EXTRA_ARG), arg2 = intent.getStringExtra(EXTRA_ARG2);
         if (ACTION_CANCEL.equals(action)) {
             cancelJob(id);
-        } else if (ACTION_START.equals(action) || ACTION_SUMMARY.equals(action)) {
+        } else if (ACTION_START.equals(action)) {
             Uri src = null;
             ClipData cd = intent.getClipData();
             if (cd != null && cd.getItemCount() == 1) src = cd.getItemAt(0).getUri();
             if (src != null && !"content".equals(src.getScheme())) src = null; // nur content://
-            enqueue(new Job(id, src, ACTION_SUMMARY.equals(action)));
+            enqueue(new Job(id, src, T_FULL, null, null));
+        } else if (ACTION_SUMMARY.equals(action)) {
+            enqueue(new Job(id, null, T_SUMMARY, null, null));
+        } else if (ACTION_ASK.equals(action)) {
+            String q = Text.line(arg, 300);
+            if (!q.isEmpty()) enqueue(new Job(id, null, T_ASK, q, null));
+        } else if (ACTION_TRANSLATE.equals(action)) {
+            String l = Languages.clean(arg);
+            if (!Languages.AUTO.equals(l)) enqueue(new Job(id, null, T_TRANSLATE, l, null));
+        } else if (ACTION_FOLDER.equals(action)) {
+            if (arg != null && (arg.isEmpty() || Text.isId(arg))) enqueue(new Job(id, null, T_FOLDER, arg, Text.line(arg2, 300)));
         }
         stopIfIdle();
         return START_NOT_STICKY;
@@ -149,10 +190,17 @@ public final class TranscribeService extends Service {
         for (Job j : queue) if (j.id.equals(job.id)) return;
         Transcript t = Store.get(this, job.id);
         if (t == null) return;
+        if (job.type == T_ASK || job.type == T_TRANSLATE || job.type == T_SUMMARY) {
+            if (t.isWorking()) return;
+            job.prevStatus = t.status;
+        }
         Transcript n = Store.copy(t);
-        n.status = job.summaryOnly ? Transcript.SUMMARY : Transcript.QUEUED;
-        n.error = "";
+        n.status = job.type == T_FULL || job.type == T_FOLDER ? Transcript.QUEUED : Transcript.SUMMARY;
+        if (job.type == T_FULL || job.type == T_FOLDER || job.type == T_SUMMARY) n.error = "";
         Store.save(this, n);
+        int res = job.type == T_ASK ? R.string.st_ask : job.type == T_TRANSLATE ? R.string.st_translate
+                : job.type == T_SUMMARY ? R.string.st_summary : 0;
+        if (res != 0) setLive(job.id, res, -1);
         queue.add(job);
         if (worker == null) {
             worker = new Thread(this::loop, "transcribe");
@@ -170,7 +218,8 @@ public final class TranscribeService extends Service {
         for (Job j : queue) {
             if (j.id.equals(id)) {
                 queue.remove(j);
-                markCanceled(id);
+                if (j.type == T_FULL || j.type == T_FOLDER) markCanceled(id);
+                else restore(j, null);
                 break;
             }
         }
@@ -184,6 +233,17 @@ public final class TranscribeService extends Service {
         n.error = "";
         Store.save(this, n);
         setLive(id, 0, 0);
+    }
+
+    /** Nach Fragen/Übersetzen/Zusammenfassung: alten Status wiederherstellen, ggf. Hinweis setzen. */
+    private void restore(Job job, String note) {
+        Transcript t = Store.get(this, job.id);
+        if (t == null) return;
+        Transcript n = Store.copy(t);
+        n.status = Transcript.SUMMARY.equals(job.prevStatus) ? Transcript.DONE : job.prevStatus;
+        if (note != null) n.error = note;
+        Store.save(this, n);
+        setLive(job.id, 0, 0);
     }
 
     private synchronized Job next() {
@@ -204,11 +264,28 @@ public final class TranscribeService extends Service {
             Job job;
             while ((job = next()) != null) {
                 try {
-                    process(job);
+                    String key = GeminiKey.get(this);
+                    if (key == null) {
+                        if (job.type == T_FULL || job.type == T_FOLDER) fail(job.id, getString(R.string.err_no_key));
+                        else restore(job, getString(R.string.err_no_key));
+                        continue;
+                    }
+                    client = new GeminiClient(key);
+                    switch (job.type) {
+                        case T_FULL: process(job, false); break;
+                        case T_SUMMARY: process(job, true); break;
+                        case T_ASK: ask(job); break;
+                        case T_TRANSLATE: translate(job); break;
+                        default: folderSummary(job);
+                    }
                 } catch (GoneException e) {
                     // Transkript wurde gelöscht: nichts mehr zu tun
                 } catch (Throwable e) {
-                    fail(job.id, getString(R.string.err_unexpected, e.getClass().getSimpleName()));
+                    if (job.type == T_FULL || job.type == T_FOLDER) {
+                        fail(job.id, getString(R.string.err_unexpected, e.getClass().getSimpleName()));
+                    } else {
+                        restore(job, getString(R.string.err_unexpected, e.getClass().getSimpleName()));
+                    }
                 } finally {
                     setLive(job.id, 0, 0);
                     synchronized (this) { runningId = null; }
@@ -231,8 +308,7 @@ public final class TranscribeService extends Service {
     @Override
     public void onTimeout(int startId, int fgsType) {
         // Android 15: Zeitlimit für dataSync erreicht → sauber beenden
-        String id = runningId;
-        if (id != null) {
+        if (runningId != null) {
             cancelCurrent = true;
             GeminiClient c = client;
             if (c != null) c.cancel();
@@ -240,172 +316,357 @@ public final class TranscribeService extends Service {
         stopSelf();
     }
 
-    // ------------------------------------------------------------------ Ablauf
+    // ------------------------------------------------------------------ Transkribieren und zusammenfassen
 
-    private void process(Job job) throws IOException {
+    private void process(Job job, boolean summaryOnly) throws IOException {
         Transcript base = Store.get(this, job.id);
         if (base == null) return;
         Transcript t = Store.copy(base);
-        String key = GeminiKey.get(this);
-        if (key == null) {
-            fail(t.id, getString(R.string.err_no_key));
-            return;
-        }
-        client = new GeminiClient(key);
 
-        if (!job.summaryOnly) {
-            // 1) Tonspur aufbereiten
-            File audio = Store.audioFile(this, t.id);
-            if (!t.audioReady || !audio.isFile()) {
-                Uri source = job.source;
-                if (source == null && !t.sourceUri.isEmpty()) source = Uri.parse(t.sourceUri); // dauerhafte Freigabe
-                if (source == null) {
-                    fail(t.id, getString(R.string.err_need_file_again));
-                    return;
-                }
-                t.status = Transcript.PREPARE;
-                t.chunksDone = 0;
-                t.segments.clear();
-                t.cuts = new int[0];
-                persist(t);
-                setLive(t.id, R.string.st_prepare, 0);
-                notifyWork(t, getString(R.string.st_prepare), 0);
-                AudioPrep.Result r;
-                try {
-                    r = AudioPrep.run(this, source, audio, new AudioPrep.Progress() {
-                        long last;
-
-                        @Override
-                        public void onProgress(int percent) {
-                            long now = SystemClock.elapsedRealtime();
-                            if (now - last < 400 && percent < 100) return;
-                            last = now;
-                            setLive(job.id, R.string.st_prepare, percent);
-                            notifyWork(job.id, getString(R.string.st_prepare), percent);
-                        }
-
-                        @Override
-                        public boolean isCanceled() {
-                            return cancelCurrent;
-                        }
-                    });
-                } catch (AudioPrep.PrepException e) {
-                    fail(t.id, getString(e.messageRes));
-                    return;
-                } catch (IOException e) {
-                    if (cancelCurrent) { markCanceled(t.id); return; }
-                    fail(t.id, getString(R.string.err_open_file));
-                    return;
-                }
-                double fps = r.sampleRate / (double) Adts.SAMPLES_PER_FRAME;
-                t.cuts = Chunker.cuts(r.frames, r.energy, fps, CHUNK_SEC, CHUNK_WINDOW_SEC);
-                t.durationMs = r.durationMs;
-                t.audioReady = true;
-                persist(t);
-            }
-
-            // 2) Teile transkribieren
-            Adts.Index idx;
-            try (InputStream in = new FileInputStream(audio)) {
-                idx = Adts.index(in, 4_000_000, true); // tolerant: unterbrochene Aufnahme bleibt nutzbar
-            } catch (IOException e) {
-                fail(t.id, getString(R.string.err_audio_broken));
-                return;
-            }
-            if (idx.frames == 0) { fail(t.id, getString(R.string.err_no_audio)); return; }
-            if (t.cuts.length == 0 || t.cuts[t.cuts.length - 1] >= idx.frames) {
-                // Nach einem Update oder kaputten Daten neu teilen (ohne Lautstärke)
-                double fps = idx.sampleRate / (double) Adts.SAMPLES_PER_FRAME;
-                t.cuts = Chunker.cuts(idx.frames, null, fps, CHUNK_SEC, CHUNK_WINDOW_SEC);
-                t.chunksDone = 0;
-                t.segments.clear();
-            }
-            t.durationMs = idx.durationMs();
-            t.status = Transcript.TRANSCRIBE;
-            t.incomplete = false;
-            persist(t);
-
-            while (t.chunksDone < t.cuts.length) {
-                if (cancelCurrent) { markCanceled(t.id); return; }
-                int i = t.chunksDone;
-                int startFrame = t.cuts[i];
-                int endFrame = i + 1 < t.cuts.length ? t.cuts[i + 1] : idx.frames;
-                int n = t.cuts.length;
-                int pct = (int) (100L * startFrame / Math.max(1, idx.frames));
-                setLive(t.id, R.string.st_transcribe, pct);
-                notifyWork(t.id, n > 1 ? getString(R.string.st_transcribe_part, i + 1, n) : getString(R.string.st_transcribe), pct);
-
-                Gemini.ChunkInfo info = new Gemini.ChunkInfo();
-                info.index = i;
-                info.count = n;
-                info.durationMs = idx.frameToMs(endFrame) - idx.frameToMs(startFrame);
-                info.knownSpeakers = Gemini.knownSpeakers(t);
-                info.previousTail = i > 0 ? Gemini.tail(t, 300) : "";
-                String prompt = Gemini.transcribePrompt(t.language, t.diarize, t.cleanFillers, t.terms, info);
-
-                Outcome o = callAudio(prompt, audio, idx.offsets[startFrame], idx.offsets[endFrame], info.durationMs,
-                        idx.frameToMs(startFrame), t.diarize);
-                if (cancelCurrent) { markCanceled(t.id); return; }
-                if (o.error != null) {
-                    // Bisheriges bleibt erhalten; "Erneut versuchen" macht hier weiter
-                    t.status = Transcript.ERROR;
-                    t.error = o.error;
-                    persist(t);
-                    notifyDone(t, false);
-                    return;
-                }
-                if (o.truncated) {
-                    // Antwort zu lang: Teil halbieren und erneut versuchen (nur bei ausreichender Länge)
-                    int half = startFrame + (endFrame - startFrame) / 2;
-                    double fps = idx.sampleRate / (double) Adts.SAMPLES_PER_FRAME;
-                    if (endFrame - startFrame > MIN_SPLIT_FRAMES_SEC * fps && t.cuts.length < Transcript.MAX_CHUNKS) {
-                        int[] nc = new int[t.cuts.length + 1];
-                        System.arraycopy(t.cuts, 0, nc, 0, i + 1);
-                        nc[i + 1] = half;
-                        System.arraycopy(t.cuts, i + 1, nc, i + 2, t.cuts.length - i - 1);
-                        t.cuts = nc;
-                        persist(t);
-                        continue;
-                    }
-                    t.incomplete = true; // geretteter Teil wird übernommen
-                }
-                t.segments.addAll(o.segments.list);
-                t.model = o.model;
-                t.chunksDone = i + 1;
-                persist(t);
-                pause(1500);
+        if (!summaryOnly) {
+            if (t.isAudio()) {
+                if (!transcribeAudio(job, t)) return;
+            } else if (Transcript.KIND_IMAGE.equals(t.kind) && t.segments.isEmpty()) {
+                if (!readImage(t)) return;
             }
         }
 
-        // 3) Zusammenfassung
-        if ((t.summarize || job.summaryOnly) && !t.segments.isEmpty()) {
-            if (cancelCurrent) { markCanceled(t.id); return; }
+        // Zusammenfassung
+        if ((t.summarize || summaryOnly) && !t.segments.isEmpty()) {
+            if (cancelCurrent) { finishCanceled(job, t, summaryOnly); return; }
             t.status = Transcript.SUMMARY;
             persist(t);
-            setLive(t.id, R.string.st_summary, 0);
-            notifyWork(t.id, getString(R.string.st_summary), -1);
+            setLive(t.id, R.string.st_summary, -1);
+            if (!summaryOnly) notifyWork(t.id, getString(R.string.st_summary), -1);
             String body = Gemini.summaryRequest(Gemini.summaryPrompt(t, Settings.summaryLanguage(this)));
-            Outcome o = callJson(body);
-            if (cancelCurrent) {
-                if (job.summaryOnly) { t.status = Transcript.DONE; persist(t); }
-                else markCanceled(t.id);
-                return;
-            }
+            List<String> tags = new ArrayList<>();
+            Outcome o = call(model -> client.json(model, body), (reply, oc) -> {
+                oc.summary = Gemini.parseSummary(reply.text);
+                if (oc.summary != null) tags.addAll(Gemini.parseTags(reply.text));
+                return oc.summary != null;
+            });
+            if (cancelCurrent) { finishCanceled(job, t, summaryOnly); return; }
             if (o.error == null && o.summary != null) {
                 t.summary = o.summary;
                 t.error = "";
+                if (t.tags.isEmpty()) t.tags.addAll(tags);
             } else {
                 t.error = getString(R.string.err_summary_failed) + (o.error != null ? " " + o.error : "");
             }
-        } else if (job.summaryOnly) {
+        } else if (summaryOnly) {
             t.error = getString(R.string.err_summary_empty);
         } else {
             t.error = "";
         }
-        if (t.segments.isEmpty() && !job.summaryOnly) t.error = getString(R.string.err_no_speech);
-        t.status = Transcript.DONE;
+        if (t.segments.isEmpty() && !summaryOnly) t.error = getString(t.isAudio() ? R.string.err_no_speech : R.string.err_no_text);
+        t.status = summaryOnly && Transcript.ERROR.equals(job.prevStatus) ? Transcript.ERROR : Transcript.DONE;
+        if (summaryOnly && Transcript.ERROR.equals(job.prevStatus) && t.error.isEmpty()) t.error = base.error;
         persist(t);
-        if (!Settings.keepAudio(this) && !job.summaryOnly) Store.deleteAudio(this, t.id);
+        if (!summaryOnly && t.isAudio() && !Settings.keepAudio(this)) Store.deleteAudio(this, t.id);
+        if (!summaryOnly) notifyDone(t, true);
+    }
+
+    private void finishCanceled(Job job, Transcript t, boolean summaryOnly) {
+        if (summaryOnly) restore(job, null);
+        else markCanceled(t.id);
+    }
+
+    /** Ton aufbereiten und alle offenen Teile transkribieren. false = abgebrochen oder Fehler (schon gemeldet). */
+    private boolean transcribeAudio(Job job, Transcript t) throws IOException {
+        File audio = Store.audioFile(this, t.id);
+        if (!t.audioReady || !audio.isFile()) {
+            Uri source = job.source;
+            if (source == null && !t.sourceUri.isEmpty()) source = Uri.parse(t.sourceUri); // dauerhafte Freigabe
+            if (source == null) {
+                fail(t.id, getString(R.string.err_need_file_again));
+                return false;
+            }
+            t.status = Transcript.PREPARE;
+            t.chunksDone = 0;
+            t.segments.clear();
+            t.cuts = new int[0];
+            persist(t);
+            setLive(t.id, R.string.st_prepare, 0);
+            notifyWork(t.id, getString(R.string.st_prepare), 0);
+            AudioPrep.Result r;
+            try {
+                r = AudioPrep.run(this, source, audio, new AudioPrep.Progress() {
+                    long last;
+
+                    @Override
+                    public void onProgress(int percent) {
+                        long now = SystemClock.elapsedRealtime();
+                        if (now - last < 400 && percent < 100) return;
+                        last = now;
+                        setLive(job.id, R.string.st_prepare, percent);
+                        notifyWork(job.id, getString(R.string.st_prepare), percent);
+                    }
+
+                    @Override
+                    public boolean isCanceled() {
+                        return cancelCurrent;
+                    }
+                });
+            } catch (AudioPrep.PrepException e) {
+                fail(t.id, getString(e.messageRes));
+                return false;
+            } catch (IOException e) {
+                if (cancelCurrent) { markCanceled(t.id); return false; }
+                fail(t.id, getString(R.string.err_open_file));
+                return false;
+            }
+            double fps = r.sampleRate / (double) Adts.SAMPLES_PER_FRAME;
+            t.cuts = Chunker.cuts(r.frames, r.energy, fps, CHUNK_SEC, CHUNK_WINDOW_SEC);
+            t.durationMs = r.durationMs;
+            t.audioReady = true;
+            persist(t);
+        }
+
+        Adts.Index idx;
+        try (InputStream in = new FileInputStream(audio)) {
+            idx = Adts.index(in, 4_000_000, true); // tolerant: unterbrochene Aufnahme bleibt nutzbar
+        } catch (IOException e) {
+            fail(t.id, getString(R.string.err_audio_broken));
+            return false;
+        }
+        if (idx.frames == 0) { fail(t.id, getString(R.string.err_no_audio)); return false; }
+        if (t.cuts.length == 0 || t.cuts[t.cuts.length - 1] >= idx.frames) {
+            // Nach einem Update oder kaputten Daten neu teilen (ohne Lautstärke)
+            double fps = idx.sampleRate / (double) Adts.SAMPLES_PER_FRAME;
+            t.cuts = Chunker.cuts(idx.frames, null, fps, CHUNK_SEC, CHUNK_WINDOW_SEC);
+            t.chunksDone = 0;
+            t.segments.clear();
+        }
+        t.durationMs = idx.durationMs();
+        t.status = Transcript.TRANSCRIBE;
+        t.incomplete = false;
+        persist(t);
+
+        while (t.chunksDone < t.cuts.length) {
+            if (cancelCurrent) { markCanceled(t.id); return false; }
+            int i = t.chunksDone;
+            int startFrame = t.cuts[i];
+            int endFrame = i + 1 < t.cuts.length ? t.cuts[i + 1] : idx.frames;
+            int n = t.cuts.length;
+            int pct = (int) (100L * startFrame / Math.max(1, idx.frames));
+            setLive(t.id, R.string.st_transcribe, pct);
+            notifyWork(t.id, n > 1 ? getString(R.string.st_transcribe_part, i + 1, n) : getString(R.string.st_transcribe), pct);
+
+            Gemini.ChunkInfo info = new Gemini.ChunkInfo();
+            info.index = i;
+            info.count = n;
+            info.durationMs = idx.frameToMs(endFrame) - idx.frameToMs(startFrame);
+            info.knownSpeakers = Gemini.knownSpeakers(t);
+            info.previousTail = i > 0 ? Gemini.tail(t, 300) : "";
+            String prompt = Gemini.transcribePrompt(t.language, t.diarize, t.cleanFillers, t.terms, info);
+            long from = idx.offsets[startFrame], to = idx.offsets[endFrame];
+            long chunkMs = info.durationMs, offsetMs = idx.frameToMs(startFrame);
+            boolean diarize = t.diarize;
+            Outcome o = call(model -> client.audio(model, prompt, audio, from, to), (reply, oc) -> {
+                boolean maybeCut = "MAX_TOKENS".equals(reply.finishReason);
+                Gemini.Segments s = Gemini.parseSegments(reply.text, chunkMs, offsetMs, diarize, maybeCut);
+                if (s == null) return false;
+                oc.segments = s;
+                oc.truncated = maybeCut || s.truncated;
+                return true;
+            });
+            if (cancelCurrent) { markCanceled(t.id); return false; }
+            if (o.error != null) {
+                // Bisheriges bleibt erhalten; "Erneut versuchen" macht hier weiter
+                t.status = Transcript.ERROR;
+                t.error = o.error;
+                persist(t);
+                notifyDone(t, false);
+                return false;
+            }
+            if (o.truncated) {
+                // Antwort zu lang: Teil halbieren und erneut versuchen (nur bei ausreichender Länge)
+                int half = startFrame + (endFrame - startFrame) / 2;
+                double fps = idx.sampleRate / (double) Adts.SAMPLES_PER_FRAME;
+                if (endFrame - startFrame > MIN_SPLIT_FRAMES_SEC * fps && t.cuts.length < Transcript.MAX_CHUNKS) {
+                    int[] nc = new int[t.cuts.length + 1];
+                    System.arraycopy(t.cuts, 0, nc, 0, i + 1);
+                    nc[i + 1] = half;
+                    System.arraycopy(t.cuts, i + 1, nc, i + 2, t.cuts.length - i - 1);
+                    t.cuts = nc;
+                    persist(t);
+                    continue;
+                }
+                t.incomplete = true; // geretteter Teil wird übernommen
+            }
+            t.segments.addAll(o.segments.list);
+            t.model = o.model;
+            t.chunksDone = i + 1;
+            persist(t);
+            pause(1500);
+        }
+        return true;
+    }
+
+    /** Text aus dem Bild lesen. false = Fehler (schon gemeldet). */
+    private boolean readImage(Transcript t) {
+        File img = Store.imageFile(this, t.id);
+        if (!img.isFile()) {
+            fail(t.id, getString(R.string.err_image_missing));
+            return false;
+        }
+        t.status = Transcript.TRANSCRIBE;
+        persist(t);
+        setLive(t.id, R.string.st_ocr, -1);
+        notifyWork(t.id, getString(R.string.st_ocr), -1);
+        String prompt = Gemini.ocrPrompt(t.language);
+        final Gemini.Ocr[] res = new Gemini.Ocr[1];
+        Outcome o = call(model -> client.image(model, prompt, img), (reply, oc) -> {
+            res[0] = Gemini.parseOcr(reply.text);
+            return res[0] != null;
+        });
+        if (cancelCurrent) { markCanceled(t.id); return false; }
+        if (o.error != null || res[0] == null) {
+            t.status = Transcript.ERROR;
+            t.error = o.error != null ? o.error : getString(R.string.err_no_text);
+            persist(t);
+            notifyDone(t, false);
+            return false;
+        }
+        for (String p : res[0].paragraphs) t.segments.add(new Transcript.Segment(0, "", p));
+        if (Settings.isDefaultImageTitle(this, t.title) && !res[0].title.isEmpty()) {
+            // Titel aus dem Bild übernehmen, wenn noch der Standardtitel gesetzt ist
+            Transcript cur = Store.get(this, t.id);
+            if (cur != null && cur.title.equals(t.title)) {
+                Transcript n = Store.copy(cur);
+                n.title = res[0].title;
+                Store.save(this, n);
+            }
+        }
+        t.model = o.model;
+        persist(t);
+        return true;
+    }
+
+    // ------------------------------------------------------------------ Fragen, Übersetzen, Ordner
+
+    private void ask(Job job) {
+        Transcript base = Store.get(this, job.id);
+        if (base == null) return;
+        if (base.segments.isEmpty()) { restore(job, getString(R.string.err_summary_empty)); return; }
+        String body = Gemini.textRequest(Gemini.questionPrompt(base, job.arg, Settings.summaryLanguage(this)), Gemini.answerSchema(), 0.1);
+        long maxMs = Math.max(base.durationMs, base.segments.get(base.segments.size() - 1).startMs) + 60_000;
+        final Transcript.Answer[] ans = new Transcript.Answer[1];
+        Outcome o = call(model -> client.json(model, body), (reply, oc) -> {
+            ans[0] = Gemini.parseAnswer(reply.text, job.arg, maxMs);
+            return ans[0] != null;
+        });
+        if (cancelCurrent) { restore(job, null); return; }
+        Transcript cur = Store.get(this, job.id);
+        if (cur == null) return;
+        Transcript n = Store.copy(cur);
+        n.status = Transcript.SUMMARY.equals(job.prevStatus) ? Transcript.DONE : job.prevStatus;
+        if (o.error == null && ans[0] != null) {
+            ans[0].askedMs = System.currentTimeMillis();
+            n.answers.add(0, ans[0]);
+            while (n.answers.size() > Transcript.MAX_QA) n.answers.remove(n.answers.size() - 1);
+        } else {
+            n.error = getString(R.string.err_ask_failed) + (o.error != null ? " " + o.error : "");
+        }
+        Store.save(this, n);
+    }
+
+    private void translate(Job job) {
+        Transcript base = Store.get(this, job.id);
+        if (base == null) return;
+        Transcript.Translation tr = new Transcript.Translation();
+        int total = base.segments.size();
+        for (int i = 0; i < total; i += Gemini.TRANSLATE_BATCH) {
+            if (cancelCurrent) { restore(job, null); return; }
+            setLive(job.id, R.string.st_translate, total == 0 ? -1 : (int) (100L * i / total));
+            List<String> lines = new ArrayList<>();
+            for (int k = i; k < Math.min(total, i + Gemini.TRANSLATE_BATCH); k++) lines.add(base.segments.get(k).text);
+            String body = Gemini.textRequest(Gemini.translatePrompt(lines, job.arg), Gemini.linesSchema(), 0);
+            final List<String>[] got = new List[1];
+            Outcome o = call(model -> client.json(model, body), (reply, oc) -> {
+                got[0] = Gemini.parseLines(reply.text, lines.size());
+                return got[0] != null;
+            });
+            if (cancelCurrent) { restore(job, null); return; }
+            if (o.error != null || got[0] == null) {
+                restore(job, getString(R.string.err_translate_failed) + (o.error != null ? " " + o.error : ""));
+                return;
+            }
+            tr.segments.addAll(got[0]);
+        }
+        if (base.summary != null) {
+            String body = Gemini.summaryRequest(Gemini.translateSummaryPrompt(base.summary, job.arg));
+            Outcome o = call(model -> client.json(model, body), (reply, oc) -> {
+                oc.summary = Gemini.parseSummary(reply.text);
+                return oc.summary != null;
+            });
+            if (cancelCurrent) { restore(job, null); return; }
+            if (o.summary != null) tr.summary = o.summary;
+        }
+        Transcript cur = Store.get(this, job.id);
+        if (cur == null) return;
+        if (cur.segments.size() != tr.segments.size()) {
+            restore(job, getString(R.string.err_translate_changed));
+            return;
+        }
+        Transcript n = Store.copy(cur);
+        n.translations.remove(job.arg);
+        while (n.translations.size() >= Transcript.MAX_TRANSLATIONS) n.translations.remove(n.translations.keySet().iterator().next());
+        n.translations.put(job.arg, tr);
+        n.status = Transcript.SUMMARY.equals(job.prevStatus) ? Transcript.DONE : job.prevStatus;
+        n.error = "";
+        Store.save(this, n);
+    }
+
+    private void folderSummary(Job job) {
+        Transcript base = Store.get(this, job.id);
+        if (base == null) return;
+        Folders folders = Store.folders(this);
+        Set<String> ids = folders.subtree(folders.clean(job.arg));
+        List<Transcript> items = new ArrayList<>();
+        for (Transcript x : Store.all(this)) {
+            if (x.id.equals(job.id) || x.aggregate || x.isWorking() || !ids.contains(x.folder)) continue;
+            if (x.segments.isEmpty() && (x.summary == null || x.summary.isEmpty())) continue;
+            items.add(x);
+            if (items.size() >= MAX_FOLDER_ITEMS) break;
+        }
+        Transcript t = Store.copy(base);
+        if (items.isEmpty()) {
+            t.status = Transcript.ERROR;
+            t.error = getString(R.string.err_folder_empty);
+            persist(t);
+            return;
+        }
+        t.status = Transcript.SUMMARY;
+        persist(t);
+        setLive(t.id, R.string.st_folder, -1);
+        notifyWork(t.id, getString(R.string.st_folder), -1);
+        String name = job.arg.isEmpty() ? getString(R.string.folder_all) : folders.pathText(job.arg);
+        String body = Gemini.summaryRequest(Gemini.folderPrompt(name, items, job.arg2, Settings.summaryLanguage(this)));
+        List<String> tags = new ArrayList<>();
+        Outcome o = call(model -> client.json(model, body), (reply, oc) -> {
+            oc.summary = Gemini.parseSummary(reply.text);
+            if (oc.summary != null) tags.addAll(Gemini.parseTags(reply.text));
+            return oc.summary != null;
+        });
+        if (cancelCurrent) { markCanceled(t.id); return; }
+        if (o.error != null || o.summary == null) {
+            t.status = Transcript.ERROR;
+            t.error = o.error != null ? o.error : getString(R.string.err_summary_failed);
+            persist(t);
+            notifyDone(t, false);
+            return;
+        }
+        java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.GERMANY);
+        t.segments.clear();
+        for (Transcript x : items) t.segments.add(new Transcript.Segment(0, "", x.title + " (" + df.format(new java.util.Date(x.createdMs)) + ")"));
+        t.summary = o.summary;
+        t.tags.clear();
+        t.tags.addAll(tags);
+        t.status = Transcript.DONE;
+        t.error = "";
+        t.model = o.model;
+        persist(t);
         notifyDone(t, true);
     }
 
@@ -419,31 +680,14 @@ public final class TranscribeService extends Service {
         }
     }
 
-    /** Ergebnis eines Aufrufs (mit Modell-Rückfall). */
+    // ------------------------------------------------------------------ Gemini-Aufruf mit Rückfall
+
     private static final class Outcome {
         Gemini.Segments segments;
         Transcript.Summary summary;
         boolean truncated;
         String model = "";
         String error;
-    }
-
-    private Outcome callAudio(String prompt, File audio, long from, long to, long chunkMs, long offsetMs, boolean diarize) {
-        return call(model -> client.audio(model, prompt, audio, from, to), (reply, o) -> {
-            boolean maybeCut = "MAX_TOKENS".equals(reply.finishReason);
-            Gemini.Segments s = Gemini.parseSegments(reply.text, chunkMs, offsetMs, diarize, maybeCut);
-            if (s == null) return false;
-            o.segments = s;
-            o.truncated = maybeCut || s.truncated;
-            return true;
-        });
-    }
-
-    private Outcome callJson(String body) {
-        return call(model -> client.json(model, body), (reply, o) -> {
-            o.summary = Gemini.parseSummary(reply.text);
-            return o.summary != null;
-        });
     }
 
     private interface Request {
@@ -529,17 +773,8 @@ public final class TranscribeService extends Service {
 
     // ------------------------------------------------------------------ Benachrichtigungen
 
-    private void goForeground(String text, int pct, boolean indeterminate) {
-        Notification n = workNotification(null, text, pct, indeterminate);
-        if (Build.VERSION.SDK_INT >= 29) {
-            startForeground(NOTIF_WORK, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
-        } else {
-            startForeground(NOTIF_WORK, n);
-        }
-    }
-
-    private void notifyWork(Transcript t, String text, int pct) {
-        notifyWork(t.id, text, pct);
+    private void goForeground(String text) {
+        startForeground(NOTIF_WORK, workNotification(null, text, 0, true), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
     }
 
     private void notifyWork(String id, String text, int pct) {

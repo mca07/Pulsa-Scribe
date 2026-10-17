@@ -13,6 +13,9 @@
                 android:maxLines="2" android:ellipsize="end" />
             <TextView android:id="@+id/it_meta" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginTop="3dp" android:textColor="?attr/pl_muted" android:textSize="13sp" />
+            <TextView android:id="@+id/it_tags" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" android:textColor="?attr/pl_accent" android:textSize="12sp"
+                android:maxLines="1" android:ellipsize="end" />
             <TextView android:id="@+id/it_preview" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginTop="6dp" android:textColor="?attr/pl_text" android:textSize="14sp"
                 android:maxLines="2" android:ellipsize="end" />

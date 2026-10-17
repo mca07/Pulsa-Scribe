@@ -23,6 +23,13 @@ public final class Transcript {
     public static final int MAX_TERMS = 300;
     public static final int MAX_SPEAKERS = 30;
     public static final int MAX_CHUNKS = 200;
+    public static final int MAX_TAGS = 10;
+    public static final int MAX_TAG = 30;
+    public static final int MAX_QA = 50;
+    public static final int MAX_TRANSLATIONS = 3;
+
+    /** Art der Quelle. */
+    public static final String KIND_AUDIO = "audio", KIND_TEXT = "text", KIND_IMAGE = "image";
 
     public static final class Segment {
         public long startMs;
@@ -80,6 +87,30 @@ public final class Transcript {
     public final List<Segment> segments = new ArrayList<>();
     public final Map<String, String> speakerNames = new LinkedHashMap<>();
     public Summary summary;
+    public String kind = KIND_AUDIO;
+    public String folder = "";                 // Ordner-ID, "" = oberste Ebene
+    public boolean aggregate;                  // Ordner-Auswertung (wird nicht erneut mit ausgewertet)
+    public final List<String> tags = new ArrayList<>();
+    public String template = Templates.STANDARD;
+    public final List<Answer> answers = new ArrayList<>();          // Fragen an das Transkript
+    public final Map<String, Translation> translations = new LinkedHashMap<>(); // Sprachcode → Übersetzung
+
+    /** Frage mit Antwort und Belegstellen (Zeit in ms). */
+    public static final class Answer {
+        public String question, answer;
+        public final List<Long> refs = new ArrayList<>();
+        public long askedMs;
+    }
+
+    /** Übersetzung: ein Text je Abschnitt (gleiche Reihenfolge) und eine übersetzte Zusammenfassung. */
+    public static final class Translation {
+        public final List<String> segments = new ArrayList<>();
+        public Summary summary;
+    }
+
+    public boolean isAudio() {
+        return KIND_AUDIO.equals(kind);
+    }
 
     public boolean isWorking() {
         return RECORDING.equals(status) || QUEUED.equals(status) || PREPARE.equals(status) || TRANSCRIBE.equals(status)
@@ -152,6 +183,29 @@ public final class Transcript {
         m.put("segments", segs);
         m.put("speakers", new LinkedHashMap<>(speakerNames));
         if (summary != null) m.put("summary", summaryToMap(summary));
+        m.put("kind", kind);
+        m.put("folder", folder);
+        m.put("aggregate", aggregate);
+        m.put("tags", new ArrayList<Object>(tags));
+        m.put("template", template);
+        List<Object> qa = new ArrayList<>();
+        for (Answer a : answers) {
+            Map<String, Object> o = new LinkedHashMap<>();
+            o.put("q", a.question);
+            o.put("a", a.answer);
+            o.put("at", a.askedMs);
+            o.put("refs", new ArrayList<Object>(a.refs));
+            qa.add(o);
+        }
+        m.put("qa", qa);
+        Map<String, Object> tr = new LinkedHashMap<>();
+        for (Map.Entry<String, Translation> e : translations.entrySet()) {
+            Map<String, Object> o = new LinkedHashMap<>();
+            o.put("segments", new ArrayList<Object>(e.getValue().segments));
+            if (e.getValue().summary != null) o.put("summary", summaryToMap(e.getValue().summary));
+            tr.put(e.getKey(), o);
+        }
+        m.put("translations", tr);
         return Json.write(m);
     }
 
@@ -249,7 +303,92 @@ public final class Transcript {
             Summary s = summaryFromMap(sum);
             if (s != null && !s.isEmpty()) t.summary = s;
         }
+        String kind = Json.str(m, "kind");
+        t.kind = KIND_TEXT.equals(kind) || KIND_IMAGE.equals(kind) ? kind : KIND_AUDIO;
+        String folder = Json.str(m, "folder");
+        t.folder = folder != null && Text.isId(folder) ? folder : "";
+        t.aggregate = Json.bool(m, "aggregate", false);
+        setTags(t.tags, Json.arr(m, "tags"));
+        t.template = Templates.clean(Json.str(m, "template"));
+        List<Object> qa = Json.arr(m, "qa");
+        if (qa != null) {
+            for (Object o : qa) {
+                if (t.answers.size() >= MAX_QA) break;
+                Answer a = answerFromMap(Json.obj(o), Times.MAX_MS);
+                if (a != null) {
+                    a.askedMs = clamp(Json.num(Json.obj(o), "at", 0), 0, now + 86_400_000L);
+                    t.answers.add(a);
+                }
+            }
+        }
+        Map<String, Object> tr = Json.obj(m, "translations");
+        if (tr != null) {
+            for (Map.Entry<String, Object> e : tr.entrySet()) {
+                if (t.translations.size() >= MAX_TRANSLATIONS) break;
+                String code = Languages.clean(e.getKey());
+                if (Languages.AUTO.equals(code) || t.translations.containsKey(code)) continue;
+                Translation x = translationFromMap(Json.obj(e.getValue()), t.segments.size());
+                if (x != null) t.translations.put(code, x);
+            }
+        }
         // Ein unterbrochener Lauf (App beendet) bleibt nicht als "läuft" stehen – das setzt der Store.
+        return t;
+    }
+
+    /** Schlagwörter: einzeilig, ohne #, max. 10 × 30 Zeichen, keine Doppelten (ohne Groß/Klein). */
+    public static void setTags(List<String> out, List<Object> in) {
+        out.clear();
+        if (in == null) return;
+        for (Object o : in) {
+            if (out.size() >= MAX_TAGS) break;
+            if (!(o instanceof String)) continue;
+            String tag = cleanTag((String) o);
+            if (tag.isEmpty()) continue;
+            boolean dup = false;
+            for (String x : out) if (x.equalsIgnoreCase(tag)) { dup = true; break; }
+            if (!dup) out.add(tag);
+        }
+    }
+
+    public static String cleanTag(String s) {
+        String t = Text.line(s, MAX_TAG + 5).replace("#", "").replace(",", " ").trim();
+        return Text.line(t, MAX_TAG);
+    }
+
+    /** Antwort prüfen (gespeichert oder von Gemini). refs nur innerhalb der Dauer, max. 5. */
+    public static Answer answerFromMap(Map<String, Object> m, long maxMs) {
+        if (m == null) return null;
+        Answer a = new Answer();
+        a.question = Text.line(Json.str(m, "q"), 300);
+        a.answer = Text.block(Json.str(m, "a"), 3000);
+        if (a.question.isEmpty() || a.answer.isEmpty()) return null;
+        List<Object> refs = Json.arr(m, "refs");
+        if (refs != null) {
+            for (Object r : refs) {
+                if (a.refs.size() >= 5) break;
+                long ms = -1;
+                if (r instanceof Double) {
+                    double d = (Double) r;
+                    if (d >= 0 && d <= maxMs) ms = (long) d;
+                } else if (r instanceof String) {
+                    ms = Times.parse((String) r);
+                    if (ms > maxMs) ms = -1;
+                }
+                if (ms >= 0 && !a.refs.contains(ms)) a.refs.add(ms);
+            }
+        }
+        return a;
+    }
+
+    /** Übersetzung prüfen: genau so viele Texte wie Abschnitte, sonst verworfen. */
+    public static Translation translationFromMap(Map<String, Object> m, int segmentCount) {
+        if (m == null) return null;
+        List<Object> segs = Json.arr(m, "segments");
+        if (segs == null || segs.size() != segmentCount) return null;
+        Translation t = new Translation();
+        for (Object o : segs) t.segments.add(o instanceof String ? Text.block((String) o, MAX_TEXT) : "");
+        Summary s = summaryFromMap(Json.obj(m, "summary"));
+        if (s != null && !s.isEmpty()) t.summary = s;
         return t;
     }
 

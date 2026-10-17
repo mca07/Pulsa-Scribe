@@ -53,16 +53,25 @@ final class GeminiClient {
 
     /** Transkriptionsanfrage: Prompt + Audioausschnitt [from, to) der ADTS-Datei. */
     Response audio(String model, String prompt, File audio, long from, long to) throws IOException {
+        return inline(model, Gemini.audioRequestPrefix(prompt, "audio/aac"), audio, from, to, Gemini.audioRequestSuffix());
+    }
+
+    /** Bild (JPEG) lesen. */
+    Response image(String model, String prompt, File jpeg) throws IOException {
+        return inline(model, Gemini.imageRequestPrefix(prompt), jpeg, 0, jpeg.length(), Gemini.imageRequestSuffix());
+    }
+
+    private Response inline(String model, String pre, File file, long from, long to, String post) throws IOException {
         long len = to - from;
         if (len <= 0 || len > MAX_AUDIO_BYTES) throw new IOException("Teil zu groß");
-        byte[] prefix = Gemini.audioRequestPrefix(prompt, "audio/aac").getBytes(StandardCharsets.UTF_8);
-        byte[] suffix = Gemini.audioRequestSuffix().getBytes(StandardCharsets.UTF_8);
+        byte[] prefix = pre.getBytes(StandardCharsets.UTF_8);
+        byte[] suffix = post.getBytes(StandardCharsets.UTF_8);
         long b64 = 4 * ((len + 2) / 3);
         long total = prefix.length + b64 + suffix.length;
         return post(model, total, os -> {
             os.write(prefix);
             OutputStream enc = Base64.getEncoder().wrap(new NonClosing(os));
-            try (RandomAccessFile raf = new RandomAccessFile(audio, "r")) {
+            try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
                 raf.seek(from);
                 byte[] buf = new byte[48 * 1024];
                 long left = len;

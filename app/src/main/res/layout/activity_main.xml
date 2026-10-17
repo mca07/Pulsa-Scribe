@@ -14,8 +14,40 @@
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="@string/main_subtitle" android:textSize="13sp" android:textColor="?attr/pl_header_muted" />
         </LinearLayout>
+        <ImageButton android:id="@+id/main_search" style="@style/HeaderIconButton"
+            android:src="@drawable/ic_search" android:contentDescription="@string/search_all_hint" />
         <ImageButton android:id="@+id/main_settings" style="@style/HeaderIconButton"
             android:src="@drawable/ic_settings" android:contentDescription="@string/settings" />
+    </LinearLayout>
+
+    <!-- Suche über alles -->
+    <LinearLayout android:id="@+id/main_search_bar" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone"
+        android:paddingStart="12dp" android:paddingEnd="4dp" android:paddingTop="8dp">
+        <EditText android:id="@+id/main_search_input" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1"
+            android:background="@drawable/input_bg" android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:hint="@string/search_all_hint" android:inputType="text" android:imeOptions="actionSearch"
+            android:maxLength="60" android:textColor="?attr/pl_text" android:textColorHint="?attr/pl_muted" android:textSize="15sp" />
+        <ImageButton android:id="@+id/main_search_close" android:layout_width="48dp" android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_close"
+            android:tint="?attr/pl_muted" android:contentDescription="@string/close" />
+    </LinearLayout>
+
+    <!-- Ordnerpfad -->
+    <LinearLayout android:id="@+id/main_crumbs_row" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical"
+        android:paddingStart="8dp" android:paddingEnd="4dp" android:paddingTop="6dp">
+        <HorizontalScrollView android:id="@+id/main_crumbs_scroll" android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:scrollbars="none">
+            <LinearLayout android:id="@+id/main_crumbs" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical" />
+        </HorizontalScrollView>
+        <ImageButton android:id="@+id/main_new_folder" android:layout_width="48dp" android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_folder_add"
+            android:contentDescription="@string/folder_new" />
+        <ImageButton android:id="@+id/main_folder_more" android:layout_width="44dp" android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_more"
+            android:contentDescription="@string/more" />
     </LinearLayout>
 
     <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
