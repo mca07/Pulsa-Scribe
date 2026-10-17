@@ -74,7 +74,16 @@ final class Store {
                 if (t == null || !id.equals(t.id)) continue;
                 if (t.audioReady && !audioFile(c, id).isFile()) t.audioReady = false;
                 // Beim Start kann nichts mehr laufen: ein voriger Lauf wurde unterbrochen.
-                if (t.isWorking()) {
+                if (Transcript.RECORDING.equals(t.status)) {
+                    // Aufnahme abgebrochen (App beendet): Bisheriger Ton bleibt nutzbar
+                    File a = audioFile(c, id);
+                    t.audioReady = a.isFile() && a.length() > 1024;
+                    t.cuts = new int[0];
+                    t.chunksDone = 0;
+                    t.status = Transcript.ERROR;
+                    t.error = c.getString(t.audioReady ? R.string.err_rec_interrupted : R.string.err_rec_lost);
+                    write(c, t);
+                } else if (t.isWorking()) {
                     t.status = Transcript.ERROR;
                     t.error = c.getString(R.string.err_interrupted);
                     write(c, t);

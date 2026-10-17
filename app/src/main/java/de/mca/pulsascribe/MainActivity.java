@@ -20,14 +20,12 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.mca.pulsascribe.core.Languages;
 import de.mca.pulsascribe.core.Text;
 import de.mca.pulsascribe.core.Transcript;
 
@@ -43,6 +41,16 @@ public final class MainActivity extends Activity {
     private boolean persistable;
     private String themeName;
     private final Runnable onChange = this::refresh;
+    private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable recTick = new Runnable() {
+        @Override
+        public void run() {
+            if (RecordService.isRecording()) {
+                adapter.notifyDataSetChanged();
+                handler.postDelayed(this, 1000);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle state) {
@@ -56,6 +64,7 @@ public final class MainActivity extends Activity {
         list.setAdapter(adapter);
         findViewById(R.id.main_settings).setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         findViewById(R.id.main_pick).setOnClickListener(v -> pick());
+        findViewById(R.id.main_record).setOnClickListener(v -> startActivity(new Intent(this, RecordActivity.class)));
         if (state != null) {
             String u = state.getString(STATE_PENDING);
             if (u != null) pendingUri = Uri.parse(u);
@@ -76,11 +85,28 @@ public final class MainActivity extends Activity {
         if (!themeName.equals(Design.get(this))) { recreate(); return; }
         Store.addListener(onChange);
         refresh();
+        startPendingRecording(this);
+        handler.removeCallbacks(recTick);
+        handler.postDelayed(recTick, 1000);
+    }
+
+    /** Fertige Aufnahme, die noch auf den Start der Transkription wartet (z. B. automatisch gestoppt). */
+    static void startPendingRecording(Activity a) {
+        String id = RecordService.Pending.take();
+        if (id == null) return;
+        Transcript t = Store.get(a, id);
+        if (t == null || !Transcript.QUEUED.equals(t.status)) return;
+        try {
+            TranscribeService.start(a, id, null);
+        } catch (RuntimeException e) {
+            RecordService.Pending.set(id);
+        }
     }
 
     @Override
     protected void onPause() {
         Store.removeListener(onChange);
+        handler.removeCallbacks(recTick);
         super.onPause();
     }
 
@@ -187,53 +213,20 @@ public final class MainActivity extends Activity {
         }
         String sourceName = Text.line(name, 120);
         LinearLayout col = Ui.column(this);
-        Ui.add(col, Ui.label(this, R.string.start_name));
-        EditText title = Ui.input(this, Text.titleFromFileName(sourceName), Transcript.MAX_TITLE, false);
-        Ui.add(col, title);
-        Ui.add(col, Ui.label(this, R.string.start_lang));
-        final String[] lang = {Settings.language(this)};
-        TextView langRow = Ui.choiceRow(this, Languages.label(lang[0]));
-        langRow.setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.start_lang)
-                .setSingleChoiceItems(Languages.LABELS, Languages.index(lang[0]), (d, w) -> {
-                    lang[0] = Languages.CODES[w];
-                    langRow.setText(Languages.LABELS[w]);
-                    d.dismiss();
-                }).show());
-        Ui.add(col, langRow);
-        Switch diarize = Ui.switchRow(this, R.string.start_diarize, Settings.diarize(this));
-        Switch summary = Ui.switchRow(this, R.string.start_summary, Settings.summarize(this));
-        Switch clean = Ui.switchRow(this, R.string.start_clean, Settings.cleanFillers(this));
-        View gap = new View(this);
-        gap.setMinimumHeight(Ui.dp(this, 6));
-        Ui.add(col, gap);
-        Ui.add(col, diarize);
-        Ui.add(col, summary);
-        Ui.add(col, clean);
-        Ui.add(col, Ui.label(this, R.string.start_terms));
-        EditText terms = Ui.input(this, "", Transcript.MAX_TERMS, false);
-        terms.setHint(R.string.start_terms_hint);
-        Ui.add(col, terms);
+        OptionsForm form = new OptionsForm(this, col, Text.titleFromFileName(sourceName));
         TextView info = Ui.body(this, getString(R.string.start_info));
         info.setTextColor(Design.color(this, R.attr.pl_muted));
         info.setTextSize(13);
         Ui.add(col, info);
         android.widget.ScrollView sc = new android.widget.ScrollView(this);
         sc.addView(col);
+        final boolean keep = persistable;
 
         Ui.dialog(this).setTitle(R.string.start_title).setView(sc)
                 .setPositiveButton(R.string.start_go, (d, w) -> {
-                    Transcript t = new Transcript();
-                    t.id = Store.newId();
-                    String tt = Text.line(title.getText().toString(), Transcript.MAX_TITLE);
-                    t.title = tt.isEmpty() ? Text.titleFromFileName(sourceName) : tt;
-                    t.createdMs = System.currentTimeMillis();
+                    Transcript t = form.build();
                     t.source = sourceName;
-                    if (persistable) t.sourceUri = Transcript.cleanUri(uri.toString());
-                    t.language = Languages.clean(lang[0]);
-                    t.diarize = diarize.isChecked();
-                    t.summarize = summary.isChecked();
-                    t.cleanFillers = clean.isChecked();
-                    t.terms = Text.line(terms.getText().toString(), Transcript.MAX_TERMS);
+                    if (keep) t.sourceUri = Transcript.cleanUri(uri.toString());
                     t.status = Transcript.QUEUED;
                     Store.save(this, t);
                     askNotifications();
@@ -269,6 +262,10 @@ public final class MainActivity extends Activity {
     // ------------------------------------------------------------------ Einträge
 
     private void openItem(Transcript t) {
+        if (Transcript.RECORDING.equals(t.status) && RecordService.isRecording()) {
+            startActivity(new Intent(this, RecordActivity.class));
+            return;
+        }
         startActivity(new Intent(this, TranscriptActivity.class).putExtra(TranscribeService.EXTRA_ID, t.id));
     }
 

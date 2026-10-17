@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="?attr/pl_bg" android:fitsSystemWindows="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/header_bg"
+        android:paddingStart="6dp" android:paddingEnd="16dp" android:paddingTop="6dp" android:paddingBottom="9dp">
+        <ImageButton android:id="@+id/rec_back" style="@style/HeaderIconButton"
+            android:src="@drawable/ic_back" android:contentDescription="@string/back" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:layout_marginStart="6dp" android:text="@string/rec_title" android:textSize="20sp"
+            android:textStyle="bold" android:textColor="?attr/pl_header_text" android:accessibilityHeading="true" />
+    </LinearLayout>
+
+    <!-- Vorbereitung -->
+    <ScrollView android:id="@+id/rec_setup" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <LinearLayout android:id="@+id/rec_form" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="20dp" android:paddingEnd="20dp" android:paddingBottom="20dp">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="14dp" android:background="@drawable/note_bg" android:padding="14dp"
+                android:text="@string/rec_consent_text" android:textColor="?attr/pl_text" android:textSize="14sp"
+                android:lineSpacingMultiplier="1.15" />
+            <CheckBox android:id="@+id/rec_consent" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:minHeight="48dp" android:text="@string/rec_consent"
+                android:textColor="?attr/pl_text" android:textSize="15sp" />
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Läuft -->
+    <LinearLayout android:id="@+id/rec_live" android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+        android:padding="24dp" android:visibility="gone">
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <View android:id="@+id/rec_dot" android:layout_width="14dp" android:layout_height="14dp"
+                android:background="@drawable/rec_dot" />
+            <TextView android:id="@+id/rec_state" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="10dp" android:textColor="?attr/pl_muted" android:textSize="15sp" />
+        </LinearLayout>
+        <TextView android:id="@+id/rec_timer" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:textColor="?attr/pl_text" android:textSize="56sp"
+            android:fontFeatureSettings="tnum" android:accessibilityLiveRegion="none" />
+        <ProgressBar android:id="@+id/rec_level" style="@android:style/Widget.Material.ProgressBar.Horizontal"
+            android:layout_width="240dp" android:layout_height="12dp" android:layout_marginTop="18dp"
+            android:max="100" android:progressDrawable="@drawable/level_bar"
+            android:importantForAccessibility="no" />
+        <TextView android:id="@+id/rec_title_text" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="18dp" android:textColor="?attr/pl_muted" android:textSize="14sp"
+            android:maxLines="2" android:ellipsize="end" android:gravity="center" />
+        <TextView android:id="@+id/rec_hint" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:text="@string/rec_screen_hint" android:textColor="?attr/pl_muted"
+            android:textSize="13sp" android:gravity="center" />
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:background="?attr/pl_surface"
+        android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingTop="12dp" android:paddingBottom="14dp">
+        <Button android:id="@+id/rec_primary" style="@style/Button.Primary"
+            android:layout_width="match_parent" android:layout_height="wrap_content" />
+        <LinearLayout android:id="@+id/rec_secondary_row" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:orientation="horizontal" android:visibility="gone">
+            <Button android:id="@+id/rec_pause" style="@style/Button.Secondary"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
+            <Button android:id="@+id/rec_discard" style="@style/Button.Secondary"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_marginStart="10dp" android:text="@string/rec_discard" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

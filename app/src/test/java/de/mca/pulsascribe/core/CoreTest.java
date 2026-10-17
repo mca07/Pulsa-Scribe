@@ -166,6 +166,31 @@ public class CoreTest {
     }
 
     @Test
+    public void adtsTolerantTailForInterruptedRecording() throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        for (int i = 0; i < 3; i++) {
+            byte[] h = new byte[7];
+            Adts.header(h, 8, 1, 50);
+            bos.write(h);
+            bos.write(new byte[50]);
+        }
+        byte[] h = new byte[7];
+        Adts.header(h, 8, 1, 50);
+        bos.write(h);
+        bos.write(new byte[20]); // abgebrochener letzter Rahmen
+        byte[] data = bos.toByteArray();
+        try {
+            Adts.index(new ByteArrayInputStream(data), 100);
+            throw new AssertionError("abgebrochener Rahmen angenommen");
+        } catch (IOException expected) { }
+        Adts.Index idx = Adts.index(new ByteArrayInputStream(data), 100, true);
+        assertEquals(3, idx.frames);
+        assertEquals(16000, idx.sampleRate);
+        assertEquals(171, idx.offsets[3]);
+        assertEquals(3 * 1024 * 1000L / 16000, idx.durationMs());
+    }
+
+    @Test
     public void adtsFrameLimit() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         for (int i = 0; i < 20; i++) {

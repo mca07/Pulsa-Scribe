@@ -32,9 +32,16 @@
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
         android:orientation="vertical" android:background="?attr/pl_surface"
         android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingTop="12dp" android:paddingBottom="14dp">
-        <Button android:id="@+id/main_pick" style="@style/Button.Primary"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:drawableStart="@drawable/ic_file" android:drawablePadding="10dp" android:drawableTint="?attr/pl_on_accent"
-            android:gravity="center" android:text="@string/pick_file" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <Button android:id="@+id/main_record" style="@style/Button.Secondary"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:minHeight="52dp" android:drawableStart="@drawable/ic_mic" android:drawablePadding="8dp"
+                android:drawableTint="?attr/pl_accent" android:gravity="center" android:text="@string/record" />
+            <Button android:id="@+id/main_pick" style="@style/Button.Primary"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:drawableStart="@drawable/ic_file" android:drawablePadding="8dp" android:drawableTint="?attr/pl_on_accent"
+                android:gravity="center" android:text="@string/pick_file" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

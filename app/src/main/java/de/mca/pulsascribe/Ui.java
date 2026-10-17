@@ -130,6 +130,8 @@ final class Ui {
     static String status(Context c, Transcript t) {
         int[] live = TranscribeService.liveProgress(t.id);
         switch (t.status) {
+            case Transcript.RECORDING:
+                return c.getString(R.string.st_recording, Times.clock(t.id.equals(RecordService.currentId) ? RecordService.recordedMs : 0));
             case Transcript.QUEUED: return c.getString(R.string.st_queued);
             case Transcript.PREPARE:
                 return c.getString(R.string.st_prepare) + (live != null ? " · " + live[1] + " %" : " …");

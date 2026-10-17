@@ -91,6 +91,14 @@ public final class Adts {
      * maxFrames schützt vor riesigen Dateien.
      */
     public static Index index(InputStream in, int maxFrames) throws IOException {
+        return index(in, maxFrames, false);
+    }
+
+    /**
+     * Wie {@link #index(InputStream, int)}; mit tolerantTail endet der Index beim letzten vollständigen
+     * Rahmen, wenn die Datei mitten im Rahmen abbricht (z. B. Aufnahme durch Absturz unterbrochen).
+     */
+    public static Index index(InputStream in, int maxFrames, boolean tolerantTail) throws IOException {
         byte[] h = new byte[HEADER];
         long pos = 0;
         long[] offs = new long[1024];
@@ -99,9 +107,15 @@ public final class Adts {
         while (true) {
             int r = readFully(in, h);
             if (r == 0) break;
-            if (r < HEADER) throw new IOException("Datei endet mitten im Rahmen");
+            if (r < HEADER) {
+                if (tolerantTail) break;
+                throw new IOException("Datei endet mitten im Rahmen");
+            }
             int[] p = parseHeader(h, 0);
-            if (p == null) throw new IOException("Kein gültiger AAC-Rahmen");
+            if (p == null) {
+                if (tolerantTail && n > 0) break; // Rest unbrauchbar, bisheriges bleibt
+                throw new IOException("Kein gültiger AAC-Rahmen");
+            }
             if (rate < 0) rate = rate(p[0]);
             else if (rate(p[0]) != rate) throw new IOException("Abtastrate wechselt");
             if (n + 2 > offs.length) {
@@ -110,16 +124,21 @@ public final class Adts {
                 System.arraycopy(offs, 0, g, 0, n);
                 offs = g;
             }
-            offs[n++] = pos;
             long skip = p[2] - HEADER;
+            boolean cut = false;
             while (skip > 0) {
                 long s = in.skip(skip);
                 if (s <= 0) {
-                    if (in.read() < 0) throw new IOException("Datei endet mitten im Rahmen");
+                    if (in.read() < 0) { cut = true; break; }
                     s = 1;
                 }
                 skip -= s;
             }
+            if (cut) {
+                if (tolerantTail) break;
+                throw new IOException("Datei endet mitten im Rahmen");
+            }
+            offs[n++] = pos;
             pos += p[2];
             if (n > maxFrames) throw new IOException("Zu viele Rahmen");
         }

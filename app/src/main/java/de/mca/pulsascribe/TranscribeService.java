@@ -307,7 +307,7 @@ public final class TranscribeService extends Service {
             // 2) Teile transkribieren
             Adts.Index idx;
             try (InputStream in = new FileInputStream(audio)) {
-                idx = Adts.index(in, 4_000_000);
+                idx = Adts.index(in, 4_000_000, true); // tolerant: unterbrochene Aufnahme bleibt nutzbar
             } catch (IOException e) {
                 fail(t.id, getString(R.string.err_audio_broken));
                 return;

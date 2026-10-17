@@ -12,6 +12,7 @@ import java.util.Map;
  */
 public final class Transcript {
 
+    public static final String RECORDING = "recording";
     public static final String QUEUED = "queued", PREPARE = "prepare", TRANSCRIBE = "transcribe",
             SUMMARY = "summary", DONE = "done", ERROR = "error", CANCELED = "canceled";
 
@@ -75,12 +76,14 @@ public final class Transcript {
     public int chunksDone;
     public String model = "";
     public boolean incomplete;    // ein Teil fehlt (Text wurde trotzdem gespeichert)
+    public boolean recorded;      // in der App aufgenommen (nicht aus einer Datei)
     public final List<Segment> segments = new ArrayList<>();
     public final Map<String, String> speakerNames = new LinkedHashMap<>();
     public Summary summary;
 
     public boolean isWorking() {
-        return QUEUED.equals(status) || PREPARE.equals(status) || TRANSCRIBE.equals(status) || SUMMARY.equals(status);
+        return RECORDING.equals(status) || QUEUED.equals(status) || PREPARE.equals(status) || TRANSCRIBE.equals(status)
+                || SUMMARY.equals(status);
     }
 
     /** Anzeigename eines Sprechers (umbenannt oder wie erkannt). */
@@ -137,6 +140,7 @@ public final class Transcript {
         m.put("chunksDone", chunksDone);
         m.put("model", model);
         m.put("incomplete", incomplete);
+        m.put("recorded", recorded);
         List<Object> segs = new ArrayList<>();
         for (Segment s : segments) {
             Map<String, Object> o = new LinkedHashMap<>();
@@ -216,6 +220,7 @@ public final class Transcript {
         String model = Json.str(m, "model");
         t.model = model != null && model.matches("[a-z0-9.\\-]{1,48}") ? model : "";
         t.incomplete = Json.bool(m, "incomplete", false);
+        t.recorded = Json.bool(m, "recorded", false);
         List<Object> segs = Json.arr(m, "segments");
         if (segs != null) {
             for (Object o : segs) {
@@ -291,7 +296,7 @@ public final class Transcript {
     }
 
     static boolean isStatus(String s) {
-        return QUEUED.equals(s) || PREPARE.equals(s) || TRANSCRIBE.equals(s) || SUMMARY.equals(s)
+        return RECORDING.equals(s) || QUEUED.equals(s) || PREPARE.equals(s) || TRANSCRIBE.equals(s) || SUMMARY.equals(s)
                 || DONE.equals(s) || ERROR.equals(s) || CANCELED.equals(s);
     }
 

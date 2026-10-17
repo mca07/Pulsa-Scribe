@@ -17,8 +17,8 @@
 
     <!-- Hauptseite -->
     <string name="main_subtitle">Videos und Gespräche zu Text</string>
-    <string name="pick_file">Datei transkribieren</string>
-    <string name="empty">Noch keine Transkripte.\n\nTippe auf „Datei transkribieren“ und wähle eine Audio- oder Videodatei – oder teile eine Datei aus einer anderen App mit Pulsa Scribe.</string>
+    <string name="pick_file">Datei wählen</string>
+    <string name="empty">Noch keine Transkripte.\n\nTippe auf „Aufnehmen“ für ein Gespräch oder auf „Datei wählen“ für eine Audio- oder Videodatei – oder teile eine Datei aus einer anderen App mit Pulsa Scribe.</string>
     <string name="item_menu_title">Transkript</string>
     <string name="delete_title">Transkript löschen?</string>
     <string name="delete_text">„%1$s“ wird mit Text, Zusammenfassung und Ton vom Handy gelöscht.</string>
@@ -170,4 +170,34 @@
     <string name="err_summary_empty">Kein Text für eine Zusammenfassung vorhanden.</string>
     <string name="err_no_speech">In der Aufnahme wurde keine Sprache erkannt.</string>
     <string name="err_notif_denied">Ohne Benachrichtigungen siehst du den Fortschritt nur in der App.</string>
+    <!-- Aufnahme -->
+    <string name="record">Aufnehmen</string>
+    <string name="rec_title">Aufnahme</string>
+    <string name="rec_start">Aufnahme starten</string>
+    <string name="rec_stop">Beenden</string>
+    <string name="rec_stop_transcribe">Beenden und transkribieren</string>
+    <string name="rec_pause">Pause</string>
+    <string name="rec_resume">Weiter</string>
+    <string name="rec_discard">Verwerfen</string>
+    <string name="rec_discard_title">Aufnahme verwerfen?</string>
+    <string name="rec_discard_text">Der aufgenommene Ton wird gelöscht.</string>
+    <string name="rec_running">Aufnahme läuft</string>
+    <string name="rec_paused">Pausiert</string>
+    <string name="rec_finishing">Wird gespeichert …</string>
+    <string name="rec_notif_title">Pulsa Scribe nimmt auf</string>
+    <string name="ch_record">Laufende Aufnahme</string>
+    <string name="rec_consent">Alle Beteiligten wissen von der Aufnahme und sind einverstanden.</string>
+    <string name="rec_consent_text">Bitte vor dem Start alle Anwesenden fragen. Heimliches Aufnehmen nicht-öffentlich gesprochener Worte ist in Deutschland strafbar (§ 201 StGB).\n\nTelefonate kann Android nicht direkt aufnehmen – für Telefon- oder Videokonferenzen den Lautsprecher nutzen oder die Aufzeichnung der Konferenz-App als Datei transkribieren.\n\nDer Ton bleibt auf dem Handy, bis du die Aufnahme beendest; dann geht er zur Transkription an Google Gemini.</string>
+    <string name="rec_need_consent">Bitte zuerst das Einverständnis bestätigen.</string>
+    <string name="rec_need_mic">Ohne Mikrofon-Berechtigung ist keine Aufnahme möglich.</string>
+    <string name="rec_screen_hint">Die Aufnahme läuft auch bei ausgeschaltetem Bildschirm weiter.</string>
+    <string name="rec_failed">Die Aufnahme konnte nicht gestartet oder gespeichert werden.</string>
+    <string name="rec_stopped_space">Aufnahme beendet: Der Speicher ist fast voll.</string>
+    <string name="rec_stopped_max">Aufnahme beendet: Höchstdauer von 6 Stunden erreicht.</string>
+    <string name="rec_low_space">Zu wenig freier Speicher für eine Aufnahme (mind. 60 MB).</string>
+    <string name="rec_default_title">Aufnahme %1$s</string>
+    <string name="st_recording">Aufnahme läuft · %1$s</string>
+    <string name="err_rec_interrupted">Die Aufnahme wurde unterbrochen. Der bisherige Ton ist gesichert – „Erneut versuchen“ transkribiert ihn.</string>
+    <string name="err_rec_lost">Die Aufnahme wurde unterbrochen, bevor Ton gespeichert war.</string>
+    <string name="rec_busy">Es läuft bereits eine Aufnahme.</string>
 </resources>

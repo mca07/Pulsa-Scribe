@@ -265,6 +265,17 @@ final class AudioPrep {
             pending[pendingLen++] = (short) v;
         }
 
+        void flush() throws IOException {
+            os.flush();
+        }
+
+        /** Für die Aufnahme: Mono-PCM mit fester Rate, ohne Umrechnung. */
+        static MediaFormat pcmFormat(int rate) {
+            MediaFormat f = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_RAW, rate, 1);
+            f.setInteger(MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_16BIT);
+            return f;
+        }
+
         void endOfInput() {
             inputEnded = true;
         }
