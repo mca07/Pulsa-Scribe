@@ -74,6 +74,7 @@ final class Store {
     private static synchronized void ensureLoaded(Context c) {
         if (loaded) return;
         loaded = true;
+        purgeOld(c, Settings.trashDays(c));
         File ff = foldersFile(c);
         folders = new Folders();
         if (ff.isFile() && ff.length() < MAX_FILE) {
@@ -141,10 +142,13 @@ final class Store {
     }
 
     private static void write(Context c, Transcript t) throws IOException {
-        File f = jsonFile(c, t.id);
+        writeFile(jsonFile(c, t.id), t.toJson());
+    }
+
+    private static void writeFile(File f, String text) throws IOException {
         File tmp = new File(f.getPath() + ".tmp");
         try (FileOutputStream os = new FileOutputStream(tmp)) {
-            os.write(t.toJson().getBytes(StandardCharsets.UTF_8));
+            os.write(text.getBytes(StandardCharsets.UTF_8));
             os.getFD().sync();
         }
         if (!tmp.renameTo(f)) {
@@ -311,5 +315,188 @@ final class Store {
     /** Nur für Fortschrittsanzeigen: meldet ohne zu speichern. */
     static void progress() {
         changed();
+    }
+
+    // ------------------------------------------------------------------ Papierkorb
+
+    /** Eintrag im Papierkorb (nur lesen). */
+    static final class TrashItem {
+        String id, title, kind, folder;
+        long createdMs, durationMs, deletedMs, bytes;
+        boolean audio;
+    }
+
+    private static final String TRASH_INFO = "info.json";
+
+    private static File trashDir(Context c) {
+        File d = new File(c.getApplicationContext().getFilesDir(), "trash");
+        //noinspection ResultOfMethodCallIgnored
+        d.mkdirs();
+        return d;
+    }
+
+    private static File trashItem(Context c, String id) {
+        if (!Text.isId(id)) throw new IllegalArgumentException("id");
+        return new File(trashDir(c), id);
+    }
+
+    /**
+     * In den Papierkorb: JSON, Ton und Bild wandern (umbenennen, kein Kopieren) nach files/trash/&lt;id&gt;/.
+     * Die Dateifreigabe der Quelle bleibt bestehen, damit „Erneut versuchen“ nach dem Wiederherstellen geht.
+     */
+    static synchronized boolean trash(Context c, String id) {
+        ensureLoaded(c);
+        Transcript t = cache.get(id);
+        if (t == null) return false;
+        File d = trashItem(c, id);
+        deleteTree(d);
+        if (!d.mkdirs()) return false;
+        Transcript n = copy(t);
+        if (n.isWorking()) {
+            n.status = Transcript.ERROR;
+            n.error = c.getString(R.string.err_interrupted);
+        }
+        Map<String, Object> info = new java.util.LinkedHashMap<>();
+        info.put("deletedMs", System.currentTimeMillis());
+        info.put("folder", folders.exists(t.folder) ? folders.pathText(t.folder) : "");
+        try {
+            writeFile(new File(d, TRASH_INFO), de.mca.pulsascribe.core.Json.write(info));
+            writeFile(new File(d, id + ".json"), n.toJson());
+        } catch (IOException e) {
+            deleteTree(d);
+            return false;
+        }
+        moveFile(audioFile(c, id), new File(d, id + ".aac"));
+        moveFile(imageFile(c, id), new File(d, id + ".jpg"));
+        //noinspection ResultOfMethodCallIgnored
+        jsonFile(c, id).delete();
+        cache.remove(id);
+        changed();
+        return true;
+    }
+
+    static synchronized List<TrashItem> trashList(Context c) {
+        List<TrashItem> out = new ArrayList<>();
+        File[] dirs = trashDir(c).listFiles();
+        if (dirs == null) return out;
+        for (File d : dirs) {
+            String id = d.getName();
+            if (!d.isDirectory() || !Text.isId(id)) continue;
+            File j = new File(d, id + ".json");
+            if (!j.isFile() || j.length() > MAX_FILE) continue;
+            try {
+                Transcript t = Transcript.fromJson(new String(Files.readAllBytes(j.toPath()), StandardCharsets.UTF_8));
+                if (t == null || !id.equals(t.id)) continue;
+                TrashItem it = new TrashItem();
+                it.id = id;
+                it.title = t.title;
+                it.kind = t.kind;
+                it.createdMs = t.createdMs;
+                it.durationMs = t.durationMs;
+                it.audio = new File(d, id + ".aac").isFile();
+                it.bytes = treeSize(d);
+                it.deletedMs = d.lastModified();
+                it.folder = "";
+                File inf = new File(d, TRASH_INFO);
+                if (inf.isFile() && inf.length() < 64 * 1024) {
+                    Map<String, Object> m = de.mca.pulsascribe.core.Json.obj(de.mca.pulsascribe.core.Json.parse(
+                            new String(Files.readAllBytes(inf.toPath()), StandardCharsets.UTF_8)));
+                    it.deletedMs = de.mca.pulsascribe.core.Json.num(m, "deletedMs", it.deletedMs);
+                    it.folder = Text.line(de.mca.pulsascribe.core.Json.str(m, "folder"), 200);
+                }
+                out.add(it);
+            } catch (Exception ignored) { }
+        }
+        out.sort((a, b) -> Long.compare(b.deletedMs, a.deletedMs));
+        return out;
+    }
+
+    /** Belegter Platz im Papierkorb bzw. aller aktiven Transkripte. */
+    static long trashBytes(Context c) { return treeSize(trashDir(c)); }
+
+    static long activeBytes(Context c) { return treeSize(dir(c)); }
+
+    /** Zurückholen; true = ok. Ordner, den es nicht mehr gibt → oberste Ebene. */
+    static synchronized boolean restore(Context c, String id) {
+        ensureLoaded(c);
+        if (cache.containsKey(id)) return false;
+        File d = trashItem(c, id);
+        File j = new File(d, id + ".json");
+        if (!j.isFile() || j.length() > MAX_FILE) return false;
+        Transcript t;
+        try {
+            t = Transcript.fromJson(new String(Files.readAllBytes(j.toPath()), StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            return false;
+        }
+        if (t == null || !id.equals(t.id)) return false;
+        moveFile(new File(d, id + ".aac"), audioFile(c, id));
+        moveFile(new File(d, id + ".jpg"), imageFile(c, id));
+        if (t.audioReady && !audioFile(c, id).isFile()) t.audioReady = false;
+        if (!folders.exists(t.folder)) t.folder = Folders.ROOT;
+        try {
+            write(c, t);
+        } catch (IOException e) {
+            return false;
+        }
+        cache.put(id, t);
+        deleteTree(d);
+        changed();
+        return true;
+    }
+
+    /** Endgültig löschen (gibt auch die Dateifreigabe der Quelle frei). */
+    static synchronized void purge(Context c, String id) {
+        File d = trashItem(c, id);
+        File j = new File(d, id + ".json");
+        if (j.isFile() && j.length() <= MAX_FILE) {
+            try {
+                Transcript t = Transcript.fromJson(new String(Files.readAllBytes(j.toPath()), StandardCharsets.UTF_8));
+                if (t != null && !t.sourceUri.isEmpty()) {
+                    c.getContentResolver().releasePersistableUriPermission(android.net.Uri.parse(t.sourceUri),
+                            android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
+            } catch (Exception ignored) { }
+        }
+        deleteTree(d);
+        changed();
+    }
+
+    static synchronized void emptyTrash(Context c) {
+        for (TrashItem it : trashList(c)) purge(c, it.id);
+        deleteTree(trashDir(c)); // auch Reste unlesbarer Einträge
+        changed();
+    }
+
+    /** Ältere Einträge als days Tage endgültig löschen; days &lt;= 0 = nie. */
+    static synchronized void purgeOld(Context c, int days) {
+        if (days <= 0) return;
+        long limit = System.currentTimeMillis() - days * 86_400_000L;
+        for (TrashItem it : trashList(c)) if (it.deletedMs < limit) purge(c, it.id);
+    }
+
+    private static void moveFile(File from, File to) {
+        if (!from.isFile()) return;
+        //noinspection ResultOfMethodCallIgnored
+        to.delete();
+        if (!from.renameTo(to)) {
+            //noinspection ResultOfMethodCallIgnored
+            from.delete();
+        }
+    }
+
+    private static long treeSize(File f) {
+        if (f.isFile()) return f.length();
+        File[] l = f.listFiles();
+        long n = 0;
+        if (l != null) for (File x : l) n += treeSize(x);
+        return n;
+    }
+
+    private static void deleteTree(File f) {
+        File[] l = f.listFiles();
+        if (l != null) for (File x : l) deleteTree(x);
+        //noinspection ResultOfMethodCallIgnored
+        f.delete();
     }
 }

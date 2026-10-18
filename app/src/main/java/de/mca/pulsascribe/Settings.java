@@ -84,4 +84,13 @@ final class Settings {
 
     static boolean todoistAuto(Context c) { return p(c).getBoolean("todoist_auto", false); }
     static void setTodoistAuto(Context c, boolean v) { p(c).edit().putBoolean("todoist_auto", v).apply(); }
+
+    /** Papierkorb automatisch leeren nach … Tagen (0 = nie). */
+    static final int[] TRASH_DAYS = {7, 30, 90, 0};
+    static int trashDays(Context c) {
+        int d = p(c).getInt("trash_days", 30);
+        for (int x : TRASH_DAYS) if (x == d) return d;
+        return 30;
+    }
+    static void setTrashDays(Context c, int d) { p(c).edit().putInt("trash_days", d).apply(); }
 }

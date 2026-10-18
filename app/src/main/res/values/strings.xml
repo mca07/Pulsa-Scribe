@@ -21,7 +21,7 @@
     <string name="empty">Noch keine Transkripte.\n\nTippe auf „Aufnehmen“ für ein Gespräch oder auf „Datei wählen“ für eine Audio- oder Videodatei – oder teile eine Datei aus einer anderen App mit Pulsa Scribe.</string>
     <string name="item_menu_title">Transkript</string>
     <string name="delete_title">Transkript löschen?</string>
-    <string name="delete_text">„%1$s“ wird mit Text, Zusammenfassung und Ton vom Handy gelöscht.</string>
+    <string name="delete_text">„%1$s“ wird mit Text, Zusammenfassung und Ton in den Papierkorb verschoben. Dort kannst du es wiederherstellen.</string>
     <string name="speakers_n">%1$d Sprecher</string>
 
     <!-- Status -->
@@ -51,7 +51,7 @@
     <string name="start_set_key">Schlüssel hinterlegen</string>
 
     <string name="hint_title">Kurz vorab</string>
-    <string name="hint_text">• Pulsa Scribe sendet die Tonspur zur Transkription an Google Gemini (mit deinem eigenen Schlüssel). Kunden-, Personal- oder andere vertrauliche Gespräche nur, wenn das für dich und die Beteiligten in Ordnung ist.\n\n• Gespräche nur mit Einverständnis aller Beteiligten aufnehmen und transkribieren. Heimliches Aufnehmen nicht-öffentlich gesprochener Worte ist in Deutschland strafbar (§ 201 StGB).\n\n• Mit dem kostenlosen Kontingent gelten die Bedingungen von Google für die Gemini API. Für Kundendaten die bezahlte Variante und eine Vereinbarung zur Auftragsverarbeitung nutzen.\n\n• Transkripte und Ton bleiben auf deinem Handy. Der Ton wird direkt in der Anfrage gesendet und nicht als Datei bei Google abgelegt; wie Google Anfragen verarbeitet, regeln die Bedingungen der Gemini API.</string>
+    <string name="hint_text">• Pulsa Scribe sendet die Tonspur zur Transkription an Google Gemini (mit deinem eigenen Schlüssel). Kunden-, Personal- oder andere vertrauliche Gespräche nur, wenn das für dich und die Beteiligten in Ordnung ist.\n\n• Gespräche nur mit Einverständnis aller Beteiligten aufnehmen und transkribieren. Heimliches Aufnehmen nicht-öffentlich gesprochener Worte ist in Deutschland strafbar (§ 201 StGB).\n\n• Mit dem kostenlosen Kontingent gelten die Bedingungen von Google für die Gemini API. Für Kundendaten die bezahlte Variante und eine Vereinbarung zur Auftragsverarbeitung nutzen.\n\n• Transkripte und Ton bleiben auf deinem Handy. Der Ton wird direkt in der Anfrage gesendet und nicht als Datei bei Google abgelegt; wie Google Anfragen verarbeitet, regeln die Bedingungen der Gemini API.\n\n• Gelöschte Transkripte liegen bis zum endgültigen Löschen im Papierkorb (Standard: 30 Tage) weiterhin auf dem Handy.</string>
     <string name="hint_ok">Verstanden</string>
 
     <!-- Transkript -->
@@ -136,7 +136,7 @@
     <string name="set_delete_all">Alle Transkripte löschen</string>
     <string name="set_delete_all_sub">Löscht Texte, Zusammenfassungen und Ton auf diesem Gerät.</string>
     <string name="delete_all_title">Alle Transkripte löschen?</string>
-    <string name="delete_all_text">Das kann nicht rückgängig gemacht werden.</string>
+    <string name="delete_all_text">Alle Transkripte und der Papierkorb werden endgültig gelöscht. Das kann nicht rückgängig gemacht werden.</string>
     <string name="deleted_all">Alles gelöscht</string>
     <string name="set_about">Version</string>
     <string name="busy_delete_all">Bitte zuerst laufende Transkriptionen abbrechen.</string>
@@ -352,9 +352,9 @@
     <string name="sel_close">Auswahl beenden</string>
     <string name="sel_move">Ausgewählte verschieben</string>
     <string name="sel_delete">Ausgewählte löschen</string>
-    <string name="sel_delete_title">%1$d Transkripte löschen?</string>
-    <string name="sel_delete_text">Die ausgewählten Transkripte werden mit Text, Zusammenfassung und Ton vom Handy gelöscht. Laufende Transkriptionen werden abgebrochen.</string>
-    <string name="sel_deleted">%1$d gelöscht</string>
+    <string name="sel_delete_title">%1$d Transkripte in den Papierkorb?</string>
+    <string name="sel_delete_text">Die ausgewählten Transkripte werden mit Text, Zusammenfassung und Ton in den Papierkorb verschoben und können dort wiederhergestellt werden. Laufende Transkriptionen werden abgebrochen, eine laufende Aufnahme wird verworfen.</string>
+    <string name="sel_deleted">%1$d in den Papierkorb verschoben</string>
     <string name="sel_moved">%1$d verschoben nach %2$s</string>
     <string name="sel_hint">Antippen zum Auswählen</string>
     <string name="sum_length">Länge der Zusammenfassung</string>
@@ -415,4 +415,51 @@
     <string name="td_send_one">An Todoist senden</string>
     <string name="td_send_all">Offene Aufgaben an Todoist senden</string>
     <string name="td_linked">Todoist ✓</string>
+    <!-- Papierkorb (1.11) -->
+    <string name="trash_title">Papierkorb</string>
+    <string name="to_trash">In den Papierkorb</string>
+    <string name="trashed_one">In den Papierkorb verschoben</string>
+    <string name="trash_empty_short">Leer</string>
+    <string name="trash_empty_long">Der Papierkorb ist leer.</string>
+    <plurals name="trash_summary">
+        <item quantity="one">%1$d Eintrag · %2$s</item>
+        <item quantity="other">%1$d Einträge · %2$s</item>
+    </plurals>
+    <string name="trash_share">Papierkorb %1$s von insgesamt %2$s, die Pulsa Scribe für Transkripte belegt</string>
+    <plurals name="trash_auto">
+        <item quantity="one">Einträge werden nach %1$d Tag endgültig gelöscht.</item>
+        <item quantity="other">Einträge werden nach %1$d Tagen endgültig gelöscht.</item>
+    </plurals>
+    <string name="trash_auto_never">Einträge bleiben, bis du sie endgültig löschst.</string>
+    <string name="trash_days">Papierkorb automatisch leeren</string>
+    <plurals name="trash_after_days">
+        <item quantity="one">nach %1$d Tag</item>
+        <item quantity="other">nach %1$d Tagen</item>
+    </plurals>
+    <string name="trash_never">nie</string>
+    <string name="trash_deleted_at">Gelöscht am</string>
+    <string name="trash_size">Größe</string>
+    <string name="trash_with_audio">mit Ton</string>
+    <string name="trash_duration">Dauer</string>
+    <string name="trash_created">Erstellt am</string>
+    <string name="trash_folder">War in Ordner</string>
+    <string name="trash_until">Endgültig gelöscht am</string>
+    <string name="trash_restore">Wiederherstellen</string>
+    <string name="trash_restore_all">Alle wiederherstellen</string>
+    <string name="trash_restored">Wiederhergestellt</string>
+    <plurals name="trash_restored_n">
+        <item quantity="one">%1$d wiederhergestellt</item>
+        <item quantity="other">%1$d wiederhergestellt</item>
+    </plurals>
+    <string name="trash_restore_failed">Konnte nicht wiederhergestellt werden.</string>
+    <string name="trash_purge">Endgültig löschen</string>
+    <string name="trash_purge_title">„%1$s“ endgültig löschen?</string>
+    <string name="trash_purge_text">Text, Zusammenfassung und Ton werden vom Handy gelöscht. Das kann nicht rückgängig gemacht werden.</string>
+    <string name="trash_empty">Leeren</string>
+    <string name="trash_empty_title">Papierkorb leeren?</string>
+    <plurals name="trash_empty_text">
+        <item quantity="one">%1$d Eintrag (%2$s) wird endgültig gelöscht. Das kann nicht rückgängig gemacht werden.</item>
+        <item quantity="other">%1$d Einträge (%2$s) werden endgültig gelöscht. Das kann nicht rückgängig gemacht werden.</item>
+    </plurals>
+    <string name="trash_emptied">Papierkorb geleert</string>
 </resources>

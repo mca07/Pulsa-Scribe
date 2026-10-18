@@ -173,6 +173,21 @@
             </LinearLayout>
             <TextView style="@style/SettingsHeader" android:text="@string/set_sec_data" />
             <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_trash" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/trash_title" />
+                        <TextView android:id="@+id/trash_status" style="@style/SettingsSub" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_trash_days" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/trash_days" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/trash_days_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:textColor="?attr/pl_accent" android:textSize="14sp" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
                 <LinearLayout android:id="@+id/row_backup" style="@style/SettingsRow">
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                         <TextView style="@style/SettingsTitle" android:text="@string/backup_create" />

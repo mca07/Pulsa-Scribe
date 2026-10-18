@@ -142,3 +142,15 @@ Mit Todoist:
 - [ ] Schalter „Neue Aufgaben automatisch senden“ an → neues Gespräch → Aufgaben landen ohne Knopfdruck in Todoist
 - [ ] Flugmodus → Senden → „Todoist nicht erreichbar“, App bleibt bedienbar
 - [ ] „Todoist-Token“ → „Entfernen“ → Knöpfe für Todoist verschwinden
+
+## 17. Papierkorb (neu in 1.11)
+- [ ] Transkript löschen (⋮ oder lange drücken → Papierkorb-Symbol) → Rückfrage „In den Papierkorb“ → verschwindet aus der Liste
+- [ ] Startbildschirm: graues Papierkorb-Symbol neben „Neuer Ordner“ → Papierkorb öffnet
+- [ ] Oben: belegter Platz (z. B. „45,2 MB“), Anzahl Einträge, Balken „Papierkorb … von insgesamt …“, Hinweis „nach 30 Tagen endgültig gelöscht“
+- [ ] Pro Eintrag: Gelöscht am, Größe (mit Ton), Dauer, Erstellt am, War in Ordner, Endgültig gelöscht am
+- [ ] „Wiederherstellen“ → wieder im ursprünglichen Ordner (Ordner inzwischen gelöscht → oberste Ebene), Ton abspielbar, Zusammenfassung/Aufgaben/Haken da
+- [ ] „Endgültig löschen“ und „Leeren“ fragen nach und löschen dann wirklich; Größe sinkt
+- [ ] Einstellungen → Daten: „Papierkorb“ zeigt Anzahl und Größe; „Papierkorb automatisch leeren“ (7 / 30 / 90 Tage / nie)
+- [ ] Gelöschte Transkripte tauchen nicht in Suche, Aufgaben-Übersicht, Widget oder Datensicherung auf
+- [ ] Während einer laufenden Transkription löschen → Abbruch, im Papierkorb; nach Wiederherstellen „Erneut versuchen“ möglich
+- [ ] Einstellungen → „Alles löschen“ leert auch den Papierkorb

@@ -107,6 +107,7 @@ public final class MainActivity extends Activity {
         findViewById(R.id.main_new_folder).setOnClickListener(v -> FolderPicker.create(this, folder, id -> refresh()));
         findViewById(R.id.main_folder_more).setOnClickListener(this::folderHeaderMenu);
         findViewById(R.id.main_search).setOnClickListener(v -> openSearch());
+        findViewById(R.id.main_trash).setOnClickListener(v -> startActivity(new Intent(this, TrashActivity.class)));
         findViewById(R.id.main_tasks).setOnClickListener(v -> startActivity(new Intent(this, TasksActivity.class)));
         findViewById(R.id.main_search_close).setOnClickListener(v -> closeSearch());
         searchInput.addTextChangedListener(new TextWatcher() {
@@ -667,15 +668,9 @@ public final class MainActivity extends Activity {
         Transcript t = Store.get(a, id);
         if (t == null) return;
         Ui.dialog(a).setTitle(R.string.delete_title).setMessage(a.getString(R.string.delete_text, t.title))
-                .setPositiveButton(R.string.delete, (d, w) -> {
+                .setPositiveButton(R.string.to_trash, (d, w) -> {
                     if (t.isWorking()) TranscribeService.cancel(a, id);
-                    if (!t.sourceUri.isEmpty()) {
-                        try {
-                            a.getContentResolver().releasePersistableUriPermission(Uri.parse(t.sourceUri),
-                                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        } catch (RuntimeException ignored) { }
-                    }
-                    Store.delete(a, id);
+                    if (Store.trash(a, id)) Toast.makeText(a, R.string.trashed_one, Toast.LENGTH_SHORT).show();
                     if (after != null) after.run();
                 })
                 .setNegativeButton(R.string.cancel, null).show();
@@ -794,23 +789,19 @@ public final class MainActivity extends Activity {
         if (selected.isEmpty()) return;
         List<String> ids = new ArrayList<>(selected);
         Ui.dialog(this).setTitle(getString(R.string.sel_delete_title, ids.size())).setMessage(R.string.sel_delete_text)
-                .setPositiveButton(R.string.delete, (d, w) -> {
+                .setPositiveButton(R.string.to_trash, (d, w) -> {
                     int n = 0;
                     for (String id : ids) {
                         Transcript t = Store.get(this, id);
                         if (t == null) continue;
-                        if (t.isWorking()) {
-                            if (Transcript.RECORDING.equals(t.status)) RecordService.command(this, RecordService.ACTION_DISCARD);
-                            else TranscribeService.cancel(this, id);
+                        if (Transcript.RECORDING.equals(t.status)) {
+                            // Laufende Aufnahme wird verworfen (nicht in den Papierkorb)
+                            RecordService.command(this, RecordService.ACTION_DISCARD);
+                            n++;
+                            continue;
                         }
-                        if (!t.sourceUri.isEmpty()) {
-                            try {
-                                getContentResolver().releasePersistableUriPermission(Uri.parse(t.sourceUri),
-                                        Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            } catch (RuntimeException ignored) { }
-                        }
-                        Store.delete(this, id);
-                        n++;
+                        if (t.isWorking()) TranscribeService.cancel(this, id);
+                        if (Store.trash(this, id)) n++;
                     }
                     selected.clear();
                     Toast.makeText(this, getString(R.string.sel_deleted, n), Toast.LENGTH_SHORT).show();

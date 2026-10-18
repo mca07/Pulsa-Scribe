@@ -133,9 +133,22 @@ public final class SettingsActivity extends Activity {
             Ui.dialog(this).setTitle(R.string.delete_all_title).setMessage(R.string.delete_all_text)
                     .setPositiveButton(R.string.delete, (d, w) -> {
                         for (Transcript t : Store.all(this)) Store.delete(this, t.id);
+                        Store.emptyTrash(this);
                         Toast.makeText(this, R.string.deleted_all, Toast.LENGTH_SHORT).show();
                     }).setNegativeButton(R.string.cancel, null).show();
         });
+
+        findViewById(R.id.row_trash).setOnClickListener(v -> startActivity(new Intent(this, TrashActivity.class)));
+        TextView trashDays = findViewById(R.id.trash_days_value);
+        trashDays.setText(trashDaysLabels()[trashDaysIndex()]);
+        findViewById(R.id.row_trash_days).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.trash_days)
+                .setSingleChoiceItems(trashDaysLabels(), trashDaysIndex(), (d, w) -> {
+                    Settings.setTrashDays(this, Settings.TRASH_DAYS[w]);
+                    trashDays.setText(trashDaysLabels()[w]);
+                    Store.purgeOld(this, Settings.TRASH_DAYS[w]);
+                    updateTrash();
+                    d.dismiss();
+                }).setNegativeButton(R.string.cancel, null).show());
 
         findViewById(R.id.row_backup).setOnClickListener(v -> backupDialog());
         findViewById(R.id.row_restore).setOnClickListener(v -> {
@@ -305,6 +318,7 @@ public final class SettingsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        updateTrash();
         handler.post(modelTick);
     }
 
@@ -414,6 +428,28 @@ public final class SettingsActivity extends Activity {
         s.setChecked(value);
         s.setOnCheckedChangeListener((b, on) -> t.set(on));
         findViewById(rowId).setOnClickListener(v -> s.toggle());
+    }
+
+    private String[] trashDaysLabels() {
+        String[] l = new String[Settings.TRASH_DAYS.length];
+        for (int i = 0; i < l.length; i++) {
+            int d = Settings.TRASH_DAYS[i];
+            l[i] = d == 0 ? getString(R.string.trash_never) : getResources().getQuantityString(R.plurals.trash_after_days, d, d);
+        }
+        return l;
+    }
+
+    private int trashDaysIndex() {
+        int d = Settings.trashDays(this);
+        for (int i = 0; i < Settings.TRASH_DAYS.length; i++) if (Settings.TRASH_DAYS[i] == d) return i;
+        return 1;
+    }
+
+    private void updateTrash() {
+        int n = Store.trashList(this).size();
+        ((TextView) findViewById(R.id.trash_status)).setText(n == 0 ? getString(R.string.trash_empty_short)
+                : getResources().getQuantityString(R.plurals.trash_summary, n, n,
+                android.text.format.Formatter.formatShortFileSize(this, Store.trashBytes(this))));
     }
 
     private void updateTodoist() {

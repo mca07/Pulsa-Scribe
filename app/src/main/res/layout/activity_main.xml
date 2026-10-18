@@ -69,6 +69,9 @@
             <LinearLayout android:id="@+id/main_crumbs" android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:gravity="center_vertical" />
         </HorizontalScrollView>
+        <ImageButton android:id="@+id/main_trash" android:layout_width="44dp" android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_delete"
+            android:tint="?attr/pl_muted" android:contentDescription="@string/trash_title" />
         <ImageButton android:id="@+id/main_new_folder" android:layout_width="48dp" android:layout_height="48dp"
             android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_folder_add"
             android:contentDescription="@string/folder_new" />

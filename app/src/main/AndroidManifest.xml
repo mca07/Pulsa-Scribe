@@ -58,6 +58,10 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".TrashActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".TasksActivity"
             android:exported="false" />
 

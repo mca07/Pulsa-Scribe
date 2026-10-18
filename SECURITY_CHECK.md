@@ -154,6 +154,15 @@
 - ✅ Teilen an andere Aufgaben-Apps nur per Android-Teilen-Dialog durch Nutzeraktion
 - ✅ Unit-Tests `taskStateRoundTripAndCarry`, `todoistRequestsAndReplies`
 
+## 9h. Papierkorb (ab 1.11)
+- ✅ Nur im privaten App-Speicher (files/trash/<id>/), Dateien werden umbenannt statt kopiert – kein zusätzlicher Speicherort, kein externer Speicher
+- ✅ Ordnernamen werden per `Text.isId` geprüft, bevor daraus Pfade entstehen; Inhalte beim Lesen wie immer über `Transcript.fromJson` validiert, Infodatei max. 64 KB
+- ✅ Automatisches endgültiges Löschen (Standard 30 Tage, wählbar 7/30/90/nie) beim App-Start; endgültiges Löschen gibt auch die Dateifreigabe der Quelle frei
+- ✅ „Alles löschen“ leert den Papierkorb mit (DSGVO: vollständige Löschung möglich)
+- ✅ Papierkorb ist nicht in Datensicherung, Suche, Aufgaben, Widget oder Todoist-Abgleich enthalten
+- ✅ Endgültiges Löschen und Leeren nur nach Rückfrage
+- ⚠️ Gelöschte Inhalte bleiben bis zum endgültigen Löschen auf dem Handy – im Datenschutzhinweis erwähnt
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB
