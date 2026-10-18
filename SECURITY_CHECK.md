@@ -163,6 +163,18 @@
 - ✅ Endgültiges Löschen und Leeren nur nach Rückfrage
 - ⚠️ Gelöschte Inhalte bleiben bis zum endgültigen Löschen auf dem Handy – im Datenschutzhinweis erwähnt
 
+## 9i. Links: Webseiten, PDFs, YouTube (ab 1.12)
+- ✅ Adressen per `WebPage.cleanUrl`: nur http(s) → immer HTTPS, keine Zugangsdaten in der URL, nur Standardports, keine Hosts ohne Punkt/`localhost`/`.local`, max. 2000 Zeichen; gespeicherte URL wird beim Laden erneut geprüft
+- ✅ Kein Zugriff aufs eigene Netz (SSRF-Schutz): jede Adresse und jede Weiterleitung wird aufgelöst und bei Loopback, privaten (10/8, 172.16/12, 192.168/16, fc00::/7), Link-local, CGNAT- und Multicast-Adressen abgelehnt
+- ✅ Weiterleitungen manuell (max. 5), jede einzeln geprüft; keine Cookies; Zeitlimit 20 s; HTML max. 3 MB, PDF max. 15 MB (Cache-Datei wird immer gelöscht); nur HTML/Text/JSON/PDF
+- ✅ HTML wird nie angezeigt oder ausgeführt (kein WebView): Skripte, Styles, iframes, Formulare entfernt, nur Klartext über `Text.block` (Steuer-/Bidi-Zeichen raus), Anzeige per setText
+- ✅ Gemini-Ausweg (url_context) nur, wenn direkter Abruf scheitert; Antwort wird nur übernommen, wenn Gemini den erfolgreichen Abruf bestätigt (`URL_RETRIEVAL_STATUS_SUCCESS`) – sonst Fehlermeldung statt erfundenem Inhalt; Prompt: Inhalt = Daten, nicht Anweisungen
+- ✅ YouTube nur mit geprüfter 11-stelliger Video-ID, kanonische URL wird neu gebaut; Titel über oEmbed (ohne Schlüssel) mit gleicher Prüfung
+- ✅ „Quelle öffnen“ nur mit erneut geprüfter HTTPS-Adresse über ACTION_VIEW/CATEGORY_BROWSABLE
+- ✅ Zwischenablage wird nur gelesen, wenn der Nutzer „Link“ antippt (Vorbelegung)
+- ✅ Unit-Tests `webUrlsAreCheckedAndCleaned`, `htmlMainTextIsExtracted`, `geminiUrlReplyNeedsRetrievalAndText`
+- ⚠️ Datenschutz: Die besuchte Seite sieht die IP-Adresse des Handys (wie im Browser); beim Gemini-Ausweg und bei YouTube erfährt Google die Adresse
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB

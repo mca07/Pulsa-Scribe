@@ -455,4 +455,83 @@ public class FeatureTest {
         assertEquals("", Todoist.nextCursor("{\"next_cursor\":null}"));
         assertEquals("", Todoist.findProject("{\"results\":[]}"));
     }
+
+    @Test
+    public void webUrlsAreCheckedAndCleaned() {
+        assertEquals("https://heise.de/news?x=1", WebPage.cleanUrl("http://heise.de/news?x=1#frag"));
+        assertEquals("https://example.com/", WebPage.cleanUrl("https://Example.com"));
+        assertNull(WebPage.cleanUrl("javascript:alert(1)"));
+        assertNull(WebPage.cleanUrl("file:///etc/passwd"));
+        assertNull(WebPage.cleanUrl("https://user:pw@example.com/"));
+        assertNull(WebPage.cleanUrl("https://localhost/x"));
+        assertNull(WebPage.cleanUrl("https://192.168.0.1:8080/"));
+        assertNull(WebPage.cleanUrl("https://router/"));
+        assertNull(WebPage.cleanUrl("https://exa mple.com/"));
+        assertEquals("https://www.spiegel.de/a.html", WebPage.findUrl("Schau mal: https://www.spiegel.de/a.html."));
+        assertNull(WebPage.findUrl("kein Link hier"));
+        assertEquals("dQw4w9WgXcQ", WebPage.youTubeId("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10s"));
+        assertEquals("dQw4w9WgXcQ", WebPage.youTubeId("https://youtu.be/dQw4w9WgXcQ?si=abc"));
+        assertEquals("dQw4w9WgXcQ", WebPage.youTubeId("https://m.youtube.com/shorts/dQw4w9WgXcQ"));
+        assertEquals("", WebPage.youTubeId("https://evil-youtube.com/watch?v=dQw4w9WgXcQ"));
+        assertEquals("", WebPage.youTubeId("https://www.youtube.com/watch?v=../../x"));
+        assertEquals("spiegel.de", WebPage.host("https://www.spiegel.de/a"));
+        // URL wird beim Laden geprüft
+        Transcript t = new Transcript();
+        t.id = "abcdefgh12";
+        t.kind = Transcript.KIND_WEB;
+        t.url = "https://heise.de/";
+        Transcript r = Transcript.fromJson(t.toJson());
+        assertEquals(Transcript.KIND_WEB, r.kind);
+        assertEquals("https://heise.de/", r.url);
+        Transcript bad = Transcript.fromJson(t.toJson().replace("https://heise.de/", "javascript:x"));
+        assertEquals("", bad.url);
+    }
+
+    @Test
+    public void htmlMainTextIsExtracted() {
+        StringBuilder art = new StringBuilder();
+        for (int i = 0; i < 6; i++) art.append("<p>Dies ist Absatz Nummer ").append(i).append(" mit genug Text, damit er als Inhalt z&auml;hlt &amp; bleibt.</p>");
+        String html = "<html><head><title>Fallback</title><meta property=\"og:title\" content=\"Gro&szlig;e Nachricht\">"
+                + "<script>alert('x')</script><style>p{}</style></head><body>"
+                + "<nav><a href=/>Startseite</a> <a>Login</a></nav>"
+                + "<div class=cookie><p>Wir verwenden Cookies. Bitte akzeptieren Sie alle Cookies für die beste Erfahrung.</p></div>"
+                + "<article><h1>Große Nachricht</h1>" + art + "<ul><li>Erster wichtiger Punkt der Liste</li></ul></article>"
+                + "<footer>Impressum Datenschutz Kontakt und noch mehr Text im Fuß</footer></body></html>";
+        WebPage.Page p = WebPage.extract(html);
+        assertEquals("Große Nachricht", p.title);
+        assertEquals(7, p.paragraphs.size());
+        assertTrue(p.paragraphs.get(0).startsWith("Dies ist Absatz Nummer 0"));
+        assertTrue(p.paragraphs.get(0).contains("zählt & bleibt"));
+        assertEquals("• Erster wichtiger Punkt der Liste", p.paragraphs.get(6));
+        for (String x : p.paragraphs) {
+            assertFalse(x.contains("alert"));
+            assertFalse(x.contains("Cookies"));
+            assertFalse(x.contains("Impressum"));
+            assertFalse(x.contains("<"));
+        }
+        assertTrue(p.length() >= WebPage.MIN_TEXT);
+        // Nur Cookie-Wand → zu wenig Text
+        assertTrue(WebPage.extract("<body><p>Bitte akzeptieren Sie Cookies, um fortzufahren und die Seite zu sehen.</p></body>").length() < WebPage.MIN_TEXT);
+        assertEquals("ISO-8859-1", WebPage.charset("text/html; charset=ISO-8859-1", null));
+        assertEquals("windows-1252", WebPage.charset(null, "<meta charset=\"windows-1252\">".getBytes()));
+        assertEquals("UTF-8", WebPage.charset("text/html; charset=bogus", null));
+    }
+
+    @Test
+    public void geminiUrlReplyNeedsRetrievalAndText() {
+        assertNull(WebPage.parseUrlReply("NO_ACCESS"));
+        assertNull(WebPage.parseUrlReply("  "));
+        WebPage.Page p = WebPage.parseUrlReply("TITLE: Test Seite\n\nErster Absatz.\n\nZweiter Absatz.");
+        assertEquals("Test Seite", p.title);
+        assertEquals(2, p.paragraphs.size());
+        String ok = "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}]},\"urlContextMetadata\":{\"urlMetadata\":"
+                + "[{\"retrievedUrl\":\"https://a.de\",\"urlRetrievalStatus\":\"URL_RETRIEVAL_STATUS_SUCCESS\"}]}}]}";
+        assertTrue(Gemini.reply(ok).urlRetrieved);
+        assertFalse(Gemini.reply(ok.replace("STATUS_SUCCESS", "STATUS_ERROR")).urlRetrieved);
+        assertFalse(Gemini.reply("{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}]}}]}").urlRetrieved);
+        String body = WebPage.urlRequest(WebPage.urlPrompt("https://a.de/", "de"));
+        assertTrue(body.contains("\"tools\":[{\"url_context\":{}}]"));
+        String yt = WebPage.youTubeRequest("p", WebPage.youTubeUrl("dQw4w9WgXcQ"));
+        assertTrue(yt.contains("\"fileUri\":\"https://www.youtube.com/watch?v=dQw4w9WgXcQ\""));
+    }
 }

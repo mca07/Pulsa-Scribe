@@ -39,6 +39,7 @@ import de.mca.pulsascribe.core.Gemini;
 import de.mca.pulsascribe.core.Search;
 import de.mca.pulsascribe.core.Text;
 import de.mca.pulsascribe.core.Transcript;
+import de.mca.pulsascribe.core.WebPage;
 
 /** Ordner und Transkripte, Datei wählen, Suche über alles, Teilen-Ziel. */
 public final class MainActivity extends Activity {
@@ -102,6 +103,7 @@ public final class MainActivity extends Activity {
         list.setAdapter(adapter);
         findViewById(R.id.main_settings).setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         findViewById(R.id.main_pick).setOnClickListener(v -> pick());
+        findViewById(R.id.main_link).setOnClickListener(v -> askLink());
         findViewById(R.id.main_record).setOnClickListener(v ->
                 startActivity(new Intent(this, RecordActivity.class).putExtra(EXTRA_FOLDER, folder)));
         findViewById(R.id.main_new_folder).setOnClickListener(v -> FolderPicker.create(this, folder, id -> refresh()));
@@ -390,8 +392,12 @@ public final class MainActivity extends Activity {
             String s = text.toString();
             String trimmed = s.trim();
             if (trimmed.isEmpty()) { Toast.makeText(this, R.string.share_empty, Toast.LENGTH_LONG).show(); return; }
-            if (trimmed.matches("(?s)https?://\\S+") || (trimmed.length() < 300 && trimmed.split("\\s+").length <= 3 && trimmed.contains("http"))) {
-                Ui.dialog(this).setMessage(R.string.share_link_only).setPositiveButton(R.string.ok, null).show();
+            String link = WebPage.findUrl(trimmed);
+            if (link != null && (trimmed.length() < 500 || trimmed.matches("(?s)https?://\\S+"))) {
+                // Geteilter Link (Browser, YouTube, Newsletter …): Seite bzw. Video selbst lesen
+                pendingLink = link;
+                pendingSubject = subject;
+                begin(null, null);
                 return;
             }
             pendingText = s.length() > Gemini.MAX_TEXT_INPUT ? s.substring(0, Gemini.MAX_TEXT_INPUT) : s;
@@ -406,7 +412,7 @@ public final class MainActivity extends Activity {
         begin(uri, null);
     }
 
-    private String pendingText, pendingSubject;
+    private String pendingText, pendingSubject, pendingLink;
 
     /** Erst Hinweis, dann Schlüssel, dann Startdialog. */
     private void begin(Uri uri, String text) {
@@ -417,7 +423,7 @@ public final class MainActivity extends Activity {
                         Settings.setHintAccepted(this);
                         begin(uri, text);
                     })
-                    .setNegativeButton(R.string.cancel, (d, w) -> { pendingUri = null; pendingText = null; })
+                    .setNegativeButton(R.string.cancel, (d, w) -> { pendingUri = null; pendingText = null; pendingLink = null; })
                     .setCancelable(false)
                     .show();
             return;
@@ -425,10 +431,14 @@ public final class MainActivity extends Activity {
         if (!GeminiKey.has(this)) {
             Ui.dialog(this).setTitle(R.string.key_title).setMessage(R.string.start_need_key)
                     .setPositiveButton(R.string.start_set_key, (d, w) -> KeyDialog.show(this, () -> {
-                        if (GeminiKey.has(this) && (pendingUri != null || pendingText != null)) begin(pendingUri, pendingText);
+                        if (GeminiKey.has(this) && (pendingUri != null || pendingText != null || pendingLink != null)) begin(pendingUri, pendingText);
                     }))
-                    .setNegativeButton(R.string.cancel, (d, w) -> { pendingUri = null; pendingText = null; })
+                    .setNegativeButton(R.string.cancel, (d, w) -> { pendingUri = null; pendingText = null; pendingLink = null; })
                     .show();
+            return;
+        }
+        if (pendingLink != null) {
+            showLinkStart(pendingLink);
             return;
         }
         if (text != null) {
@@ -501,6 +511,88 @@ public final class MainActivity extends Activity {
     }
 
     /** Text oder Bild zusammenfassen (und optional vorlesen). */
+    /** „Link“-Knopf: Adresse eingeben; steht ein Link in der Zwischenablage, ist er vorausgefüllt. */
+    private void askLink() {
+        String pre = "";
+        try {
+            android.content.ClipboardManager cm = getSystemService(android.content.ClipboardManager.class);
+            if (cm != null && cm.hasPrimaryClip() && cm.getPrimaryClip() != null && cm.getPrimaryClip().getItemCount() > 0) {
+                CharSequence c = cm.getPrimaryClip().getItemAt(0).getText();
+                String u = c == null ? null : WebPage.findUrl(c.toString());
+                if (u != null) pre = u;
+            }
+        } catch (RuntimeException ignored) { }
+        LinearLayout col = Ui.column(this);
+        Ui.add(col, Ui.body(this, getString(R.string.link_ask_text)));
+        EditText e = Ui.input(this, pre, WebPage.MAX_URL, false);
+        e.setHint(R.string.link_hint);
+        e.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        Ui.add(col, e);
+        AlertDialog d = Ui.dialog(this).setTitle(R.string.link_title).setView(col)
+                .setPositiveButton(R.string.link_next, null)
+                .setNegativeButton(R.string.cancel, null).create();
+        d.setOnShowListener(x -> d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String u = WebPage.findUrl(e.getText().toString());
+            if (u == null) {
+                e.setError(getString(R.string.web_bad_url));
+                return;
+            }
+            d.dismiss();
+            pendingLink = u;
+            pendingSubject = null;
+            begin(null, null);
+        }));
+        d.show();
+    }
+
+    /** Start für einen Link: Webseite/PDF zusammenfassen oder vorlesen, YouTube transkribieren. */
+    private void showLinkStart(String url) {
+        boolean yt = !WebPage.youTubeId(url).isEmpty();
+        String host = WebPage.host(url);
+        String defTitle = yt ? getString(R.string.web_youtube_title)
+                : (pendingSubject != null && !Text.line(pendingSubject, 80).isEmpty() && WebPage.findUrl(pendingSubject) == null
+                ? Text.line(pendingSubject, 80) : host);
+        LinearLayout col = Ui.column(this);
+        TextView where = Ui.body(this, url);
+        where.setTextSize(13);
+        where.setMaxLines(2);
+        where.setEllipsize(android.text.TextUtils.TruncateAt.MIDDLE);
+        where.setTextColor(Design.color(this, R.attr.pl_accent));
+        Ui.add(col, where);
+        OptionsForm form = new OptionsForm(this, col, defTitle, folder, yt);
+        TextView info = Ui.body(this, getString(yt ? R.string.web_youtube_info : R.string.web_info));
+        info.setTextColor(Design.color(this, R.attr.pl_muted));
+        info.setTextSize(13);
+        Ui.add(col, info);
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.addView(col);
+        AlertDialog.Builder b = Ui.dialog(this).setTitle(yt ? R.string.web_youtube_start : R.string.web_start).setView(sc)
+                .setPositiveButton(yt ? R.string.web_go_transcribe : R.string.web_go_summary, (d, w) -> startLink(url, form, false))
+                .setNegativeButton(R.string.cancel, (d, w) -> { pendingLink = null; pendingSubject = null; });
+        if (!yt) b.setNeutralButton(R.string.web_go_read, (d, w) -> startLink(url, form, true));
+        b.show();
+    }
+
+    private void startLink(String url, OptionsForm form, boolean readOnly) {
+        Transcript t = form.build();
+        t.kind = Transcript.KIND_WEB;
+        t.url = url;
+        t.source = WebPage.host(url);
+        boolean read = form.readAfter();
+        if (readOnly) {
+            // Nur vorlesen: ganzer Text, keine Zusammenfassung nötig
+            t.summarize = false;
+            read = true;
+        }
+        t.status = Transcript.QUEUED;
+        Store.save(this, t);
+        TranscribeService.start(this, t.id, null);
+        startActivity(new Intent(this, TranscriptActivity.class).putExtra(TranscribeService.EXTRA_ID, t.id)
+                .putExtra(TranscriptActivity.EXTRA_READ_WHEN_DONE, read));
+        pendingLink = null;
+        pendingSubject = null;
+    }
+
     private void showShareStart(Uri uri, String text) {
         boolean image = false;
         String sourceName = "";

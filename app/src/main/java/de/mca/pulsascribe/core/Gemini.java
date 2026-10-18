@@ -129,6 +129,8 @@ public final class Gemini {
     // ------------------------------------------------------------------ Antwort
 
     public static final class Reply {
+        /** url_context: mindestens eine Seite wurde laut Gemini erfolgreich abgerufen. */
+        public boolean urlRetrieved;
         public String text = "";
         public String finishReason = "";
         public String blockReason = "";
@@ -153,6 +155,18 @@ public final class Gemini {
         List<Object> cands = Json.arr(m, "candidates");
         if (cands == null || cands.isEmpty()) return r;
         Map<String, Object> c = Json.obj(cands.get(0));
+        Map<String, Object> ucm = Json.obj(c, "urlContextMetadata");
+        if (ucm == null) ucm = Json.obj(c, "url_context_metadata");
+        List<Object> um = ucm == null ? null : Json.arr(ucm, "urlMetadata");
+        if (um == null && ucm != null) um = Json.arr(ucm, "url_metadata");
+        if (um != null) {
+            for (Object o : um) {
+                Map<String, Object> x = Json.obj(o);
+                String st = Json.str(x, "urlRetrievalStatus");
+                if (st == null) st = Json.str(x, "url_retrieval_status");
+                if ("URL_RETRIEVAL_STATUS_SUCCESS".equals(st)) r.urlRetrieved = true;
+            }
+        }
         String fin = Json.str(c, "finishReason");
         if (fin != null) r.finishReason = Text.line(fin, 40);
         List<Object> parts = Json.arr(Json.obj(c, "content"), "parts");

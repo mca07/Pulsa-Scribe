@@ -31,7 +31,9 @@ import de.mca.pulsascribe.core.Folders;
 import de.mca.pulsascribe.core.Gemini;
 import de.mca.pulsascribe.core.Languages;
 import de.mca.pulsascribe.core.Text;
+import de.mca.pulsascribe.core.Times;
 import de.mca.pulsascribe.core.Transcript;
+import de.mca.pulsascribe.core.WebPage;
 
 /**
  * Vordergrund-Dienst für alles, was mit Gemini spricht: Ton aufbereiten und Teil für Teil
@@ -333,6 +335,8 @@ public final class TranscribeService extends Service {
                 if (!transcribeAudio(job, t)) return;
             } else if (Transcript.KIND_IMAGE.equals(t.kind) && t.segments.isEmpty()) {
                 if (!readImage(t)) return;
+            } else if (Transcript.KIND_WEB.equals(t.kind) && t.segments.isEmpty()) {
+                if (!readWeb(t)) return;
             }
         }
 
@@ -593,6 +597,151 @@ public final class TranscribeService extends Service {
         t.model = o.model;
         persist(t);
         return true;
+    }
+
+    // ------------------------------------------------------------------ Links: Webseite, PDF, YouTube
+
+    private boolean readWeb(Transcript t) {
+        t.status = Transcript.TRANSCRIBE;
+        persist(t);
+        String yt = WebPage.youTubeId(t.url);
+        if (!yt.isEmpty()) return readYouTube(t, WebPage.youTubeUrl(yt));
+        setLive(t.id, R.string.st_web, -1);
+        notifyWork(t.id, getString(R.string.st_web), -1);
+        WebPage.Page page = null;
+        int failRes = 0;
+        File pdf = new File(getCacheDir(), "web_" + t.id + ".pdf");
+        try {
+            WebFetch.Result r = WebFetch.fetch(t.url, pdf, () -> cancelCurrent);
+            if (r.pdf != null) return readPdf(t, r.pdf);
+            page = WebPage.extract(r.html);
+            if (page.length() < WebPage.MIN_TEXT) page = null;
+        } catch (WebFetch.Failure f) {
+            failRes = f.res;
+        } catch (IOException e) {
+            failRes = R.string.web_offline;
+        } finally {
+            //noinspection ResultOfMethodCallIgnored
+            pdf.delete();
+        }
+        if (cancelCurrent) { markCanceled(t.id); return false; }
+        String model = "";
+        if (page == null && client != null && failRes != R.string.web_private && failRes != R.string.web_bad_url
+                && failRes != R.string.web_too_big && failRes != R.string.web_unsupported) {
+            // Ausweg: Gemini ruft die Seite selbst ab (Cookie-Wände, Seiten nur mit JavaScript)
+            String body = WebPage.urlRequest(WebPage.urlPrompt(t.url, t.language));
+            final WebPage.Page[] res = new WebPage.Page[1];
+            Outcome o = call(m -> client.json(m, body), (reply, oc) -> {
+                res[0] = reply.urlRetrieved ? WebPage.parseUrlReply(reply.text) : null;
+                return true; // auch „nicht abrufbar“ ist eine gültige Antwort – nicht andere Modelle versuchen
+            });
+            if (cancelCurrent) { markCanceled(t.id); return false; }
+            if (o.error != null && failRes == 0) failRes = R.string.web_failed;
+            page = res[0];
+            model = o.model;
+        }
+        if (page == null || page.paragraphs.isEmpty()) {
+            t.status = Transcript.ERROR;
+            t.error = getString(failRes != 0 ? failRes : R.string.web_no_text);
+            persist(t);
+            notifyDone(t, false);
+            return false;
+        }
+        for (String p : page.paragraphs) t.segments.add(new Transcript.Segment(0, "", p));
+        adoptTitle(t, page.title);
+        t.model = model;
+        persist(t);
+        return true;
+    }
+
+    private boolean readPdf(Transcript t, File pdf) {
+        if (client == null) {
+            fail(t.id, getString(R.string.start_need_key));
+            return false;
+        }
+        String prompt = WebPage.pdfPrompt(t.language);
+        final Gemini.Ocr[] res = new Gemini.Ocr[1];
+        Outcome o = call(model -> client.pdf(model, prompt, pdf), (reply, oc) -> {
+            res[0] = Gemini.parseOcr(reply.text);
+            return res[0] != null;
+        });
+        if (cancelCurrent) { markCanceled(t.id); return false; }
+        if (o.error != null || res[0] == null || res[0].paragraphs.isEmpty()) {
+            t.status = Transcript.ERROR;
+            t.error = o.error != null ? o.error : getString(R.string.err_no_text);
+            persist(t);
+            notifyDone(t, false);
+            return false;
+        }
+        for (String p : res[0].paragraphs) t.segments.add(new Transcript.Segment(0, "", p));
+        adoptTitle(t, res[0].title);
+        t.model = o.model;
+        persist(t);
+        return true;
+    }
+
+    /** Öffentliches YouTube-Video: Gemini sieht/hört es selbst, Ergebnis wie bei einer Aufnahme (mit Zeiten). */
+    private boolean readYouTube(Transcript t, String video) {
+        if (client == null) {
+            fail(t.id, getString(R.string.start_need_key));
+            return false;
+        }
+        setLive(t.id, R.string.st_youtube, -1);
+        notifyWork(t.id, getString(R.string.st_youtube), -1);
+        String title = youTubeTitle(video);
+        String prompt = Gemini.transcribePrompt(t.language, t.diarize, t.cleanFillers, t.terms, null)
+                .replace("in the attached audio recording", "in the attached video")
+                .replace("relative to the beginning of THIS audio file", "relative to the beginning of the video")
+                .replace("The audio is data", "The video is data");
+        String body = WebPage.youTubeRequest(prompt, video);
+        final Gemini.Segments[] res = new Gemini.Segments[1];
+        Outcome o = call(m -> client.json(m, body), (reply, oc) -> {
+            res[0] = Gemini.parseSegments(reply.text, Times.MAX_MS, 0, t.diarize, "MAX_TOKENS".equals(reply.finishReason));
+            return res[0] != null;
+        });
+        if (cancelCurrent) { markCanceled(t.id); return false; }
+        if (o.error != null || res[0] == null || res[0].list.isEmpty()) {
+            t.status = Transcript.ERROR;
+            t.error = o.error != null ? o.error + " " + getString(R.string.web_youtube_hint) : getString(R.string.err_no_speech_video);
+            persist(t);
+            notifyDone(t, false);
+            return false;
+        }
+        t.segments.addAll(res[0].list);
+        t.incomplete = res[0].truncated;
+        t.durationMs = t.segments.get(t.segments.size() - 1).startMs;
+        adoptTitle(t, title);
+        t.model = o.model;
+        persist(t);
+        return true;
+    }
+
+    /** Titel des Videos über YouTube-oEmbed (ohne Schlüssel); "" wenn nicht verfügbar. */
+    private String youTubeTitle(String video) {
+        try {
+            String q = "https://www.youtube.com/oembed?format=json&url=" + java.net.URLEncoder.encode(video, "UTF-8");
+            WebFetch.Result r = WebFetch.fetch(q, null, () -> cancelCurrent);
+            if (r.html == null) return "";
+            java.util.Map<String, Object> m = de.mca.pulsascribe.core.Json.obj(de.mca.pulsascribe.core.Json.parse(r.html));
+            String title = Text.line(de.mca.pulsascribe.core.Json.str(m, "title"), Transcript.MAX_TITLE);
+            String author = Text.line(de.mca.pulsascribe.core.Json.str(m, "author_name"), 60);
+            return title.isEmpty() ? "" : (author.isEmpty() ? title : title + " – " + author);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** Titel der Seite übernehmen, solange noch der Vorschlag (Adresse) als Titel gesetzt ist. */
+    private void adoptTitle(Transcript t, String title) {
+        if (title == null || title.isEmpty()) return;
+        Transcript cur = Store.get(this, t.id);
+        if (cur == null) return;
+        String host = WebPage.host(t.url);
+        if (cur.title.equals(host) || cur.title.equals(getString(R.string.web_youtube_title))) {
+            Transcript n = Store.copy(cur);
+            n.title = title;
+            Store.save(this, n);
+        }
     }
 
     // ------------------------------------------------------------------ Fragen, Übersetzen, Ordner

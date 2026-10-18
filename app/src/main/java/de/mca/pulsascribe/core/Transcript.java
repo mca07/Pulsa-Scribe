@@ -29,7 +29,7 @@ public final class Transcript {
     public static final int MAX_TRANSLATIONS = 3;
 
     /** Art der Quelle. */
-    public static final String KIND_AUDIO = "audio", KIND_TEXT = "text", KIND_IMAGE = "image";
+    public static final String KIND_AUDIO = "audio", KIND_TEXT = "text", KIND_IMAGE = "image", KIND_WEB = "web";
 
     public static final class Segment {
         public long startMs;
@@ -115,6 +115,8 @@ public final class Transcript {
     public final Map<String, String> speakerNames = new LinkedHashMap<>();
     public Summary summary;
     public String kind = KIND_AUDIO;
+    /** Webseite oder YouTube-Video (nur bei KIND_WEB), geprüft über WebPage.cleanUrl. */
+    public String url = "";
     public String folder = "";                 // Ordner-ID, "" = oberste Ebene
     public boolean aggregate;
     public static final String ENGINE_GEMINI = "gemini", ENGINE_WHISPER = "whisper";
@@ -214,6 +216,7 @@ public final class Transcript {
         m.put("speakers", new LinkedHashMap<>(speakerNames));
         if (summary != null) m.put("summary", summaryToMap(summary));
         m.put("kind", kind);
+        if (!url.isEmpty()) m.put("url", url);
         m.put("folder", folder);
         m.put("aggregate", aggregate);
         m.put("engine", engine);
@@ -341,7 +344,9 @@ public final class Transcript {
             if (s != null && !s.isEmpty()) t.summary = s;
         }
         String kind = Json.str(m, "kind");
-        t.kind = KIND_TEXT.equals(kind) || KIND_IMAGE.equals(kind) ? kind : KIND_AUDIO;
+        t.kind = KIND_TEXT.equals(kind) || KIND_IMAGE.equals(kind) || KIND_WEB.equals(kind) ? kind : KIND_AUDIO;
+        String url = WebPage.cleanUrl(Json.str(m, "url"));
+        t.url = url == null ? "" : url;
         String folder = Json.str(m, "folder");
         t.folder = folder != null && Text.isId(folder) ? folder : "";
         t.aggregate = Json.bool(m, "aggregate", false);

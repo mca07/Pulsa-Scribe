@@ -216,7 +216,7 @@ public final class TranscriptActivity extends Activity {
             viewLang = state.getString("lang");
         } else {
             readWhenDone = getIntent().getBooleanExtra(EXTRA_READ_WHEN_DONE, false);
-            if (!first.isAudio() && readWhenDone) startTab = TAB_SUMMARY;
+            if (!first.isAudio() && readWhenDone) startTab = first.summarize ? TAB_SUMMARY : TAB_TEXT;
             if (getIntent().getBooleanExtra(EXTRA_TAB_SUMMARY, false)) startTab = TAB_SUMMARY;
         }
         reload();
@@ -1099,6 +1099,7 @@ public final class TranscriptActivity extends Activity {
         m.getMenu().add(0, 13, 0, R.string.m_tags);
         m.getMenu().add(0, 5, 0, R.string.m_rename);
         if (t.audioReady && !t.isWorking()) m.getMenu().add(0, 6, 0, R.string.m_delete_audio);
+        if (!t.url.isEmpty()) m.getMenu().add(0, 40, 0, R.string.m_open_source);
         m.getMenu().add(0, 7, 0, R.string.m_delete);
         m.setOnMenuItemClickListener(mi -> {
             switch (mi.getItemId()) {
@@ -1116,6 +1117,11 @@ public final class TranscriptActivity extends Activity {
                             .setNegativeButton(R.string.cancel, null).show();
                     return true;
                 case 7: MainActivity.confirmDelete(this, id, this::finish); return true;
+                case 40: {
+                    String u = de.mca.pulsascribe.core.WebPage.cleanUrl(t.url);
+                    if (u != null) launch(new Intent(Intent.ACTION_VIEW, Uri.parse(u)).addCategory(Intent.CATEGORY_BROWSABLE));
+                    return true;
+                }
                 case 8: readMenu(); return true;
                 case 9: chooseTemplate(); return true;
                 case 10: chooseTranslation(); return true;

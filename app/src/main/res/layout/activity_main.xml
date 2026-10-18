@@ -97,13 +97,21 @@
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/main_record" style="@style/Button.Secondary"
                 android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                android:minHeight="52dp" android:drawableStart="@drawable/ic_mic" android:drawablePadding="8dp"
+                android:minHeight="64dp" android:paddingStart="4dp" android:paddingEnd="4dp" android:paddingTop="8dp" android:paddingBottom="6dp"
+                android:drawableTop="@drawable/ic_mic" android:drawablePadding="2dp" android:textSize="14sp" android:maxLines="1"
                 android:drawableTint="?attr/pl_accent" android:gravity="center" android:text="@string/record" />
+            <Button android:id="@+id/main_link" style="@style/Button.Secondary"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:minHeight="64dp" android:paddingStart="4dp" android:paddingEnd="4dp" android:paddingTop="8dp" android:paddingBottom="6dp"
+                android:drawableTop="@drawable/ic_link" android:drawablePadding="2dp" android:textSize="14sp" android:maxLines="1"
+                android:drawableTint="?attr/pl_accent" android:gravity="center" android:text="@string/link_button" />
             <Button android:id="@+id/main_pick" style="@style/Button.Primary"
                 android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                android:layout_marginStart="10dp"
-                android:drawableStart="@drawable/ic_file" android:drawablePadding="8dp" android:drawableTint="?attr/pl_on_accent"
-                android:gravity="center" android:text="@string/pick_file" />
+                android:layout_marginStart="8dp"
+                android:minHeight="64dp" android:paddingStart="4dp" android:paddingEnd="4dp" android:paddingTop="8dp" android:paddingBottom="6dp"
+                android:drawableTop="@drawable/ic_file" android:drawablePadding="2dp" android:textSize="14sp" android:maxLines="1"
+                android:drawableTint="?attr/pl_on_accent" android:gravity="center" android:text="@string/pick_file_short" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

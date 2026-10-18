@@ -42,6 +42,7 @@ public final class Export {
         if (t.durationMs > 0) b.append(" · ").append(Times.duration(t.durationMs));
         int sp = t.speakers().size();
         if (sp > 0) b.append(" · ").append(sp).append(sp == 1 ? " Sprecher" : " Sprecher");
+        if (!t.url.isEmpty()) b.append(" · Quelle: ").append(t.url);
         return b.toString();
     }
 

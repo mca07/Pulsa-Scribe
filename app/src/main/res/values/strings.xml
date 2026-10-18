@@ -268,7 +268,6 @@
     <string name="share_title">Zusammenfassen</string>
     <string name="share_text_info">Der Text wird an Google Gemini gesendet und zusammengefasst.</string>
     <string name="share_image_info">Das Bild wird verkleinert an Google Gemini gesendet; Gemini liest den Text und fasst ihn zusammen.</string>
-    <string name="share_link_only">Es wurde nur ein Link geteilt. Links kann Pulsa Scribe nicht selbst öffnen – bitte den Text markieren und teilen oder einen Screenshot teilen.</string>
     <string name="share_empty">Der geteilte Inhalt ist leer.</string>
     <string name="share_go">Zusammenfassen</string>
 
@@ -462,4 +461,35 @@
         <item quantity="other">%1$d Einträge (%2$s) werden endgültig gelöscht. Das kann nicht rückgängig gemacht werden.</item>
     </plurals>
     <string name="trash_emptied">Papierkorb geleert</string>
+    <!-- Links (1.12) -->
+    <string name="link_button">Link</string>
+    <string name="pick_file_short">Datei</string>
+    <string name="link_title">Link öffnen</string>
+    <string name="link_ask_text">Adresse einer Webseite, eines PDFs oder eines YouTube-Videos. Tipp: In Chrome oder YouTube „Teilen“ → Pulsa Scribe geht auch.</string>
+    <string name="link_hint">https://…</string>
+    <string name="link_next">Weiter</string>
+    <string name="web_start">Webseite</string>
+    <string name="web_youtube_start">YouTube-Video</string>
+    <string name="web_youtube_title">YouTube-Video</string>
+    <string name="web_info">Pulsa Scribe lädt die Seite direkt (ohne Cookies) und nimmt nur den Haupttext. Klappt das nicht – z. B. wegen Cookie-Hinweis oder weil die Seite nur mit JavaScript funktioniert –, ruft Gemini die Seite ab. Inhalte hinter Login oder Bezahlschranke sind nicht lesbar. PDFs liest Gemini.\n\n„Vorlesen“ liest den ganzen Text vor, „Zusammenfassen“ erstellt die Zusammenfassung (und liest sie vor, wenn eingeschaltet).</string>
+    <string name="web_youtube_info">Gemini schaut sich das öffentliche Video selbst an und erstellt Transkript mit Zeitstempeln, Sprechern und Zusammenfassung. Private, nicht gelistete mit Sperre oder altersbeschränkte Videos gehen nicht. Sehr lange Videos (über ca. 1 Stunde) können unvollständig sein.</string>
+    <string name="web_go_summary">Zusammenfassen</string>
+    <string name="web_go_read">Vorlesen</string>
+    <string name="web_go_transcribe">Transkribieren</string>
+    <string name="st_web">Webseite wird gelesen</string>
+    <string name="st_youtube">Video wird transkribiert</string>
+    <string name="web_bad_url">Das ist keine gültige Webadresse (https://…).</string>
+    <string name="web_blocked">Die Seite verweigert den Zugriff (Login oder Schutz vor automatischen Abrufen).</string>
+    <string name="web_not_found">Die Seite gibt es nicht (mehr).</string>
+    <string name="web_failed">Die Seite konnte nicht geladen werden.</string>
+    <string name="web_offline">Seite nicht erreichbar. Bitte Internetverbindung prüfen.</string>
+    <string name="web_private">Adressen im eigenen Netzwerk werden aus Sicherheitsgründen nicht geöffnet.</string>
+    <string name="web_too_big">Die Seite ist zu groß (Webseite max. 3 MB, PDF max. 15 MB).</string>
+    <string name="web_unsupported">Dieser Dateityp wird über Links nicht unterstützt. Webseiten, PDFs und YouTube gehen.</string>
+    <string name="web_no_text">Auf der Seite wurde kein lesbarer Haupttext gefunden (z. B. Bezahlschranke, Login oder nur Bilder).</string>
+    <string name="web_youtube_hint">Ist das Video öffentlich?</string>
+    <string name="err_no_speech_video">Im Video wurde keine Sprache erkannt – oder Gemini konnte das Video nicht öffnen (privat/altersbeschränkt).</string>
+    <string name="kind_web">Webseite %1$s</string>
+    <string name="kind_youtube">YouTube</string>
+    <string name="m_open_source">Quelle öffnen</string>
 </resources>

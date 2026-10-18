@@ -61,6 +61,11 @@ final class GeminiClient {
         return inline(model, Gemini.imageRequestPrefix(prompt), jpeg, 0, jpeg.length(), Gemini.imageRequestSuffix());
     }
 
+    /** PDF (aus einem Link) lesen. */
+    Response pdf(String model, String prompt, File pdf) throws IOException {
+        return inline(model, de.mca.pulsascribe.core.WebPage.pdfRequestPrefix(prompt), pdf, 0, pdf.length(), Gemini.imageRequestSuffix());
+    }
+
     private Response inline(String model, String pre, File file, long from, long to, String post) throws IOException {
         long len = to - from;
         if (len <= 0 || len > MAX_AUDIO_BYTES) throw new IOException("Teil zu groß");

@@ -154,3 +154,17 @@ Mit Todoist:
 - [ ] Gelöschte Transkripte tauchen nicht in Suche, Aufgaben-Übersicht, Widget oder Datensicherung auf
 - [ ] Während einer laufenden Transkription löschen → Abbruch, im Papierkorb; nach Wiederherstellen „Erneut versuchen“ möglich
 - [ ] Einstellungen → „Alles löschen“ leert auch den Papierkorb
+
+## 18. Links: Webseiten, PDFs, YouTube (neu in 1.12)
+- [ ] Startbildschirm unten jetzt drei Knöpfe: Aufnehmen · Link · Datei
+- [ ] Link in Chrome kopieren → „Link“ → Adresse ist vorausgefüllt → „Weiter“
+- [ ] Nachrichtenartikel (z. B. tagesschau.de) → „Zusammenfassen“ → Tab Transkript zeigt nur den Artikeltext (kein Menü, keine Cookie-Hinweise), Titel = Artikeltitel, Zusammenfassung „Beitrag / Artikel“
+- [ ] Gleicher Artikel → „Vorlesen“ → ganzer Text wird vorgelesen, keine Zusammenfassung
+- [ ] In Chrome „Teilen“ → Pulsa Scribe → gleicher Dialog (früher kam „nur ein Link geteilt“)
+- [ ] Seite mit Cookie-Wand/nur JavaScript → klappt trotzdem über Gemini oder verständliche Meldung
+- [ ] Bezahlschranke/Login → Meldung „kein lesbarer Haupttext“ – es wird nichts erfunden
+- [ ] PDF-Link (z. B. Datenblatt) → Text wird gelesen und zusammengefasst
+- [ ] YouTube-App „Teilen“ → Pulsa Scribe → „Transkribieren“ → Transkript mit Zeiten und Sprechern, Titel „Video – Kanal“
+- [ ] Privates Video → verständliche Fehlermeldung
+- [ ] Link auf http://192.168.… oder Router → „Adressen im eigenen Netzwerk werden … nicht geöffnet“
+- [ ] ⋮ → „Quelle öffnen“ öffnet die Seite im Browser; Export (TXT/Word/PDF) enthält „Quelle: …“
