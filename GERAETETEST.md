@@ -168,3 +168,17 @@ Mit Todoist:
 - [ ] Privates Video → verständliche Fehlermeldung
 - [ ] Link auf http://192.168.… oder Router → „Adressen im eigenen Netzwerk werden … nicht geöffnet“
 - [ ] ⋮ → „Quelle öffnen“ öffnet die Seite im Browser; Export (TXT/Word/PDF) enthält „Quelle: …“
+
+## 19. App-Browser für Seiten mit Anmeldung, PDF-Dateien (neu in 1.13)
+- [ ] lms.bzki.de per Link → Fehlermeldung nennt jetzt „verlangt eine Anmeldung“ und den Weg über den App-Browser
+- [ ] Im fehlgeschlagenen Eintrag ⋮ → „Im App-Browser öffnen (mit Anmeldung)“ → Login-Seite erscheint
+- [ ] Anmelden → Lektion öffnen → „Diese Seite lesen“ → Hinweis „x Absätze gefunden“ → „Zusammenfassen“ bzw. „Vorlesen“
+- [ ] Zurück → wieder im Browser, noch angemeldet → nächste Lektion lesen
+- [ ] App schließen und neu öffnen → im App-Browser weiterhin angemeldet
+- [ ] Lernmodul mit eingebettetem Inhalt (H5P/Video-Seite) → Text aus dem Modul wird mit übernommen (falls gleiche Domain)
+- [ ] Startbildschirm „Link“ → „Im App-Browser öffnen“ geht auch direkt
+- [ ] Screenshot im App-Browser ist gesperrt (schwarz), App-Übersicht zeigt keinen Inhalt
+- [ ] Download-Link → Hinweis, kein Download; mailto:/tel:-Link → „wird nicht geöffnet“
+- [ ] ⋮ → „In Chrome öffnen“, „Neu laden“, „Anmeldungen im App-Browser löschen“ → danach abgemeldet
+- [ ] Einstellungen → „Anmeldungen im App-Browser löschen“ funktioniert ebenso
+- [ ] „Datei“ → PDF auswählen (bzw. PDF aus anderer App teilen) → Text gelesen, Zusammenfassung erstellt

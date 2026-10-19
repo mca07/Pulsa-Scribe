@@ -276,6 +276,69 @@ public final class WebPage {
         return b.toString();
     }
 
+    /** Login-Seite? (Passwortfeld oder typisches Anmeldeformular) */
+    public static boolean looksLikeLogin(String html) {
+        if (html == null) return false;
+        String l = html.length() > 400_000 ? html.substring(0, 400_000).toLowerCase(Locale.ROOT) : html.toLowerCase(Locale.ROOT);
+        if (Pattern.compile("<input[^>]+type\\s*=\\s*[\"']?password").matcher(l).find()) return true;
+        return Pattern.compile("<form[^>]+(login|signin|sign-in|anmeld)").matcher(l).find();
+    }
+
+    // ------------------------------------------------------------------ App-Browser (angemeldete Seiten)
+
+    /**
+     * Skript für den App-Browser: liefert Titel, das gerenderte HTML (nach JavaScript) und den Text gleich-origin
+     * eingebetteter Rahmen (z. B. Lernmodule). Liest nur, verändert nichts, sendet nichts.
+     */
+    public static final String BROWSER_SCRIPT = "(function(){try{"
+            + "var f=[];var fr=document.querySelectorAll('iframe,frame');"
+            + "for(var i=0;i<fr.length&&i<20;i++){try{var d=fr[i].contentDocument;if(d&&d.body){f.push(d.body.innerText.slice(0,200000));}}catch(e){}}"
+            + "return JSON.stringify({t:document.title||'',h:document.documentElement.outerHTML.slice(0,3000000),"
+            + "b:(document.body?document.body.innerText:'').slice(0,300000),f:f});"
+            + "}catch(e){return '';}})()";
+
+    /** Ergebnis von evaluateJavascript(BROWSER_SCRIPT) → Seite. Leer, wenn nichts Brauchbares. */
+    public static Page parseBrowser(String result) {
+        Page page = new Page();
+        try {
+            Object outer = Json.parse(result);
+            if (!(outer instanceof String)) return page;
+            java.util.Map<String, Object> m = Json.obj(Json.parse((String) outer));
+            if (m == null) return page;
+            String html = Json.str(m, "h");
+            Page fromHtml = extract(html == null ? "" : html);
+            String title = Text.line(Json.str(m, "t"), Transcript.MAX_TITLE);
+            List<String> frames = new ArrayList<>();
+            List<Object> fl = Json.arr(m, "f");
+            if (fl != null) for (Object o : fl) if (o instanceof String) frames.add((String) o);
+            page.title = !fromHtml.title.isEmpty() ? fromHtml.title : title;
+            page.paragraphs.addAll(fromHtml.paragraphs);
+            // Inhalte aus eingebetteten Rahmen anhängen
+            for (String f : frames) addPlain(page, f);
+            // Ausweg: sichtbarer Text der Seite, wenn das HTML kaum Inhalt hergab
+            if (page.length() < MIN_TEXT) {
+                page.paragraphs.clear();
+                addPlain(page, Json.str(m, "b"));
+                for (String f : frames) addPlain(page, f);
+            }
+        } catch (Exception ignored) { }
+        return page;
+    }
+
+    private static void addPlain(Page page, String text) {
+        if (text == null) return;
+        int total = page.length();
+        for (String block : text.replace("\r", "").split("\\n")) {
+            String p = block.replaceAll("[ \\t\\u00A0]+", " ").trim();
+            if (!keep(p) || (!page.paragraphs.isEmpty() && page.paragraphs.get(page.paragraphs.size() - 1).equals(p))) continue;
+            p = Text.block(p, Transcript.MAX_TEXT);
+            if (p.isEmpty()) continue;
+            total += p.length();
+            if (total > Gemini.MAX_TEXT_INPUT || page.paragraphs.size() >= 400) return;
+            page.paragraphs.add(p);
+        }
+    }
+
     // ------------------------------------------------------------------ Gemini (Ausweg für Seiten, die sich nicht direkt lesen lassen)
 
     /** Anweisung für Gemini mit url_context: Haupttext wiedergeben, nichts erfinden. */

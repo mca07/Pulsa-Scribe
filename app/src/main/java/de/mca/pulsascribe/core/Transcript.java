@@ -29,7 +29,7 @@ public final class Transcript {
     public static final int MAX_TRANSLATIONS = 3;
 
     /** Art der Quelle. */
-    public static final String KIND_AUDIO = "audio", KIND_TEXT = "text", KIND_IMAGE = "image", KIND_WEB = "web";
+    public static final String KIND_AUDIO = "audio", KIND_TEXT = "text", KIND_IMAGE = "image", KIND_WEB = "web", KIND_PDF = "pdf";
 
     public static final class Segment {
         public long startMs;
@@ -344,7 +344,7 @@ public final class Transcript {
             if (s != null && !s.isEmpty()) t.summary = s;
         }
         String kind = Json.str(m, "kind");
-        t.kind = KIND_TEXT.equals(kind) || KIND_IMAGE.equals(kind) || KIND_WEB.equals(kind) ? kind : KIND_AUDIO;
+        t.kind = KIND_TEXT.equals(kind) || KIND_IMAGE.equals(kind) || KIND_WEB.equals(kind) || KIND_PDF.equals(kind) ? kind : KIND_AUDIO;
         String url = WebPage.cleanUrl(Json.str(m, "url"));
         t.url = url == null ? "" : url;
         String folder = Json.str(m, "folder");

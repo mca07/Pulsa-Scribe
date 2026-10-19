@@ -53,6 +53,12 @@ final class Store {
         return new File(dir(c), id + ".jpg");
     }
 
+    /** PDF-Datei, die über „Datei“ geöffnet wurde (bis zum Löschen aufbewahrt, für „Erneut versuchen“). */
+    static File pdfFile(Context c, String id) {
+        if (!Text.isId(id)) throw new IllegalArgumentException("id");
+        return new File(dir(c), id + ".pdf");
+    }
+
     private static File jsonFile(Context c, String id) {
         if (!Text.isId(id)) throw new IllegalArgumentException("id");
         return new File(dir(c), id + ".json");
@@ -205,6 +211,8 @@ final class Store {
         audioFile(c, id).delete();
         //noinspection ResultOfMethodCallIgnored
         imageFile(c, id).delete();
+        //noinspection ResultOfMethodCallIgnored
+        pdfFile(c, id).delete();
         changed();
     }
 
@@ -368,6 +376,7 @@ final class Store {
         }
         moveFile(audioFile(c, id), new File(d, id + ".aac"));
         moveFile(imageFile(c, id), new File(d, id + ".jpg"));
+        moveFile(pdfFile(c, id), new File(d, id + ".pdf"));
         //noinspection ResultOfMethodCallIgnored
         jsonFile(c, id).delete();
         cache.remove(id);
@@ -432,6 +441,7 @@ final class Store {
         if (t == null || !id.equals(t.id)) return false;
         moveFile(new File(d, id + ".aac"), audioFile(c, id));
         moveFile(new File(d, id + ".jpg"), imageFile(c, id));
+        moveFile(new File(d, id + ".pdf"), pdfFile(c, id));
         if (t.audioReady && !audioFile(c, id).isFile()) t.audioReady = false;
         if (!folders.exists(t.folder)) t.folder = Folders.ROOT;
         try {

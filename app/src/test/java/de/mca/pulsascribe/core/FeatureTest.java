@@ -534,4 +534,28 @@ public class FeatureTest {
         String yt = WebPage.youTubeRequest("p", WebPage.youTubeUrl("dQw4w9WgXcQ"));
         assertTrue(yt.contains("\"fileUri\":\"https://www.youtube.com/watch?v=dQw4w9WgXcQ\""));
     }
+
+    @Test
+    public void loginPagesAndBrowserResults() {
+        assertTrue(WebPage.looksLikeLogin("<form action=/login><input name=u><input type=\"password\" name=p></form>"));
+        assertTrue(WebPage.looksLikeLogin("<form id=\"login\" method=post>"));
+        assertFalse(WebPage.looksLikeLogin("<p>Ein Artikel über Passwörter und Sicherheit.</p>"));
+        StringBuilder html = new StringBuilder("<html><head><title>Lektion 3</title></head><body><nav>Menü Startseite Profil Abmelden</nav><main>");
+        for (int i = 0; i < 6; i++) html.append("<p>Inhalt der Lektion Absatz ").append(i).append(" mit ausreichend Text für die Übernahme.</p>");
+        html.append("</main></body></html>");
+        String inner = Json.write(java.util.Map.of("t", "Lektion 3", "h", html.toString(), "b", "x",
+                "f", java.util.List.of("Text aus dem Lernmodul im Rahmen mit genug Wörtern drin")));
+        String result = Json.quote(inner); // evaluateJavascript liefert den String JSON-kodiert
+        WebPage.Page p = WebPage.parseBrowser(result);
+        assertEquals("Lektion 3", p.title);
+        assertEquals(7, p.paragraphs.size());
+        assertEquals("Text aus dem Lernmodul im Rahmen mit genug Wörtern drin", p.paragraphs.get(6));
+        // Nur sichtbarer Text (z. B. Canvas-App): Ausweg über innerText
+        String inner2 = Json.write(java.util.Map.of("t", "App", "h", "<body><div id=app></div></body>",
+                "b", "Kurze Zeile\nDies ist ein längerer sichtbarer Absatz mit genug Inhalt zum Lesen.\nMenü", "f", java.util.List.of()));
+        WebPage.Page q = WebPage.parseBrowser(Json.quote(inner2));
+        assertEquals(1, q.paragraphs.size());
+        assertTrue(WebPage.parseBrowser("null").paragraphs.isEmpty());
+        assertTrue(WebPage.parseBrowser("\"\"").paragraphs.isEmpty());
+    }
 }

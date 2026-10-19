@@ -116,6 +116,7 @@ final class Ui {
         StringBuilder b = new StringBuilder(date(t.createdMs));
         if (Transcript.KIND_TEXT.equals(t.kind)) b.append(" · ").append(c.getString(R.string.kind_text));
         else if (Transcript.KIND_IMAGE.equals(t.kind)) b.append(" · ").append(c.getString(R.string.kind_image));
+        else if (Transcript.KIND_PDF.equals(t.kind)) b.append(" · ").append(c.getString(R.string.kind_pdf));
         else if (Transcript.KIND_WEB.equals(t.kind)) b.append(" · ").append(de.mca.pulsascribe.core.WebPage.youTubeId(t.url).isEmpty()
                 ? c.getString(R.string.kind_web, de.mca.pulsascribe.core.WebPage.host(t.url)) : c.getString(R.string.kind_youtube));
         if (t.durationMs > 0) b.append(" · ").append(Times.duration(t.durationMs));

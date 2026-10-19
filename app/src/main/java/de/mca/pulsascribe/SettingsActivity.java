@@ -134,10 +134,13 @@ public final class SettingsActivity extends Activity {
                     .setPositiveButton(R.string.delete, (d, w) -> {
                         for (Transcript t : Store.all(this)) Store.delete(this, t.id);
                         Store.emptyTrash(this);
+                        android.webkit.CookieManager.getInstance().removeAllCookies(null);
+                        android.webkit.WebStorage.getInstance().deleteAllData();
                         Toast.makeText(this, R.string.deleted_all, Toast.LENGTH_SHORT).show();
                     }).setNegativeButton(R.string.cancel, null).show();
         });
 
+        findViewById(R.id.row_browser_clear).setOnClickListener(v -> BrowserActivity.clearLogins(this, null));
         findViewById(R.id.row_trash).setOnClickListener(v -> startActivity(new Intent(this, TrashActivity.class)));
         TextView trashDays = findViewById(R.id.trash_days_value);
         trashDays.setText(trashDaysLabels()[trashDaysIndex()]);

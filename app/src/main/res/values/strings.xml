@@ -492,4 +492,21 @@
     <string name="kind_web">Webseite %1$s</string>
     <string name="kind_youtube">YouTube</string>
     <string name="m_open_source">Quelle öffnen</string>
+    <!-- App-Browser, PDF (1.13) -->
+    <string name="br_open">Im App-Browser öffnen (mit Anmeldung)</string>
+    <string name="br_read">Diese Seite lesen</string>
+    <string name="br_reload">Neu laden</string>
+    <string name="br_open_external">In Chrome öffnen</string>
+    <string name="br_clear">Anmeldungen im App-Browser löschen</string>
+    <string name="br_clear_sub">Cookies und gespeicherte Daten von Seiten, bei denen du dich in Pulsa Scribe angemeldet hast</string>
+    <string name="br_clear_text">Du wirst auf allen Seiten im App-Browser abgemeldet.</string>
+    <string name="br_cleared">Anmeldungen gelöscht</string>
+    <string name="br_no_webview">Der Android-Browserbaustein (WebView) ist nicht verfügbar. Bitte „Android System WebView“ im Play Store aktualisieren.</string>
+    <string name="br_no_download">Downloads sind im App-Browser nicht möglich. PDFs über ⋮ → „In Chrome öffnen“ laden und dann mit „Datei“ öffnen.</string>
+    <string name="br_blocked_link">Dieser Link wird im App-Browser nicht geöffnet.</string>
+    <string name="br_nothing">Auf dieser Seite wurde kein lesbarer Text gefunden.</string>
+    <string name="br_found">%1$d Absätze, %2$d Zeichen gefunden.</string>
+    <string name="web_login">Die Seite verlangt eine Anmeldung. Öffne sie über ⋮ → „Im App-Browser öffnen“, melde dich an und tippe „Diese Seite lesen“. Alternativ Text in Chrome markieren und teilen.</string>
+    <string name="share_pdf_info">Gemini liest den Text des PDFs (max. 15 MB). Danach wird zusammengefasst und auf Wunsch vorgelesen.</string>
+    <string name="kind_pdf">PDF</string>
 </resources>

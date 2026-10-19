@@ -354,7 +354,7 @@ public final class MainActivity extends Activity {
         Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         i.addCategory(Intent.CATEGORY_OPENABLE);
         i.setType("*/*");
-        i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*", "video/*", "image/*", "text/plain"});
+        i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*", "video/*", "image/*", "text/plain", "application/pdf"});
         try {
             startActivityForResult(i, REQ_PICK);
         } catch (RuntimeException e) {
@@ -451,7 +451,7 @@ public final class MainActivity extends Activity {
         } catch (RuntimeException e) {
             mime = null;
         }
-        if (mime != null && (mime.startsWith("image/") || mime.equals("text/plain"))) showShareStart(uri, null);
+        if (mime != null && (mime.startsWith("image/") || mime.equals("text/plain") || mime.equals("application/pdf"))) showShareStart(uri, null);
         else showStart(uri);
     }
 
@@ -511,6 +511,21 @@ public final class MainActivity extends Activity {
     }
 
     /** Text oder Bild zusammenfassen (und optional vorlesen). */
+    private void copyLimited(Uri uri, File out, long max) throws java.io.IOException {
+        try (java.io.InputStream in = getContentResolver().openInputStream(uri);
+             java.io.OutputStream os = new java.io.FileOutputStream(out)) {
+            if (in == null) throw new java.io.IOException("leer");
+            byte[] buf = new byte[64 * 1024];
+            long total = 0;
+            int n;
+            while ((n = in.read(buf)) > 0) {
+                total += n;
+                if (total > max) throw new java.io.IOException("zu groß");
+                os.write(buf, 0, n);
+            }
+        }
+    }
+
     /** „Link“-Knopf: Adresse eingeben; steht ein Link in der Zwischenablage, ist er vorausgefüllt. */
     private void askLink() {
         String pre = "";
@@ -530,6 +545,12 @@ public final class MainActivity extends Activity {
         Ui.add(col, e);
         AlertDialog d = Ui.dialog(this).setTitle(R.string.link_title).setView(col)
                 .setPositiveButton(R.string.link_next, null)
+                .setNeutralButton(R.string.br_open, (x, w) -> {
+                    String u = WebPage.findUrl(e.getText().toString());
+                    Intent i = new Intent(this, BrowserActivity.class);
+                    if (u != null) i.putExtra(BrowserActivity.EXTRA_URL, u);
+                    startActivity(i);
+                })
                 .setNegativeButton(R.string.cancel, null).create();
         d.setOnShowListener(x -> d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String u = WebPage.findUrl(e.getText().toString());
@@ -594,12 +615,13 @@ public final class MainActivity extends Activity {
     }
 
     private void showShareStart(Uri uri, String text) {
-        boolean image = false;
+        boolean image = false, pdf = false;
         String sourceName = "";
         if (uri != null) {
             String mime = null;
             try { mime = getContentResolver().getType(uri); } catch (RuntimeException ignored) { }
             image = mime != null && mime.startsWith("image/");
+            pdf = "application/pdf".equals(mime);
             sourceName = displayName(uri);
         }
         String date = Ui.date(System.currentTimeMillis());
@@ -610,21 +632,23 @@ public final class MainActivity extends Activity {
         else defTitle = Text.titleFromFileName(sourceName);
         LinearLayout col = Ui.column(this);
         OptionsForm form = new OptionsForm(this, col, defTitle, folder, false);
-        TextView info = Ui.body(this, getString(image ? R.string.share_image_info : R.string.share_text_info));
+        TextView info = Ui.body(this, getString(image ? R.string.share_image_info : pdf ? R.string.share_pdf_info : R.string.share_text_info));
         info.setTextColor(Design.color(this, R.attr.pl_muted));
         info.setTextSize(13);
         Ui.add(col, info);
         android.widget.ScrollView sc = new android.widget.ScrollView(this);
         sc.addView(col);
-        final boolean isImage = image;
+        final boolean isImage = image, isPdf = pdf;
         final String name = sourceName;
         Ui.dialog(this).setTitle(R.string.share_title).setView(sc)
                 .setPositiveButton(R.string.share_go, (d, w) -> {
                     Transcript t = form.build();
-                    t.kind = isImage ? Transcript.KIND_IMAGE : Transcript.KIND_TEXT;
+                    t.kind = isImage ? Transcript.KIND_IMAGE : isPdf ? Transcript.KIND_PDF : Transcript.KIND_TEXT;
                     t.source = name;
                     try {
-                        if (isImage) {
+                        if (isPdf) {
+                            copyLimited(uri, Store.pdfFile(this, t.id), WebFetch.MAX_PDF);
+                        } else if (isImage) {
                             File out = Store.imageFile(this, t.id);
                             ImagePrep.toJpeg(this, uri, out);
                         } else {
@@ -639,6 +663,8 @@ public final class MainActivity extends Activity {
                         Toast.makeText(this, R.string.start_file_unreadable, Toast.LENGTH_LONG).show();
                         //noinspection ResultOfMethodCallIgnored
                         Store.imageFile(this, t.id).delete();
+                        //noinspection ResultOfMethodCallIgnored
+                        Store.pdfFile(this, t.id).delete();
                         return;
                     }
                     t.status = Transcript.QUEUED;

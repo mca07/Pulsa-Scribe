@@ -1100,6 +1100,7 @@ public final class TranscriptActivity extends Activity {
         m.getMenu().add(0, 5, 0, R.string.m_rename);
         if (t.audioReady && !t.isWorking()) m.getMenu().add(0, 6, 0, R.string.m_delete_audio);
         if (!t.url.isEmpty()) m.getMenu().add(0, 40, 0, R.string.m_open_source);
+        if (!t.url.isEmpty() && de.mca.pulsascribe.core.WebPage.youTubeId(t.url).isEmpty()) m.getMenu().add(0, 41, 0, R.string.br_open);
         m.getMenu().add(0, 7, 0, R.string.m_delete);
         m.setOnMenuItemClickListener(mi -> {
             switch (mi.getItemId()) {
@@ -1117,6 +1118,9 @@ public final class TranscriptActivity extends Activity {
                             .setNegativeButton(R.string.cancel, null).show();
                     return true;
                 case 7: MainActivity.confirmDelete(this, id, this::finish); return true;
+                case 41:
+                    startActivity(new Intent(this, BrowserActivity.class).putExtra(BrowserActivity.EXTRA_URL, t.url));
+                    return true;
                 case 40: {
                     String u = de.mca.pulsascribe.core.WebPage.cleanUrl(t.url);
                     if (u != null) launch(new Intent(Intent.ACTION_VIEW, Uri.parse(u)).addCategory(Intent.CATEGORY_BROWSABLE));

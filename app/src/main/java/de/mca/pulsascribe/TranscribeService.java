@@ -337,6 +337,14 @@ public final class TranscribeService extends Service {
                 if (!readImage(t)) return;
             } else if (Transcript.KIND_WEB.equals(t.kind) && t.segments.isEmpty()) {
                 if (!readWeb(t)) return;
+            } else if (Transcript.KIND_PDF.equals(t.kind) && t.segments.isEmpty()) {
+                File f = Store.pdfFile(this, t.id);
+                if (!f.isFile()) { fail(t.id, getString(R.string.err_image_missing)); return; }
+                t.status = Transcript.TRANSCRIBE;
+                persist(t);
+                setLive(t.id, R.string.st_ocr, -1);
+                notifyWork(t.id, getString(R.string.st_ocr), -1);
+                if (!readPdf(t, f)) return;
             }
         }
 
@@ -615,7 +623,10 @@ public final class TranscribeService extends Service {
             WebFetch.Result r = WebFetch.fetch(t.url, pdf, () -> cancelCurrent);
             if (r.pdf != null) return readPdf(t, r.pdf);
             page = WebPage.extract(r.html);
-            if (page.length() < WebPage.MIN_TEXT) page = null;
+            if (page.length() < WebPage.MIN_TEXT) {
+                page = null;
+                if (WebPage.looksLikeLogin(r.html)) failRes = R.string.web_login;
+            }
         } catch (WebFetch.Failure f) {
             failRes = f.res;
         } catch (IOException e) {
@@ -627,7 +638,7 @@ public final class TranscribeService extends Service {
         if (cancelCurrent) { markCanceled(t.id); return false; }
         String model = "";
         if (page == null && client != null && failRes != R.string.web_private && failRes != R.string.web_bad_url
-                && failRes != R.string.web_too_big && failRes != R.string.web_unsupported) {
+                && failRes != R.string.web_too_big && failRes != R.string.web_unsupported && failRes != R.string.web_login) {
             // Ausweg: Gemini ruft die Seite selbst ab (Cookie-Wände, Seiten nur mit JavaScript)
             String body = WebPage.urlRequest(WebPage.urlPrompt(t.url, t.language));
             final WebPage.Page[] res = new WebPage.Page[1];

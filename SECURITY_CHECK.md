@@ -175,6 +175,23 @@
 - ✅ Unit-Tests `webUrlsAreCheckedAndCleaned`, `htmlMainTextIsExtracted`, `geminiUrlReplyNeedsRetrievalAndText`
 - ⚠️ Datenschutz: Die besuchte Seite sieht die IP-Adresse des Handys (wie im Browser); beim Gemini-Ausweg und bei YouTube erfährt Google die Adresse
 
+## 9j. App-Browser (WebView) für Seiten mit Anmeldung (ab 1.13) – bewusste Ausnahme
+Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar. Ausnahme von „keine WebView“, daher abgesichert:
+- ✅ Nur auf ausdrücklichen Wunsch (eigener Bildschirm), nicht exportiert, startet nie von selbst
+- ✅ Nur HTTPS: http wird auf https gehoben; intent:, file:, content:, javascript:, mailto:, tel: werden blockiert; SSL-Fehler = Abbruch (keine Ausnahmen)
+- ✅ `setAllowFileAccess(false)`, `setAllowContentAccess(false)`, keine Geolocation, keine neuen Fenster/Pop-ups, Mixed Content nie, Safe Browsing an, Formulardaten werden nicht gespeichert
+- ✅ Keine JavaScript-Brücke (`addJavascriptInterface` wird nicht verwendet); das Leseskript liest nur (Titel, HTML, Text gleich-origin-Rahmen) und sendet nichts
+- ✅ Kamera/Mikrofon-Anfragen werden abgelehnt, Dateiauswahl abgelehnt, Downloads nicht möglich
+- ✅ Drittanbieter-Cookies aus; Anmeldungen lassen sich im Browser-Menü und in den Einstellungen löschen; „Alles löschen“ löscht sie mit
+- ✅ FLAG_SECURE: keine Screenshots/Bildschirmaufnahme, kein Inhalt in der App-Übersicht
+- ✅ Übernommener Text läuft durch dieselbe Bereinigung wie Webseiten (`WebPage.extract`/`Text.block`), max. 100.000 Zeichen
+- ✅ Login-Seiten werden beim direkten Abruf erkannt → klare Meldung statt Gemini-Versuch
+- ✅ Unit-Test `loginPagesAndBrowserResults`
+- ⚠️ Rest-Risiko: JavaScript der besuchten Seite läuft (wie in jedem Browser) – isoliert vom Rest der App, ohne Brücke und ohne Dateizugriff
+
+## 9k. PDF-Dateien (ab 1.13)
+- ✅ Nur über Android-Dateiauswahl/Teilen (content://), max. 15 MB, im privaten Speicher; wandert mit in den Papierkorb und wird mit gelöscht
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB

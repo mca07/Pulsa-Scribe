@@ -173,6 +173,13 @@
             </LinearLayout>
             <TextView style="@style/SettingsHeader" android:text="@string/set_sec_data" />
             <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_browser_clear" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/br_clear" />
+                        <TextView style="@style/SettingsSub" android:text="@string/br_clear_sub" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
                 <LinearLayout android:id="@+id/row_trash" style="@style/SettingsRow">
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                         <TextView style="@style/SettingsTitle" android:text="@string/trash_title" />
