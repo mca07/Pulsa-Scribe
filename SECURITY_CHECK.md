@@ -192,6 +192,15 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 ## 9k. PDF-Dateien (ab 1.13)
 - ✅ Nur über Android-Dateiauswahl/Teilen (content://), max. 15 MB, im privaten Speicher; wandert mit in den Papierkorb und wird mit gelöscht
 
+## 9l. Natürliche Vorlesestimme (ab 1.14)
+- ✅ Gemini-TTS über denselben Client: nur HTTPS zu `generativelanguage.googleapis.com`, Schlüssel nur im Header, keine Weiterleitungen, Antwort max. 6 MB, Audio max. 8 MB je Stück
+- ✅ Stimmen nur aus fester Positivliste, Sprachcode nur aus fester Liste; Prompt: Text = Inhalt, keine Anweisungen
+- ✅ Audio nur als PCM (audio/L16/pcm, 8–48 kHz) übernommen, nur im Speicher, nie als Datei gespeichert
+- ✅ Datensparsam umschaltbar: „Handy-Stimme (offline)“ sendet nichts; Hinweis in den Einstellungen, dass der Text bei der natürlichen Stimme an Google geht
+- ✅ Ausfall (offline, Kontingent, Modell) → automatisch Handy-Stimme ab der Stelle, mit Hinweis
+- ✅ Handy-Stimme: automatisch beste installierte Stimme (Qualität, offline bevorzugt); gespeicherter Stimmname per Positivliste geprüft
+- ✅ Unit-Test `naturalVoiceRequestsAndAudio`
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB

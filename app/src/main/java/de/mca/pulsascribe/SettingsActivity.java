@@ -85,6 +85,35 @@ public final class SettingsActivity extends Activity {
                     d.dismiss();
                 }).setNegativeButton(R.string.cancel, null).show());
 
+        sampleReader = new Reader(this, new Reader.Listener() {
+            @Override
+            public void onState(boolean speaking, int index) {
+                ((TextView) findViewById(R.id.voice_test_title)).setText(speaking ? R.string.voice_test_stop : R.string.voice_test);
+            }
+
+            @Override
+            public void onError(int messageRes) {
+                Toast.makeText(SettingsActivity.this, messageRes, Toast.LENGTH_LONG).show();
+            }
+        });
+        updateVoice();
+        findViewById(R.id.row_voice_engine).setOnClickListener(v -> {
+            String[] labels = {getString(R.string.voice_natural), getString(R.string.voice_device)};
+            Ui.dialog(this).setTitle(R.string.voice_engine)
+                    .setSingleChoiceItems(labels, Settings.naturalVoice(this) ? 0 : 1, (d, w) -> {
+                        d.dismiss();
+                        if (w == 0 && !GeminiKey.has(this)) { KeyDialog.show(this, this::updateVoice); }
+                        Settings.setNaturalVoice(this, w == 0);
+                        updateVoice();
+                        playSample();
+                    }).setNegativeButton(R.string.cancel, null).show();
+        });
+        findViewById(R.id.row_voice).setOnClickListener(v -> pickVoice());
+        findViewById(R.id.row_voice_test).setOnClickListener(v -> {
+            if (sampleReader.isSpeaking()) sampleReader.stop();
+            else playSample();
+        });
+
         TextView rate = findViewById(R.id.rate_value);
         rate.setText(Settings.SPEECH_LABELS[rateIndex()]);
         findViewById(R.id.row_rate).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.set_rate)
@@ -328,6 +357,7 @@ public final class SettingsActivity extends Activity {
     @Override
     protected void onPause() {
         handler.removeCallbacks(modelTick);
+        if (sampleReader != null) sampleReader.stop();
         super.onPause();
     }
 
@@ -453,6 +483,79 @@ public final class SettingsActivity extends Activity {
         ((TextView) findViewById(R.id.trash_status)).setText(n == 0 ? getString(R.string.trash_empty_short)
                 : getResources().getQuantityString(R.plurals.trash_summary, n, n,
                 android.text.format.Formatter.formatShortFileSize(this, Store.trashBytes(this))));
+    }
+
+    private Reader sampleReader;
+
+    @Override
+    protected void onDestroy() {
+        if (sampleReader != null) sampleReader.release();
+        super.onDestroy();
+    }
+
+
+    private void playSample() {
+        sampleReader.stop();
+        sampleReader.speak(Reader.of(getString(R.string.voice_sample)), "de");
+    }
+
+    private java.util.Locale sampleLocale() {
+        return java.util.Locale.GERMANY;
+    }
+
+    private void updateVoice() {
+        boolean nat = Settings.naturalVoice(this) && GeminiKey.has(this);
+        ((TextView) findViewById(R.id.voice_engine_value)).setText(nat ? R.string.voice_natural_short : R.string.voice_device_short);
+        ((TextView) findViewById(R.id.voice_engine_sub)).setText(nat ? R.string.voice_natural_sub : R.string.voice_device_sub);
+        String dv = Settings.deviceVoice(this);
+        ((TextView) findViewById(R.id.voice_value)).setText(nat
+                ? de.mca.pulsascribe.core.Speech.VOICE_LABELS[de.mca.pulsascribe.core.Speech.voiceIndex(Settings.voice(this))]
+                : dv.isEmpty() ? getString(R.string.voice_auto) : dv);
+    }
+
+    private void pickVoice() {
+        if (Settings.naturalVoice(this) && GeminiKey.has(this)) {
+            Ui.dialog(this).setTitle(R.string.voice_pick)
+                    .setSingleChoiceItems(de.mca.pulsascribe.core.Speech.VOICE_LABELS,
+                            de.mca.pulsascribe.core.Speech.voiceIndex(Settings.voice(this)), (d, w) -> {
+                        Settings.setVoice(this, de.mca.pulsascribe.core.Speech.VOICES[w]);
+                        updateVoice();
+                        playSample(); // Dialog bleibt offen: weitere Stimmen anhören
+                    })
+                    .setPositiveButton(R.string.ok, null).show();
+            return;
+        }
+        if (!sampleReader.isReady()) {
+            Toast.makeText(this, R.string.read_unavailable, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        java.util.List<android.speech.tts.Voice> vs = sampleReader.voices(sampleLocale());
+        String[] labels = new String[vs.size() + 1];
+        labels[0] = getString(R.string.voice_auto);
+        int sel = 0;
+        String cur = Settings.deviceVoice(this);
+        for (int i = 0; i < vs.size(); i++) {
+            android.speech.tts.Voice x = vs.get(i);
+            String q = x.getQuality() >= android.speech.tts.Voice.QUALITY_VERY_HIGH ? getString(R.string.voice_q_very_high)
+                    : x.getQuality() >= android.speech.tts.Voice.QUALITY_HIGH ? getString(R.string.voice_q_high) : getString(R.string.voice_q_normal);
+            labels[i + 1] = getString(R.string.voice_device_item, i + 1, q,
+                    getString(x.isNetworkConnectionRequired() ? R.string.voice_online : R.string.voice_offline), x.getLocale().toLanguageTag());
+            if (x.getName().equals(cur)) sel = i + 1;
+        }
+        Ui.dialog(this).setTitle(R.string.voice_pick)
+                .setSingleChoiceItems(labels, sel, (d, w) -> {
+                    Settings.setDeviceVoice(this, w == 0 ? "" : vs.get(w - 1).getName());
+                    updateVoice();
+                    playSample();
+                })
+                .setPositiveButton(R.string.ok, null)
+                .setNeutralButton(R.string.voice_more, (d, w) -> {
+                    try {
+                        startActivity(new Intent("com.android.settings.TTS_SETTINGS"));
+                    } catch (RuntimeException e) {
+                        Toast.makeText(this, R.string.no_app, Toast.LENGTH_SHORT).show();
+                    }
+                }).show();
     }
 
     private void updateTodoist() {

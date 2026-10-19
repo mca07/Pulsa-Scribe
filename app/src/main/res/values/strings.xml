@@ -509,4 +509,28 @@
     <string name="web_login">Die Seite verlangt eine Anmeldung. Öffne sie über ⋮ → „Im App-Browser öffnen“, melde dich an und tippe „Diese Seite lesen“. Alternativ Text in Chrome markieren und teilen.</string>
     <string name="share_pdf_info">Gemini liest den Text des PDFs (max. 15 MB). Danach wird zusammengefasst und auf Wunsch vorgelesen.</string>
     <string name="kind_pdf">PDF</string>
+    <!-- Stimme (1.14) -->
+    <string name="voice_engine">Stimme</string>
+    <string name="voice_natural">Natürlich (Gemini) – klingt wie ein Mensch</string>
+    <string name="voice_device">Handy-Stimme (offline)</string>
+    <string name="voice_natural_short">Natürlich</string>
+    <string name="voice_device_short">Handy</string>
+    <string name="voice_natural_sub">Der vorzulesende Text wird dafür an Google Gemini gesendet; braucht Internet und zählt zu deinem Kontingent.</string>
+    <string name="voice_device_sub">Bleibt auf dem Handy. Klingt je nach installierter Stimme künstlicher.</string>
+    <string name="voice_pick">Sprecher</string>
+    <string name="voice_pick_sub">Antippen spielt eine Hörprobe</string>
+    <string name="voice_test">Hörprobe abspielen</string>
+    <string name="voice_test_stop">Hörprobe stoppen</string>
+    <string name="voice_sample">Hallo! So klinge ich, wenn ich dir Zusammenfassungen, Artikel und deine Gespräche vorlese.</string>
+    <string name="voice_auto">Automatisch (beste)</string>
+    <string name="voice_more">Weitere Stimmen laden</string>
+    <string name="voice_device_item">Stimme %1$d · %2$s · %3$s · %4$s</string>
+    <string name="voice_q_very_high">sehr gut</string>
+    <string name="voice_q_high">gut</string>
+    <string name="voice_q_normal">einfach</string>
+    <string name="voice_online">online</string>
+    <string name="voice_offline">offline</string>
+    <string name="voice_failed">Natürliche Stimme nicht verfügbar – lese mit der Handy-Stimme weiter.</string>
+    <string name="voice_quota">Kontingent für die natürliche Stimme erschöpft – lese mit der Handy-Stimme weiter.</string>
+    <string name="voice_offline_msg">Kein Internet – lese mit der Handy-Stimme weiter.</string>
 </resources>

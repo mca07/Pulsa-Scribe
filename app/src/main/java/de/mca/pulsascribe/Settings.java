@@ -93,4 +93,16 @@ final class Settings {
         return 30;
     }
     static void setTrashDays(Context c, int d) { p(c).edit().putInt("trash_days", d).apply(); }
+
+    /** Natürliche Gemini-Stimme (Standard an) oder Handy-Stimme. */
+    static boolean naturalVoice(Context c) { return p(c).getBoolean("natural_voice", true); }
+    static void setNaturalVoice(Context c, boolean v) { p(c).edit().putBoolean("natural_voice", v).apply(); }
+    static String voice(Context c) { return de.mca.pulsascribe.core.Speech.cleanVoice(p(c).getString("voice", "")); }
+    static void setVoice(Context c, String v) { p(c).edit().putString("voice", de.mca.pulsascribe.core.Speech.cleanVoice(v)).apply(); }
+    /** Name der gewählten Handy-Stimme, "" = automatisch die beste. */
+    static String deviceVoice(Context c) {
+        String v = p(c).getString("device_voice", "");
+        return v.length() <= 120 && v.matches("[A-Za-z0-9_#.\\-]*") ? v : "";
+    }
+    static void setDeviceVoice(Context c, String v) { p(c).edit().putString("device_voice", v == null ? "" : v).apply(); }
 }

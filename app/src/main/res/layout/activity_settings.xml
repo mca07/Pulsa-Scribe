@@ -146,6 +146,30 @@
 
             <TextView style="@style/SettingsHeader" android:text="@string/m_read" />
             <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_voice_engine" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/voice_engine" />
+                        <TextView android:id="@+id/voice_engine_sub" style="@style/SettingsSub" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/voice_engine_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="150dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_voice" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/voice_pick" />
+                        <TextView style="@style/SettingsSub" android:text="@string/voice_pick_sub" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/voice_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_voice_test" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:id="@+id/voice_test_title" style="@style/SettingsTitle" android:text="@string/voice_test" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
                 <LinearLayout android:id="@+id/row_rate" style="@style/SettingsRow">
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                         <TextView style="@style/SettingsTitle" android:text="@string/set_rate" />

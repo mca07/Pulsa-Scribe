@@ -182,3 +182,14 @@ Mit Todoist:
 - [ ] ⋮ → „In Chrome öffnen“, „Neu laden“, „Anmeldungen im App-Browser löschen“ → danach abgemeldet
 - [ ] Einstellungen → „Anmeldungen im App-Browser löschen“ funktioniert ebenso
 - [ ] „Datei“ → PDF auswählen (bzw. PDF aus anderer App teilen) → Text gelesen, Zusammenfassung erstellt
+
+## 20. Natürliche Stimme (neu in 1.14)
+- [ ] Zusammenfassung vorlesen → klingt natürlich (Gemini-Stimme), Start nach wenigen Sekunden, keine hörbaren Pausen zwischen den Abschnitten
+- [ ] Langer Artikel vorlesen → läuft durch, markierter Absatz wandert mit
+- [ ] Stopp-Knopf → sofort still
+- [ ] Einstellungen → Vorlesen → „Stimme“: Natürlich / Handy-Stimme umschalten → Hörprobe spielt automatisch
+- [ ] „Sprecher“ (natürlich) → verschiedene Stimmen antippen → jeweils Hörprobe, Lieblingsstimme bleibt gespeichert
+- [ ] Vorlesegeschwindigkeit (z. B. 1,2×) wirkt auch bei der natürlichen Stimme, Tonhöhe bleibt normal
+- [ ] Flugmodus → Vorlesen → Hinweis „Kein Internet – lese mit der Handy-Stimme weiter“, liest offline weiter
+- [ ] Handy-Stimme gewählt → „Sprecher“ zeigt installierte Stimmen mit Qualität (sehr gut/gut) → beste klingt deutlich besser als vorher; „Weitere Stimmen laden“ öffnet Android-Einstellungen
+- [ ] Notiz: Wie viele Minuten pro Tag gehen, bevor „Kontingent erschöpft“ kommt?

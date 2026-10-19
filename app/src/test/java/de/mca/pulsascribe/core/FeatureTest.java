@@ -558,4 +558,35 @@ public class FeatureTest {
         assertTrue(WebPage.parseBrowser("null").paragraphs.isEmpty());
         assertTrue(WebPage.parseBrowser("\"\"").paragraphs.isEmpty());
     }
+
+    @Test
+    public void naturalVoiceRequestsAndAudio() {
+        java.util.List<String> items = java.util.Arrays.asList("Titel.", "Erster Absatz mit etwas Text.", "", "Zweiter Absatz.");
+        java.util.List<Speech.Chunk> c = Speech.plan(items, 20, 60);
+        assertEquals("Titel.", c.get(0).text);
+        assertEquals(0, c.get(0).item);
+        assertEquals(1, c.get(1).item);
+        StringBuilder all = new StringBuilder();
+        for (Speech.Chunk x : c) { assertTrue(x.text.length() <= 60); all.append(x.text).append(' '); }
+        assertTrue(all.toString().contains("Zweiter Absatz."));
+        StringBuilder longText = new StringBuilder();
+        for (int i = 0; i < 50; i++) longText.append("Das ist Satz ").append(i).append(". ");
+        for (Speech.Chunk x : Speech.plan(java.util.Collections.singletonList(longText.toString()), Speech.FIRST_MAX, Speech.MAX)) {
+            assertTrue(x.text.length() <= Speech.MAX);
+        }
+        String req = Speech.request("Hallo \"Welt\"", "<evil>", "de-DE");
+        assertTrue(req.contains("\"voiceName\":\"Kore\""));
+        assertTrue(req.contains("\"languageCode\":\"de-DE\""));
+        assertTrue(req.contains("\"responseModalities\":[\"AUDIO\"]"));
+        assertFalse(Speech.request("x", "Puck", "x\"y").contains("languageCode"));
+        String pcm = java.util.Base64.getEncoder().encodeToString(new byte[]{1, 2, 3, 4, 5});
+        String body = "{\"candidates\":[{\"content\":{\"parts\":[{\"inlineData\":{\"mimeType\":\"audio/L16;codec=pcm;rate=24000\",\"data\":\"" + pcm + "\"}}]}}]}";
+        Speech.Audio a = Speech.parse(body);
+        assertEquals(24000, a.rate);
+        assertEquals(4, a.pcm.length);
+        assertNull(Speech.parse("{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Ich lese vor\"}]}}]}"));
+        assertNull(Speech.parse(body.replace("audio/L16", "image/png")));
+        assertEquals("de-DE", Speech.languageCode("de"));
+        assertEquals("", Speech.languageCode("auto"));
+    }
 }
