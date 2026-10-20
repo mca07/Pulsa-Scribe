@@ -361,7 +361,7 @@ public final class WebPage {
         StringBuilder b = new StringBuilder(prompt.length() + 200);
         b.append("{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":");
         Json.quoteTo(b, prompt);
-        b.append("}]}],\"tools\":[{\"url_context\":{}}],\"generationConfig\":{\"temperature\":0}}");
+        b.append("}]}],\"tools\":[{\"url_context\":{}}],\"generationConfig\":{\"temperature\":0,\"seed\":" + Gemini.SEED + "}}");
         return b.toString();
     }
 
@@ -387,7 +387,7 @@ public final class WebPage {
         Json.quoteTo(b, videoUrl);
         b.append("}},{\"text\":");
         Json.quoteTo(b, prompt);
-        b.append("}]}],\"generationConfig\":{\"temperature\":0,\"responseMimeType\":\"application/json\",\"responseSchema\":")
+        b.append("}]}],\"generationConfig\":{\"temperature\":0,\"seed\":" + Gemini.SEED + ",\"responseMimeType\":\"application/json\",\"responseSchema\":")
                 .append(Gemini.transcriptSchema()).append("}}");
         return b.toString();
     }

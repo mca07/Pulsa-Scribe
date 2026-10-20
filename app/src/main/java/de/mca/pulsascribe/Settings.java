@@ -111,4 +111,17 @@ final class Settings {
     static void setCrmFirstPerson(Context c, boolean v) { p(c).edit().putBoolean("crm_first_person", v).apply(); }
     static String myName(Context c) { return de.mca.pulsascribe.core.Text.line(p(c).getString("my_name", ""), 40); }
     static void setMyName(Context c, String v) { p(c).edit().putString("my_name", de.mca.pulsascribe.core.Text.line(v, 40)).apply(); }
+
+    /** Modelle in Qualitätsreihenfolge; solche in der Sperrzeit (Kontingent, nicht gefunden) kommen zuletzt. */
+    static int[] modelOrder(Context c) {
+        int n = Gemini.MODELS.length;
+        long now = System.currentTimeMillis();
+        int[] out = new int[n];
+        int k = 0;
+        for (int i = 0; i < n; i++) if (p(c).getLong("model_cd_" + i, 0) <= now) out[k++] = i;
+        for (int i = 0; i < n; i++) if (p(c).getLong("model_cd_" + i, 0) > now) out[k++] = i;
+        return out;
+    }
+    static void setModelCooldown(Context c, int i, long ms) { p(c).edit().putLong("model_cd_" + i, System.currentTimeMillis() + ms).apply(); }
+    static void clearModelCooldown(Context c, int i) { p(c).edit().remove("model_cd_" + i).apply(); }
 }

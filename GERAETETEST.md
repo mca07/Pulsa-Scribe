@@ -201,3 +201,8 @@ Mit Todoist:
 - [ ] „Automatisch (nach Name …)“ → Gemini erkennt den eigenen Sprecher am Namen
 - [ ] Zurück auf „Neutral“ → wieder neutrale Beschreibung
 - [ ] „CRM-Eintrag kopieren“ übernimmt die Ich-Form
+
+## 22. Gleichbleibende Ergebnisse (neu in 1.16)
+- [ ] Dieselbe Datei zweimal transkribieren → unter der Zusammenfassung steht beide Male dasselbe „Modell: …“
+- [ ] Ergebnisse deutlich ähnlicher als vorher (kleine Wortunterschiede sind möglich)
+- [ ] Nach „Kontingent erschöpft“ beim besten Modell: spätestens nach 10 Minuten wird wieder das beste Modell genutzt

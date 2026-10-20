@@ -365,6 +365,7 @@ public final class TranscribeService extends Service {
             if (cancelCurrent) { finishCanceled(job, t, summaryOnly); return; }
             if (o.error == null && o.summary != null) {
                 t.summary = o.summary;
+                t.sumModel = o.model;
                 t.error = "";
                 if (t.tags.isEmpty()) t.tags.addAll(tags);
             } else {
@@ -917,13 +918,14 @@ public final class TranscribeService extends Service {
      */
     private Outcome call(Request req, Accept accept) {
         Outcome o = new Outcome();
-        int start = Settings.modelIndex(this);
+        // Immer zuerst das beste Modell; Modelle mit kürzlichem Kontingent-/Verfügbarkeitsfehler ans Ende
+        int[] order = Settings.modelOrder(this);
         int models = Gemini.MODELS.length;
         String lastDetail = "";
         boolean quota = false, network = false;
         for (int attempt = 0; attempt < models * 2; attempt++) {
             if (cancelCurrent) { o.error = getString(R.string.canceled); return o; }
-            int mi = (start + attempt) % models;
+            int mi = order[attempt % models];
             String model = Gemini.MODELS[mi];
             if (attempt > 0) pause(attempt < models ? 2000 : 20_000); // zweite Runde mit längerer Pause
             GeminiClient.Response r;
@@ -944,7 +946,7 @@ public final class TranscribeService extends Service {
                 }
                 if (reply != null && accept.accept(reply, o)) {
                     o.model = model;
-                    Settings.setModelIndex(this, mi);
+                    Settings.clearModelCooldown(this, mi);
                     return o;
                 }
                 lastDetail = "200 · " + model + (reply != null && !reply.finishReason.isEmpty() ? " · " + reply.finishReason : "");
@@ -952,7 +954,8 @@ public final class TranscribeService extends Service {
             }
             String status = Gemini.errorStatus(r.body);
             lastDetail = r.code + (status.isEmpty() ? "" : " " + status) + " · " + model;
-            if (r.code == 429) quota = true;
+            if (r.code == 429) { quota = true; Settings.setModelCooldown(this, mi, 10 * 60_000L); }
+            if (r.code == 404) Settings.setModelCooldown(this, mi, 24 * 3600_000L);
             if (!Gemini.tryNextModel(r.code)) {
                 o.error = (r.code == 401 || r.code == 403 || (r.code == 400 && status.contains("INVALID_ARGUMENT") && r.body.contains("API key")))
                         ? getString(R.string.err_key_rejected, lastDetail)

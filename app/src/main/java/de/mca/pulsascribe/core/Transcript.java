@@ -126,6 +126,8 @@ public final class Transcript {
     public String summaryLength = Templates.MEDIUM;
     /** CRM-Eintrag aus Ich-Sicht; me = Sprecherbezeichnung des Nutzers ("" = automatisch), meName = Name des Nutzers. */
     public boolean firstPerson;
+    /** Modell der Zusammenfassung (zur Anzeige). */
+    public String sumModel = "";
     public String me = "";
     public String meName = "";
     public final List<Answer> answers = new ArrayList<>();          // Fragen an das Transkript
@@ -228,6 +230,7 @@ public final class Transcript {
         m.put("template", template);
         m.put("sumLength", summaryLength);
         if (firstPerson) m.put("firstPerson", true);
+        if (!sumModel.isEmpty()) m.put("sumModel", sumModel);
         if (!me.isEmpty()) m.put("me", me);
         if (!meName.isEmpty()) m.put("meName", meName);
         List<Object> qa = new ArrayList<>();
@@ -362,6 +365,8 @@ public final class Transcript {
         t.template = Templates.clean(Json.str(m, "template"));
         t.summaryLength = Templates.cleanLength(Json.str(m, "sumLength"));
         t.firstPerson = Json.bool(m, "firstPerson", false);
+        String sm = Json.str(m, "sumModel");
+        t.sumModel = sm != null && sm.matches("[a-z0-9.\\-]{1,48}") ? sm : "";
         t.me = Text.line(Json.str(m, "me"), MAX_SPEAKER);
         t.meName = Text.line(Json.str(m, "meName"), MAX_SPEAKER);
         List<Object> qa = Json.arr(m, "qa");

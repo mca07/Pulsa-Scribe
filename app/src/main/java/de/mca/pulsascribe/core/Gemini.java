@@ -16,6 +16,8 @@ public final class Gemini {
     public static final String HOST = "generativelanguage.googleapis.com";
 
     /** Reihenfolge der Modelle: bei 404/429/5xx wird das nächste versucht. */
+    /** Fester Startwert: gleiche Eingabe → möglichst gleiche Antwort (Gemini garantiert es nicht ganz). */
+    public static final int SEED = 4711;
     public static final String[] MODELS = {"gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash"};
 
     private static final Pattern MODEL = Pattern.compile("[a-z0-9.\\-]{1,48}");
@@ -122,7 +124,7 @@ public final class Gemini {
     }
 
     public static String audioRequestSuffix() {
-        return "\"}}]}],\"generationConfig\":{\"temperature\":0,\"responseMimeType\":\"application/json\",\"responseSchema\":"
+        return "\"}}]}],\"generationConfig\":{\"temperature\":0,\"seed\":" + SEED + ",\"responseMimeType\":\"application/json\",\"responseSchema\":"
                 + transcriptSchema() + "}}";
     }
 
@@ -409,7 +411,7 @@ public final class Gemini {
     }
 
     public static String summaryRequest(String prompt) {
-        return textRequest(prompt, summarySchema(), 0.2);
+        return textRequest(prompt, summarySchema(), 0);
     }
 
     /** Textanfrage mit festem Antwortschema. */
@@ -417,7 +419,7 @@ public final class Gemini {
         StringBuilder b = new StringBuilder(prompt.length() + 1200);
         b.append("{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":");
         Json.quoteTo(b, prompt);
-        b.append("}]}],\"generationConfig\":{\"temperature\":").append(temperature)
+        b.append("}]}],\"generationConfig\":{\"temperature\":").append(temperature).append(",\"seed\":").append(SEED)
                 .append(",\"responseMimeType\":\"application/json\",\"responseSchema\":");
         b.append(schema).append("}}");
         return b.toString();
@@ -463,7 +465,7 @@ public final class Gemini {
     }
 
     public static String imageRequestSuffix() {
-        return "\"}}]}],\"generationConfig\":{\"temperature\":0,\"responseMimeType\":\"application/json\",\"responseSchema\":"
+        return "\"}}]}],\"generationConfig\":{\"temperature\":0,\"seed\":" + SEED + ",\"responseMimeType\":\"application/json\",\"responseSchema\":"
                 + ocrSchema() + "}}";
     }
 

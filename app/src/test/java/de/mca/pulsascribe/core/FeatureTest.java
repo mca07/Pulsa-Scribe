@@ -615,4 +615,19 @@ public class FeatureTest {
         t.template = Templates.MEETING;
         assertFalse(Gemini.summaryPrompt(t, "same").contains("FIRST PERSON"));
     }
+
+    @Test
+    public void requestsAreDeterministic() {
+        String sum = Gemini.summaryRequest("x");
+        assertTrue(sum.contains("\"temperature\":0.0,"));
+        assertTrue(sum.contains("\"seed\":" + Gemini.SEED));
+        assertTrue(Gemini.audioRequestSuffix().contains("\"seed\":" + Gemini.SEED));
+        assertTrue(Gemini.imageRequestSuffix().contains("\"seed\":" + Gemini.SEED));
+        assertTrue(WebPage.urlRequest("p").contains("\"seed\":" + Gemini.SEED));
+        Transcript t = new Transcript();
+        t.id = "abcdefgh12";
+        t.sumModel = "gemini-3.8-flash";
+        assertEquals("gemini-3.8-flash", Transcript.fromJson(t.toJson()).sumModel);
+        assertEquals("", Transcript.fromJson(t.toJson().replace("gemini-3.8-flash", "x y")).sumModel);
+    }
 }

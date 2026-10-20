@@ -416,7 +416,8 @@ public final class TranscriptActivity extends Activity {
         }
         bullets(h[3], s.decisions);
         bullets(h[4], s.questions);
-        TextView hint = Ui.body(this, getString(R.string.sum_hint));
+        TextView hint = Ui.body(this, getString(R.string.sum_hint)
+                + (t.sumModel.isEmpty() ? "" : " " + getString(R.string.sum_model, t.sumModel)));
         hint.setTextSize(12);
         hint.setTextColor(Design.color(this, R.attr.pl_muted));
         hint.setPadding(0, Ui.dp(this, 18), 0, Ui.dp(this, 6));
