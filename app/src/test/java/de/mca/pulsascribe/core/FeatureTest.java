@@ -589,4 +589,30 @@ public class FeatureTest {
         assertEquals("de-DE", Speech.languageCode("de"));
         assertEquals("", Speech.languageCode("auto"));
     }
+
+    @Test
+    public void crmFirstPersonPrompt() {
+        Transcript t = new Transcript();
+        t.id = "abcdefgh12";
+        t.template = Templates.CRM;
+        t.segments.add(new Transcript.Segment(0, "Sprecher 1", "Hallo, hier ist Marian von nerpcon."));
+        t.segments.add(new Transcript.Segment(5000, "Sprecher 2", "Hallo."));
+        assertFalse(Gemini.summaryPrompt(t, "same").contains("FIRST PERSON"));
+        t.firstPerson = true;
+        t.meName = "Marian";
+        String p = Gemini.summaryPrompt(t, "same");
+        assertTrue(p.contains("FIRST PERSON"));
+        assertTrue(p.contains("The user's name is Marian"));
+        t.me = "Sprecher 1";
+        t.speakerNames.put("Sprecher 1", "Marian");
+        p = Gemini.summaryPrompt(t, "same");
+        assertTrue(p.contains("speaker labeled 'Marian'"));
+        Transcript r = Transcript.fromJson(t.toJson());
+        assertTrue(r.firstPerson);
+        assertEquals("Sprecher 1", r.me);
+        assertEquals("Marian", r.meName);
+        // Nur bei der CRM-Vorlage
+        t.template = Templates.MEETING;
+        assertFalse(Gemini.summaryPrompt(t, "same").contains("FIRST PERSON"));
+    }
 }

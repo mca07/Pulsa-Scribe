@@ -72,6 +72,24 @@
                         android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
                 </LinearLayout>
                 <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_crm_me" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/crm_me" />
+                        <TextView style="@style/SettingsSub" android:text="@string/crm_me_sub" />
+                    </LinearLayout>
+                    <Switch android:id="@+id/sw_crm_me" android:layout_width="wrap_content" android:layout_height="48dp"
+                        android:contentDescription="@string/crm_me" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_my_name" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/my_name" />
+                        <TextView style="@style/SettingsSub" android:text="@string/my_name_sub" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/my_name_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="150dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
                 <LinearLayout android:id="@+id/row_sum_len" style="@style/SettingsRow">
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                         <TextView style="@style/SettingsTitle" android:text="@string/sum_length" />

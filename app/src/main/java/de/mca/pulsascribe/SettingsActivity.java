@@ -75,6 +75,22 @@ public final class SettingsActivity extends Activity {
                     d.dismiss();
                 }).setNegativeButton(R.string.cancel, null).show());
 
+        bindSwitch(R.id.row_crm_me, R.id.sw_crm_me, Settings.crmFirstPerson(this), on -> Settings.setCrmFirstPerson(this, on));
+        TextView myName = findViewById(R.id.my_name_value);
+        myName.setText(Settings.myName(this).isEmpty() ? getString(R.string.my_name_none) : Settings.myName(this));
+        findViewById(R.id.row_my_name).setOnClickListener(v -> {
+            android.widget.LinearLayout col = Ui.column(this);
+            android.widget.EditText e = Ui.input(this, Settings.myName(this), 40, false);
+            e.setHint(R.string.my_name_hint);
+            Ui.add(col, e);
+            Ui.dialog(this).setTitle(R.string.my_name).setView(col)
+                    .setPositiveButton(R.string.save, (d, w) -> {
+                        Settings.setMyName(this, e.getText().toString());
+                        myName.setText(Settings.myName(this).isEmpty() ? getString(R.string.my_name_none) : Settings.myName(this));
+                    })
+                    .setNegativeButton(R.string.cancel, null).show();
+        });
+
         TextView lenV = findViewById(R.id.sum_len_value);
         lenV.setText(de.mca.pulsascribe.core.Templates.LENGTH_LABELS[de.mca.pulsascribe.core.Templates.lengthIndex(Settings.summaryLength(this))]);
         findViewById(R.id.row_sum_len).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.sum_length)

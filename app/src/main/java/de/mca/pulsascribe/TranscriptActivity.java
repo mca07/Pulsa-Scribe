@@ -427,6 +427,9 @@ public final class TranscriptActivity extends Activity {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = Ui.dp(this, 8);
         if (Templates.CRM.equals(t.template)) {
+            if (!t.isWorking() && !t.segments.isEmpty()) {
+                summaryBox.addView(linkText(t.firstPerson ? R.string.crm_view_me : R.string.crm_view_neutral, v -> crmPerspective()));
+            }
             summaryBox.addView(secondaryButton(R.string.crm_copy, v -> copyCrm(s)), lp);
             LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(lp);
             summaryBox.addView(secondaryButton(R.string.crm_mail, v -> mailCrm(s)), lp2);
@@ -457,6 +460,65 @@ public final class TranscriptActivity extends Activity {
                 .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crm_mail_subject, t.title))
                 .putExtra(Intent.EXTRA_TEXT, crmText(s));
         launch(i);
+    }
+
+    /** Perspektive des CRM-Eintrags: Ich-Form (mit Wahl, welcher Sprecher „ich“ ist) oder neutral; danach neu erstellen. */
+    private void crmPerspective() {
+        if (!editable() || t.segments.isEmpty()) return;
+        if (!GeminiKey.has(this)) { KeyDialog.show(this, null); return; }
+        LinearLayout col = Ui.column(this);
+        RadioGroup rg = new RadioGroup(this);
+        RadioButton me = new RadioButton(this);
+        me.setId(View.generateViewId());
+        me.setText(R.string.crm_persp_me);
+        me.setMinHeight(Ui.dp(this, 48));
+        RadioButton neutral = new RadioButton(this);
+        neutral.setId(View.generateViewId());
+        neutral.setText(R.string.crm_persp_neutral);
+        neutral.setMinHeight(Ui.dp(this, 48));
+        rg.addView(me);
+        rg.addView(neutral);
+        rg.check(t.firstPerson ? me.getId() : neutral.getId());
+        Ui.add(col, rg);
+        List<String> labels = t.speakers();
+        String[] names = new String[labels.size() + 1];
+        names[0] = Settings.myName(this).isEmpty() ? getString(R.string.crm_me_auto)
+                : getString(R.string.crm_me_auto_name, Settings.myName(this));
+        int sel = 0;
+        for (int i = 0; i < labels.size(); i++) {
+            names[i + 1] = t.speakerName(labels.get(i));
+            if (labels.get(i).equals(t.me)) sel = i + 1;
+        }
+        final int[] pick = {sel};
+        TextView whoLabel = Ui.label(this, R.string.crm_me_who);
+        TextView whoRow = Ui.choiceRow(this, names[sel]);
+        whoRow.setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.crm_me_who)
+                .setSingleChoiceItems(names, pick[0], (d, w) -> {
+                    pick[0] = w;
+                    whoRow.setText(names[w]);
+                    d.dismiss();
+                }).show());
+        if (labels.size() > 0) {
+            Ui.add(col, whoLabel);
+            Ui.add(col, whoRow);
+        }
+        rg.setOnCheckedChangeListener((g, id) -> {
+            int vis = id == me.getId() && labels.size() > 0 ? View.VISIBLE : View.GONE;
+            whoLabel.setVisibility(vis);
+            whoRow.setVisibility(vis);
+        });
+        if (!t.firstPerson) { whoLabel.setVisibility(View.GONE); whoRow.setVisibility(View.GONE); }
+        Ui.dialog(this).setTitle(R.string.crm_persp_title).setView(col)
+                .setPositiveButton(R.string.summary_create, (d, w) -> {
+                    Transcript n = Store.copy(t);
+                    n.firstPerson = rg.getCheckedRadioButtonId() == me.getId();
+                    n.me = pick[0] == 0 ? "" : labels.get(pick[0] - 1);
+                    n.meName = Settings.myName(this);
+                    Store.save(this, n);
+                    TranscribeService.summary(this, id);
+                    setTab(TAB_SUMMARY);
+                })
+                .setNegativeButton(R.string.cancel, null).show();
     }
 
     /** Vorlage auf CRM-Eintrag umstellen und Zusammenfassung neu erstellen. */

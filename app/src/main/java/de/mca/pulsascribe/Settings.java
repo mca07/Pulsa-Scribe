@@ -105,4 +105,10 @@ final class Settings {
         return v.length() <= 120 && v.matches("[A-Za-z0-9_#.\\-]*") ? v : "";
     }
     static void setDeviceVoice(Context c, String v) { p(c).edit().putString("device_voice", v == null ? "" : v).apply(); }
+
+    /** CRM-Eintrag standardmäßig in Ich-Form, eigener Name zum Erkennen des eigenen Sprechers. */
+    static boolean crmFirstPerson(Context c) { return p(c).getBoolean("crm_first_person", false); }
+    static void setCrmFirstPerson(Context c, boolean v) { p(c).edit().putBoolean("crm_first_person", v).apply(); }
+    static String myName(Context c) { return de.mca.pulsascribe.core.Text.line(p(c).getString("my_name", ""), 40); }
+    static void setMyName(Context c, String v) { p(c).edit().putString("my_name", de.mca.pulsascribe.core.Text.line(v, 40)).apply(); }
 }

@@ -310,6 +310,7 @@ public final class Gemini {
                 : "Summarize the following text (for example a post, article, message or screenshot content).\n");
         p.append(Templates.fields(t.template)).append(" Use empty lists where nothing applies.\n");
         p.append(Templates.lengthDirective(t.summaryLength)).append("\n");
+        appendPerspective(p, t);
         appendLanguage(p, summaryLang, audio ? "transcript" : "text", contentLanguage(t));
         p.append("tags = 2 to 5 short topic keywords (one or two words each, no #).\n");
         p.append("Use only information from the ").append(audio ? "transcript" : "text")
@@ -318,6 +319,29 @@ public final class Gemini {
         p.append(audio ? "TRANSCRIPT:\n" : "TEXT:\n");
         appendLines(p, t, audio, MAX_SUMMARY_INPUT);
         return p.toString();
+    }
+
+    /** CRM-Eintrag in Ich-Form: wer „ich“ ist, kommt aus der Sprecherwahl oder dem Namen des Nutzers. */
+    static void appendPerspective(StringBuilder p, Transcript t) {
+        if (!t.firstPerson || !Templates.CRM.equals(Templates.clean(t.template))) return;
+        p.append("PERSPECTIVE: Write overview, points, decisions and questions in the FIRST PERSON from the point of view of the user, ")
+                .append("who logs this contact in the CRM (in German: 'Ich habe mit … telefoniert', 'Ich schicke …', 'Der Kunde hat mir …'). ")
+                .append("Refer to the other party in the third person ('der Kunde', or by name). ");
+        String label = cleanForPrompt(t.me, Transcript.MAX_SPEAKER);
+        String shown = label.isEmpty() ? "" : cleanForPrompt(t.speakerName(t.me), Transcript.MAX_SPEAKER);
+        String name = cleanForPrompt(t.meName, Transcript.MAX_SPEAKER);
+        if (!label.isEmpty()) {
+            p.append("The user is the speaker labeled '").append(shown).append("' in the transcript");
+            if (!name.isEmpty()) p.append(" (name: ").append(name).append(")");
+            p.append(". ");
+        } else if (!name.isEmpty()) {
+            p.append("The user's name is ").append(name).append("; identify the user's speaker by this name if possible, ")
+                    .append("otherwise assume the user is the person representing the company (the one calling or advising the customer). ");
+        } else {
+            p.append("Assume the user is the person representing the company (the one calling or advising the customer), not the customer. ");
+        }
+        p.append("In tasks, set who = the first-person pronoun of the output language (German: 'Ich') for the user's own tasks; ")
+                .append("other people keep their names or labels.\n");
     }
 
     static void appendLanguage(StringBuilder p, String summaryLang, String what) {

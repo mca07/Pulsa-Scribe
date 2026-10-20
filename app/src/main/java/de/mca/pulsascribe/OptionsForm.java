@@ -23,9 +23,11 @@ final class OptionsForm {
     private String lang, template, folder, engine, length;
     private final String fallbackTitle;
     private final boolean audio;
+    private final Activity activity;
 
     OptionsForm(Activity a, LinearLayout col, String initialTitle, String initialFolder, boolean audio) {
         this.audio = audio;
+        this.activity = a;
         fallbackTitle = initialTitle;
         Folders folders = Store.folders(a);
         folder = folders.clean(initialFolder);
@@ -155,6 +157,8 @@ final class OptionsForm {
         t.language = Languages.clean(lang);
         t.template = Templates.clean(template);
         t.summaryLength = Templates.cleanLength(length);
+        t.firstPerson = Settings.crmFirstPerson(activity);
+        t.meName = Settings.myName(activity);
         t.folder = folder;
         t.engine = audio && "whisper".equals(engine) ? Transcript.ENGINE_WHISPER : Transcript.ENGINE_GEMINI;
         t.diarize = audio && diarize.isChecked() && !Transcript.ENGINE_WHISPER.equals(t.engine);

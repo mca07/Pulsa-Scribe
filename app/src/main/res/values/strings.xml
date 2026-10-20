@@ -533,4 +533,19 @@
     <string name="voice_failed">Natürliche Stimme nicht verfügbar – lese mit der Handy-Stimme weiter.</string>
     <string name="voice_quota">Kontingent für die natürliche Stimme erschöpft – lese mit der Handy-Stimme weiter.</string>
     <string name="voice_offline_msg">Kein Internet – lese mit der Handy-Stimme weiter.</string>
+    <!-- CRM Ich-Form (1.15) -->
+    <string name="crm_me">CRM-Eintrag in Ich-Form</string>
+    <string name="crm_me_sub">„Ich habe mit dem Kunden telefoniert …“ statt neutraler Beschreibung</string>
+    <string name="my_name">Mein Name</string>
+    <string name="my_name_sub">Damit erkennt Gemini, welcher Sprecher du bist (für die Ich-Form)</string>
+    <string name="my_name_hint">z. B. Mario</string>
+    <string name="my_name_none">nicht gesetzt</string>
+    <string name="crm_view_me">Perspektive: Ich-Form – ändern …</string>
+    <string name="crm_view_neutral">Perspektive: neutral – in Ich-Form umstellen …</string>
+    <string name="crm_persp_title">CRM-Eintrag – Perspektive</string>
+    <string name="crm_persp_me">Ich-Form („Ich habe … telefoniert“)</string>
+    <string name="crm_persp_neutral">Neutral („Der Kunde … / Sprecher 2 …“)</string>
+    <string name="crm_me_who">Ich bin im Gespräch</string>
+    <string name="crm_me_auto">Automatisch erkennen</string>
+    <string name="crm_me_auto_name">Automatisch (nach Name „%1$s“)</string>
 </resources>

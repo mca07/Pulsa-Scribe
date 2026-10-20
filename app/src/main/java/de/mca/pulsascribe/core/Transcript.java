@@ -124,6 +124,10 @@ public final class Transcript {
     public final List<String> tags = new ArrayList<>();
     public String template = Templates.STANDARD;
     public String summaryLength = Templates.MEDIUM;
+    /** CRM-Eintrag aus Ich-Sicht; me = Sprecherbezeichnung des Nutzers ("" = automatisch), meName = Name des Nutzers. */
+    public boolean firstPerson;
+    public String me = "";
+    public String meName = "";
     public final List<Answer> answers = new ArrayList<>();          // Fragen an das Transkript
     public final Map<String, Translation> translations = new LinkedHashMap<>(); // Sprachcode → Übersetzung
 
@@ -223,6 +227,9 @@ public final class Transcript {
         m.put("tags", new ArrayList<Object>(tags));
         m.put("template", template);
         m.put("sumLength", summaryLength);
+        if (firstPerson) m.put("firstPerson", true);
+        if (!me.isEmpty()) m.put("me", me);
+        if (!meName.isEmpty()) m.put("meName", meName);
         List<Object> qa = new ArrayList<>();
         for (Answer a : answers) {
             Map<String, Object> o = new LinkedHashMap<>();
@@ -354,6 +361,9 @@ public final class Transcript {
         setTags(t.tags, Json.arr(m, "tags"));
         t.template = Templates.clean(Json.str(m, "template"));
         t.summaryLength = Templates.cleanLength(Json.str(m, "sumLength"));
+        t.firstPerson = Json.bool(m, "firstPerson", false);
+        t.me = Text.line(Json.str(m, "me"), MAX_SPEAKER);
+        t.meName = Text.line(Json.str(m, "meName"), MAX_SPEAKER);
         List<Object> qa = Json.arr(m, "qa");
         if (qa != null) {
             for (Object o : qa) {

@@ -201,6 +201,11 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 - ✅ Handy-Stimme: automatisch beste installierte Stimme (Qualität, offline bevorzugt); gespeicherter Stimmname per Positivliste geprüft
 - ✅ Unit-Test `naturalVoiceRequestsAndAudio`
 
+## 9m. CRM-Eintrag in Ich-Form (ab 1.15)
+- ✅ Name des Nutzers nur lokal in den Einstellungen (max. 40 Zeichen, bereinigt), gelangt nur in den Prompt der CRM-Zusammenfassung; Sprecherwahl aus den vorhandenen Sprechern, im Prompt über `cleanForPrompt` (keine Anführungszeichen/Klammern)
+- ✅ Felder werden beim Laden geprüft (Länge, Steuerzeichen); Ich-Form wirkt nur bei der CRM-Vorlage
+- ✅ Unit-Test `crmFirstPersonPrompt`
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB

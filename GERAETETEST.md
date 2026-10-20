@@ -193,3 +193,11 @@ Mit Todoist:
 - [ ] Flugmodus → Vorlesen → Hinweis „Kein Internet – lese mit der Handy-Stimme weiter“, liest offline weiter
 - [ ] Handy-Stimme gewählt → „Sprecher“ zeigt installierte Stimmen mit Qualität (sehr gut/gut) → beste klingt deutlich besser als vorher; „Weitere Stimmen laden“ öffnet Android-Einstellungen
 - [ ] Notiz: Wie viele Minuten pro Tag gehen, bevor „Kontingent erschöpft“ kommt?
+
+## 21. CRM-Eintrag in Ich-Form (neu in 1.15)
+- [ ] Einstellungen → Standardwerte: „Mein Name“ setzen (z. B. Mario), „CRM-Eintrag in Ich-Form“ einschalten
+- [ ] Bestehendes CRM-Gespräch → Tab Zusammenfassung → „Perspektive: neutral – in Ich-Form umstellen …“ → Ich-Form, „Ich bin im Gespräch“ = richtiger Sprecher → Neu erstellen
+- [ ] Notiz lautet „Ich habe mit … telefoniert …“, der Kunde in der 3. Person; eigene Aufgaben „— Ich“, andere mit Namen
+- [ ] „Automatisch (nach Name …)“ → Gemini erkennt den eigenen Sprecher am Namen
+- [ ] Zurück auf „Neutral“ → wieder neutrale Beschreibung
+- [ ] „CRM-Eintrag kopieren“ übernimmt die Ich-Form
