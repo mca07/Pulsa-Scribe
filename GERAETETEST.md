@@ -206,3 +206,12 @@ Mit Todoist:
 - [ ] Dieselbe Datei zweimal transkribieren → unter der Zusammenfassung steht beide Male dasselbe „Modell: …“
 - [ ] Ergebnisse deutlich ähnlicher als vorher (kleine Wortunterschiede sind möglich)
 - [ ] Nach „Kontingent erschöpft“ beim besten Modell: spätestens nach 10 Minuten wird wieder das beste Modell genutzt
+
+## 23. Verschieben per Drag & Drop (neu in 1.17)
+- [ ] Transkript lange drücken → wird markiert, ein Schild „1 Eintrag verschieben“ hängt am Finger
+- [ ] Auf einen Ordner ziehen → Ordner leuchtet auf → loslassen → „1 verschoben nach …“
+- [ ] Mehrere markieren (antippen), dann eins davon lange drücken und ziehen → alle markierten werden verschoben
+- [ ] In der Pfadleiste auf „Alle“ (oder einen übergeordneten Ordner) ziehen → nach oben verschoben
+- [ ] Langer Liste: beim Ziehen an den oberen/unteren Rand scrollt die Liste mit
+- [ ] Lange drücken und ohne zu ziehen loslassen → Eintrag bleibt einfach markiert (wie bisher)
+- [ ] Auf einem Transkript statt Ordner loslassen → nichts passiert

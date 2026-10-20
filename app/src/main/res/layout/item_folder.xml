@@ -3,7 +3,7 @@
     android:layout_width="match_parent" android:layout_height="wrap_content"
     android:paddingTop="4dp" android:paddingBottom="4dp">
     <LinearLayout android:id="@+id/fo_card" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/card"
+        android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/card_select"
         android:foreground="?android:attr/selectableItemBackground" android:minHeight="60dp"
         android:paddingStart="14dp" android:paddingEnd="6dp" android:paddingTop="8dp" android:paddingBottom="8dp">
         <ImageView android:layout_width="28dp" android:layout_height="28dp" android:src="@drawable/ic_folder"

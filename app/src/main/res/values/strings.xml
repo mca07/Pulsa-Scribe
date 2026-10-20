@@ -549,4 +549,8 @@
     <string name="crm_me_auto">Automatisch erkennen</string>
     <string name="crm_me_auto_name">Automatisch (nach Name „%1$s“)</string>
     <string name="sum_model">Modell: %1$s</string>
+    <plurals name="drag_label">
+        <item quantity="one">%1$d Eintrag verschieben</item>
+        <item quantity="other">%1$d Einträge verschieben</item>
+    </plurals>
 </resources>

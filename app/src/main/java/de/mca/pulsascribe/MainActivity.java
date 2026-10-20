@@ -3,6 +3,8 @@ package de.mca.pulsascribe;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.view.DragEvent;
+import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -101,6 +103,7 @@ public final class MainActivity extends Activity {
         searchInput = findViewById(R.id.main_search_input);
         adapter = new Adapter();
         list.setAdapter(adapter);
+        setupDropTargets(list);
         findViewById(R.id.main_settings).setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         findViewById(R.id.main_pick).setOnClickListener(v -> pick());
         findViewById(R.id.main_link).setOnClickListener(v -> askLink());
@@ -270,6 +273,16 @@ public final class MainActivity extends Activity {
             c.setClickable(true);
             c.setFocusable(true);
             c.setOnClickListener(v -> { folder = id; refresh(); });
+            c.setOnDragListener((v, e) -> {
+                if (!(e.getLocalState() instanceof DragItems)) return false;
+                switch (e.getAction()) {
+                    case DragEvent.ACTION_DRAG_ENTERED: v.setActivated(true); v.setAlpha(0.6f); return true;
+                    case DragEvent.ACTION_DRAG_EXITED:
+                    case DragEvent.ACTION_DRAG_ENDED: v.setAlpha(1f); return true;
+                    case DragEvent.ACTION_DROP: v.setAlpha(1f); dropOn(id, (DragItems) e.getLocalState()); return true;
+                    default: return true;
+                }
+            });
         }
         crumbs.addView(c);
     }
@@ -821,6 +834,7 @@ public final class MainActivity extends Activity {
             View card = v.findViewById(R.id.fo_card);
             card.setOnClickListener(c -> { folder = x.id; refresh(); });
             card.setOnLongClickListener(c -> { folderMenu(c, x.id); return true; });
+            card.setActivated(x.id.equals(dropTarget));
             v.findViewById(R.id.fo_more).setOnClickListener(c -> folderMenu(c, x.id));
             return v;
         }
@@ -876,9 +890,126 @@ public final class MainActivity extends Activity {
             action.setImageResource(selecting ? (isSel ? R.drawable.ic_check_circle : R.drawable.ic_circle_empty) : R.drawable.ic_more);
             action.setContentDescription(getString(selecting ? R.string.sel_hint : R.string.more));
             card.setOnClickListener(x -> { if (selecting) toggle(t.id); else openItem(t, r.hit); });
-            card.setOnLongClickListener(x -> { toggle(t.id); return true; });
+            card.setOnLongClickListener(x -> {
+                // Langes Drücken: markieren und gleich ziehen können (auf einen Ordner oder in der Pfadleiste ablegen)
+                if (!selected.contains(t.id)) selected.add(t.id);
+                startDrag(x);
+                refresh();
+                return true;
+            });
             action.setOnClickListener(x -> { if (selecting) toggle(t.id); else itemMenu(x, t); });
             return v;
+        }
+    }
+
+    // ------------------------------------------------------------------ Ziehen und Ablegen
+
+    /** Nur innerhalb der App (kein DRAG_FLAG_GLOBAL): andere Apps sehen nichts davon. */
+    private static final class DragItems {
+        final List<String> ids;
+
+        DragItems(List<String> ids) {
+            this.ids = ids;
+        }
+    }
+
+    private String dropTarget;
+
+    private void startDrag(View from) {
+        List<String> ids = new ArrayList<>(selected);
+        if (ids.isEmpty()) return;
+        String label = getResources().getQuantityString(R.plurals.drag_label, ids.size(), ids.size());
+        from.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+        from.startDragAndDrop(ClipData.newPlainText("", ""), new BadgeShadow(this, label), new DragItems(ids), 0);
+    }
+
+    private void setupDropTargets(ListView list) {
+        list.setOnDragListener((v, e) -> {
+            if (!(e.getLocalState() instanceof DragItems)) return false;
+            switch (e.getAction()) {
+                case DragEvent.ACTION_DRAG_STARTED:
+                    return true;
+                case DragEvent.ACTION_DRAG_LOCATION: {
+                    int pos = list.pointToPosition((int) e.getX(), (int) e.getY());
+                    String target = pos >= 0 && pos < rows.size() && rows.get(pos).folder != null ? rows.get(pos).folder.id : null;
+                    if (!java.util.Objects.equals(target, dropTarget)) {
+                        dropTarget = target;
+                        adapter.notifyDataSetChanged();
+                    }
+                    // Am Rand automatisch scrollen
+                    int edge = Ui.dp(this, 72);
+                    if (e.getY() < edge) list.smoothScrollBy(-Ui.dp(this, 24), 60);
+                    else if (e.getY() > list.getHeight() - edge) list.smoothScrollBy(Ui.dp(this, 24), 60);
+                    return true;
+                }
+                case DragEvent.ACTION_DROP: {
+                    String target = dropTarget;
+                    dropTarget = null;
+                    adapter.notifyDataSetChanged();
+                    if (target == null) return false;
+                    dropOn(target, (DragItems) e.getLocalState());
+                    return true;
+                }
+                case DragEvent.ACTION_DRAG_EXITED:
+                case DragEvent.ACTION_DRAG_ENDED:
+                    if (dropTarget != null) {
+                        dropTarget = null;
+                        adapter.notifyDataSetChanged();
+                    }
+                    return true;
+                default:
+                    return true;
+            }
+        });
+    }
+
+    private void dropOn(String target, DragItems items) {
+        Folders f = Store.folders(this);
+        String dest = f.clean(target);
+        int n = 0;
+        for (String id : items.ids) {
+            Transcript t = Store.get(this, id);
+            if (t == null || dest.equals(f.clean(t.folder))) continue;
+            Store.moveTranscript(this, id, dest);
+            n++;
+        }
+        selected.clear();
+        if (n > 0) {
+            Toast.makeText(this, getString(R.string.sel_moved, n, OptionsForm.folderLabel(this, f, dest)), Toast.LENGTH_SHORT).show();
+        }
+        refresh();
+    }
+
+    /** Kleines Schild unter dem Finger statt der ganzen Karte. */
+    private static final class BadgeShadow extends View.DragShadowBuilder {
+        private final android.graphics.Paint bg = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Paint fg = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final String text;
+        private final int w, h, r;
+
+        BadgeShadow(Activity a, String text) {
+            this.text = text;
+            bg.setColor(Design.color(a, R.attr.pl_accent));
+            fg.setColor(Design.color(a, R.attr.pl_on_accent));
+            fg.setTextSize(Ui.dp(a, 15));
+            fg.setFakeBoldText(true);
+            int pad = Ui.dp(a, 16);
+            w = (int) fg.measureText(text) + 2 * pad;
+            h = Ui.dp(a, 40);
+            r = h / 2;
+        }
+
+        @Override
+        public void onProvideShadowMetrics(android.graphics.Point size, android.graphics.Point touch) {
+            size.set(w, h);
+            touch.set(w / 2, h + h / 2); // Schild etwas über dem Finger
+        }
+
+        @Override
+        public void onDrawShadow(android.graphics.Canvas c) {
+            c.drawRoundRect(0, 0, w, h, r, r, bg);
+            android.graphics.Paint.FontMetrics fm = fg.getFontMetrics();
+            c.drawText(text, (w - fg.measureText(text)) / 2f, h / 2f - (fm.ascent + fm.descent) / 2f, fg);
         }
     }
 

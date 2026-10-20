@@ -206,6 +206,11 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 - ✅ Felder werden beim Laden geprüft (Länge, Steuerzeichen); Ich-Form wirkt nur bei der CRM-Vorlage
 - ✅ Unit-Test `crmFirstPersonPrompt`
 
+## 9n. Gleichbleibende Ergebnisse, Drag & Drop (ab 1.16/1.17)
+- ✅ Alle Gemini-Anfragen mit Temperatur 0 (Fragen 0,1) und festem Seed; immer zuerst das beste Modell, Ausweichmodelle nur mit Sperrzeit (429: 10 min, 404: 24 h) – keine dauerhafte Verschlechterung
+- ✅ Verwendetes Modell wird gespeichert (Positivliste `[a-z0-9.-]{1,48}`) und angezeigt
+- ✅ Drag & Drop nur innerhalb der App (kein `DRAG_FLAG_GLOBAL`, leere ClipData, IDs nur im lokalen Zustand); Ziel-Ordner über `Folders.clean` geprüft
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB
