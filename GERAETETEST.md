@@ -317,3 +317,12 @@ Einstellungen → KI-Anbieter → „KI für alles“: Gemini / Claude / OpenAI 
 - [ ] Ordner im Dateimanager löschen → beim Öffnen einmal Hinweis „Zugriff … nicht mehr da“
 - [ ] Letzte Sicherung > 30 Tage (bzw. nie, 30 Tage nach erster Nutzung) → einmal am Tag Erinnerung mit „Jetzt sichern“
 - [ ] App deinstallieren, neu installieren → Willkommen „Aus Sicherung wiederherstellen“ → „Ordner mit Sicherungen“ → Ordner wählen → Liste → Passwort eingeben → Daten wieder da
+
+## 34. Passwort anzeigen, zweimal, Hinweis (neu in 1.28)
+- [ ] Jedes Passwortfeld (Jetzt sichern, Passwort merken, Einmalig speichern, Wiederherstellen) hat ein Auge → tippen zeigt/verbirgt das Passwort, Cursor bleibt
+- [ ] Neues Passwort: zweites Feld tippen → „✓ Beide Passwörter stimmen überein“ bzw. „stimmen nicht überein“; ungleich → Speichern nicht möglich
+- [ ] Hinweis-Feld ausfüllen (z. B. „Hund + Jahr“) → Sicherung → Wiederherstellen mit fremdem/gelöschtem gemerkten Passwort → Dialog zeigt „Hinweis: Hund + Jahr“
+- [ ] Hinweis, der das Passwort enthält → Fehlermeldung am Feld, nichts gespeichert
+- [ ] Falsches Passwort beim Wiederherstellen → Meldung, Dialog mit Hinweis erscheint erneut
+- [ ] Einstellungen → Passwort merken → „Passwort-Hinweis ändern“; Zeile zeigt „Hinweis: …“
+- [ ] Alte Sicherung (vor 1.28) wiederherstellen → „kein Hinweis hinterlegt“, Wiederherstellen klappt

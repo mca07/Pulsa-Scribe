@@ -4,7 +4,7 @@
 |---|---|
 | **Projekt** | Pulsa Scribe – transkribiert Audio- und Videodateien sowie live aufgenommene Gespräche mit Google Gemini: Sprecher, Zeitstempel, Zusammenfassung (Kernpunkte, Aufgaben, Entscheidungen, offene Fragen), Suche, Wiedergabe mit Sprung zur Stelle, Export als PDF, Word, Text und SRT; Designs Pulsa und Academy |
 | **Art** | Android (Java, native Oberfläche, keine WebView, minSdk 29 / targetSdk 35) |
-| **Version / Stand** | 1.27, 21.10.2026 |
+| **Version / Stand** | 1.28, 22.10.2026 |
 | **Geprüft von** | Claude (Erstellung), Abnahme: Mario |
 
 **Legende:** ✅ erfüllt · 🔧 bei dieser Prüfung behoben · ⚠️ offen oder bewusst akzeptiert (mit Begründung) · – nicht relevant
@@ -266,6 +266,10 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 - ✅ Wiederherstellen versucht zuerst das gemerkte Passwort, fragt nur bei Misserfolg; ergänzt weiterhin nur Fehlendes
 - ⚠️ Gemerktes Passwort heißt: wer das entsperrte Handy hat, kann ohne Passwort neu sichern bzw. wiederherstellen (wie Fastflow, bewusst; die Datei im Ordner bleibt verschlüsselt)
 - ⚠️ Zweite Sicherung am selben Tag überschreibt die Datei des Tages (wie Fastflow)
+- ✅ (1.28) Passwort anzeigen per Augen-Knopf: sichtbarer Typ `VISIBLE_PASSWORD` ohne Vorschläge (Tastatur lernt nichts), Dialoge weiter mit FLAG_SECURE; neues Passwort immer zweimal mit Übereinstimmungsanzeige
+- ✅ (1.28) Passwort-Hinweis: Dateiformat Version 2 speichert ihn unverschlüsselt im Kopf (max. 100 Zeichen, einzeilig bereinigt), aber in der AAD jedes Blocks – ausgetauschter Hinweis ⇒ Datei gilt als verändert. Version-1-Dateien bleiben lesbar. Hinweis darf das Passwort nicht enthalten (auch nicht rückwärts/ohne Groß-Klein, Prüfung in UI und beim Verschlüsseln)
+- ⚠️ (1.28) Der Hinweis ist für jeden lesbar, der die Datei hat – bewusst, damit er nach Neuinstallation hilft; Hinweistext warnt
+- ✅ (1.28) Unit-Test `BackupTest.passwordHint` (Rundreise, Bereinigung, Manipulation, Version 1, Passwort im Hinweis, Länge, kaputter Kopf)
 - ✅ Unit-Test `BackupTest.backupFileNamesAndRetention` (Namensmuster, Pfad-/Endungstricks, Aufbewahrung, gleicher Tag)
 
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
