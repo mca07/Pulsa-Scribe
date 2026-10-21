@@ -427,15 +427,22 @@ public final class TranscriptActivity extends Activity {
         // CRM: kopieren / per E-Mail; bei anderer Vorlage zuerst als CRM-Eintrag zusammenfassen lassen
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = Ui.dp(this, 8);
-        if (Templates.CRM.equals(t.template)) {
+        boolean service = Templates.SERVICE.equals(t.template);
+        if (Templates.isReport(t.template)) {
             if (!t.isWorking() && !t.segments.isEmpty()) {
                 summaryBox.addView(linkText(t.firstPerson ? R.string.crm_view_me : R.string.crm_view_neutral, v -> crmPerspective()));
             }
-            summaryBox.addView(secondaryButton(R.string.crm_copy, v -> copyCrm(s)), lp);
+            summaryBox.addView(secondaryButton(service ? R.string.service_copy : R.string.crm_copy, v -> copyCrm(s)), lp);
             LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(lp);
-            summaryBox.addView(secondaryButton(R.string.crm_mail, v -> mailCrm(s)), lp2);
-        } else if (!t.isWorking() && !t.segments.isEmpty()) {
-            summaryBox.addView(secondaryButton(R.string.crm_make, v -> makeCrm()), lp);
+            summaryBox.addView(secondaryButton(service ? R.string.service_mail : R.string.crm_mail, v -> mailCrm(s)), lp2);
+        }
+        if (!t.isWorking() && !t.segments.isEmpty()) {
+            if (Settings.crmEnabled(this) && !Templates.CRM.equals(t.template)) {
+                summaryBox.addView(secondaryButton(R.string.crm_make, v -> makeReport(Templates.CRM)), new LinearLayout.LayoutParams(lp));
+            }
+            if (Settings.serviceEnabled(this) && !service) {
+                summaryBox.addView(secondaryButton(R.string.service_make, v -> makeReport(Templates.SERVICE)), new LinearLayout.LayoutParams(lp));
+            }
         }
     }
 
@@ -453,12 +460,13 @@ public final class TranscriptActivity extends Activity {
         extras.putBoolean("android.content.extra.IS_SENSITIVE", true);
         clip.getDescription().setExtras(extras);
         cm.setPrimaryClip(clip);
-        Toast.makeText(this, R.string.crm_copied, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, Templates.SERVICE.equals(t.template) ? R.string.service_copied : R.string.crm_copied, Toast.LENGTH_SHORT).show();
     }
 
     private void mailCrm(Transcript.Summary s) {
         Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
-                .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crm_mail_subject, t.title))
+                .putExtra(Intent.EXTRA_SUBJECT, getString(Templates.SERVICE.equals(t.template)
+                        ? R.string.service_mail_subject : R.string.crm_mail_subject, t.title))
                 .putExtra(Intent.EXTRA_TEXT, crmText(s));
         launch(i);
     }
@@ -522,14 +530,14 @@ public final class TranscriptActivity extends Activity {
                 .setNegativeButton(R.string.cancel, null).show();
     }
 
-    /** Vorlage auf CRM-Eintrag umstellen und Zusammenfassung neu erstellen. */
-    private void makeCrm() {
+    /** Vorlage auf CRM-Eintrag bzw. Servicebericht umstellen und Zusammenfassung neu erstellen. */
+    private void makeReport(String template) {
         if (!editable() || t.segments.isEmpty()) return;
         if (!GeminiKey.has(this)) { KeyDialog.show(this, null); return; }
-        Ui.dialog(this).setMessage(R.string.crm_make_confirm)
+        Ui.dialog(this).setMessage(Templates.SERVICE.equals(template) ? R.string.service_make_confirm : R.string.crm_make_confirm)
                 .setPositiveButton(R.string.summary_create, (d, w) -> {
                     Transcript n = Store.copy(t);
-                    n.template = Templates.CRM;
+                    n.template = template;
                     Store.save(this, n);
                     TranscribeService.summary(this, id);
                     setTab(TAB_SUMMARY);
@@ -1066,9 +1074,10 @@ public final class TranscriptActivity extends Activity {
     private void chooseTemplate() {
         if (!editable()) return;
         Ui.dialog(this).setTitle(R.string.template_title)
-                .setSingleChoiceItems(Templates.LABELS, Templates.index(t.template), (d, w) -> {
+                .setSingleChoiceItems(Settings.templateLabels(Settings.templateIds(this, t.template)),
+                        Settings.templateIds(this, t.template).indexOf(Templates.clean(t.template)), (d, w) -> {
                     d.dismiss();
-                    String tpl = Templates.IDS[w];
+                    String tpl = Settings.templateIds(this, t.template).get(w);
                     if (tpl.equals(t.template)) return;
                     Transcript n = Store.copy(t);
                     n.template = tpl;

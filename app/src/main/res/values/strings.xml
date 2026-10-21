@@ -534,15 +534,15 @@
     <string name="voice_quota">Kontingent für die natürliche Stimme erschöpft – lese mit der Handy-Stimme weiter.</string>
     <string name="voice_offline_msg">Kein Internet – lese mit der Handy-Stimme weiter.</string>
     <!-- CRM Ich-Form (1.15) -->
-    <string name="crm_me">CRM-Eintrag in Ich-Form</string>
-    <string name="crm_me_sub">„Ich habe mit dem Kunden telefoniert …“ statt neutraler Beschreibung</string>
+    <string name="crm_me">Berichte in Ich-Form</string>
+    <string name="crm_me_sub">CRM-Einträge und Serviceberichte: „Ich habe … eingerichtet“ statt neutraler Beschreibung</string>
     <string name="my_name">Mein Name</string>
     <string name="my_name_sub">Damit erkennt Gemini, welcher Sprecher du bist (für die Ich-Form)</string>
     <string name="my_name_hint">z. B. Mario</string>
     <string name="my_name_none">nicht gesetzt</string>
     <string name="crm_view_me">Perspektive: Ich-Form – ändern …</string>
     <string name="crm_view_neutral">Perspektive: neutral – in Ich-Form umstellen …</string>
-    <string name="crm_persp_title">CRM-Eintrag – Perspektive</string>
+    <string name="crm_persp_title">Bericht – Perspektive</string>
     <string name="crm_persp_me">Ich-Form („Ich habe … telefoniert“)</string>
     <string name="crm_persp_neutral">Neutral („Der Kunde … / Sprecher 2 …“)</string>
     <string name="crm_me_who">Ich bin im Gespräch</string>
@@ -553,4 +553,15 @@
         <item quantity="one">%1$d Eintrag verschieben</item>
         <item quantity="other">%1$d Einträge verschieben</item>
     </plurals>
+    <!-- Servicebericht (1.18) -->
+    <string name="rep_service">Serviceberichte</string>
+    <string name="rep_service_sub">Vorlage „Servicebericht“ und Knöpfe zum Erstellen, Kopieren und Mailen</string>
+    <string name="rep_crm">CRM-Einträge</string>
+    <string name="rep_crm_sub">Vorlage „CRM-Eintrag“ und Knöpfe zum Erstellen, Kopieren und Mailen</string>
+    <string name="service_make">Als Servicebericht erstellen</string>
+    <string name="service_make_confirm">Die Vorlage wird auf „Servicebericht“ umgestellt und die Zusammenfassung neu erstellt. Die bisherige Zusammenfassung wird ersetzt.</string>
+    <string name="service_copy">Servicebericht kopieren</string>
+    <string name="service_mail">Servicebericht per E-Mail</string>
+    <string name="service_copied">Servicebericht kopiert – in myFactory oder Ticket einfügen</string>
+    <string name="service_mail_subject">Servicebericht: %1$s</string>
 </resources>

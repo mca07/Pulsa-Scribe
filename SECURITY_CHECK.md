@@ -211,6 +211,12 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 - ✅ Verwendetes Modell wird gespeichert (Positivliste `[a-z0-9.-]{1,48}`) und angezeigt
 - ✅ Drag & Drop nur innerhalb der App (kein `DRAG_FLAG_GLOBAL`, leere ClipData, IDs nur im lokalen Zustand); Ziel-Ordner über `Folders.clean` geprüft
 
+## 9o. Servicebericht (ab 1.18)
+- ✅ Vorlage „service“ auf der festen Positivliste; ein-/ausschaltbar (ausgeschaltet: nicht wählbar, keine Knöpfe; gespeicherte Berichte bleiben unverändert)
+- ✅ Prompt verbietet erfundene Namen, Versionen, Zeiten und Preise; Ergebnis durch dieselbe Prüfung wie jede Zusammenfassung
+- ✅ Weitergabe nur durch Nutzeraktion (Zwischenablage sensibel markiert, E-Mail-Entwurf)
+- ✅ Unit-Test `serviceReport`
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB

@@ -207,22 +207,22 @@ public final class Export {
         StringBuilder b = new StringBuilder();
         if (s == null) return "";
         String[] h = Templates.headings(t.template);
-        boolean crm = Templates.CRM.equals(Templates.clean(t.template));
+        boolean crm = Templates.isReport(t.template);
+        boolean service = Templates.SERVICE.equals(Templates.clean(t.template));
         String subject = "";
         if (crm) {
             for (String p : s.points) {
-                String l = p.toLowerCase(Locale.ROOT);
-                if (l.startsWith("betreff:") || l.startsWith("subject:")) { subject = p.substring(p.indexOf(':') + 1).trim(); break; }
+                if (isSubject(p)) { subject = p.substring(p.indexOf(':') + 1).trim(); break; }
             }
         }
-        b.append("Betreff: ").append(subject.isEmpty() ? t.title : subject).append('\n');
+        if (service) b.append("SERVICEBERICHT\n");
+        b.append(service ? "Thema: " : "Betreff: ").append(subject.isEmpty() ? t.title : subject).append('\n');
         b.append("Datum: ").append(new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMANY).format(new Date(t.createdMs)));
-        if (t.durationMs > 0) b.append(" (").append(Times.duration(t.durationMs)).append(')');
+        if (t.durationMs > 0) b.append(" (").append(service ? "Gesprächsdauer " : "").append(Times.duration(t.durationMs)).append(')');
         b.append('\n');
         if (crm) {
             for (String p : s.points) {
-                String l = p.toLowerCase(Locale.ROOT);
-                if (l.startsWith("betreff:") || l.startsWith("subject:")) continue;
+                if (isSubject(p)) continue;
                 b.append(p).append('\n');
             }
         }
@@ -236,6 +236,11 @@ public final class Export {
         }
         crmList(b, h[4], s.questions);
         return b.toString().trim() + "\n";
+    }
+
+    private static boolean isSubject(String p) {
+        String l = p.toLowerCase(Locale.ROOT);
+        return l.startsWith("betreff:") || l.startsWith("subject:") || l.startsWith("thema:") || l.startsWith("topic:");
     }
 
     private static void crmList(StringBuilder b, String heading, List<String> items) {

@@ -124,4 +124,20 @@ final class Settings {
     }
     static void setModelCooldown(Context c, int i, long ms) { p(c).edit().putLong("model_cd_" + i, System.currentTimeMillis() + ms).apply(); }
     static void clearModelCooldown(Context c, int i) { p(c).edit().remove("model_cd_" + i).apply(); }
+
+    /** Berichtsarten ein-/ausschalten (Vorlagenliste und Knöpfe in der Zusammenfassung). */
+    static boolean crmEnabled(Context c) { return p(c).getBoolean("rep_crm", true); }
+    static void setCrmEnabled(Context c, boolean v) { p(c).edit().putBoolean("rep_crm", v).apply(); }
+    static boolean serviceEnabled(Context c) { return p(c).getBoolean("rep_service", true); }
+    static void setServiceEnabled(Context c, boolean v) { p(c).edit().putBoolean("rep_service", v).apply(); }
+
+    static java.util.List<String> templateIds(Context c, String current) {
+        return de.mca.pulsascribe.core.Templates.available(crmEnabled(c), serviceEnabled(c), current);
+    }
+
+    static String[] templateLabels(java.util.List<String> ids) {
+        String[] l = new String[ids.size()];
+        for (int i = 0; i < l.length; i++) l[i] = de.mca.pulsascribe.core.Templates.label(ids.get(i));
+        return l;
+    }
 }

@@ -68,13 +68,16 @@ public final class SettingsActivity extends Activity {
         TextView tpl = findViewById(R.id.template_value);
         tpl.setText(de.mca.pulsascribe.core.Templates.label(Settings.template(this)));
         findViewById(R.id.row_template).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.start_template)
-                .setSingleChoiceItems(de.mca.pulsascribe.core.Templates.LABELS,
-                        de.mca.pulsascribe.core.Templates.index(Settings.template(this)), (d, w) -> {
-                    Settings.setTemplate(this, de.mca.pulsascribe.core.Templates.IDS[w]);
-                    tpl.setText(de.mca.pulsascribe.core.Templates.LABELS[w]);
+                .setSingleChoiceItems(Settings.templateLabels(Settings.templateIds(this, Settings.template(this))),
+                        Settings.templateIds(this, Settings.template(this)).indexOf(Settings.template(this)), (d, w) -> {
+                    String id = Settings.templateIds(this, Settings.template(this)).get(w);
+                    Settings.setTemplate(this, id);
+                    tpl.setText(de.mca.pulsascribe.core.Templates.label(id));
                     d.dismiss();
                 }).setNegativeButton(R.string.cancel, null).show());
 
+        bindSwitch(R.id.row_rep_service, R.id.sw_rep_service, Settings.serviceEnabled(this), on -> Settings.setServiceEnabled(this, on));
+        bindSwitch(R.id.row_rep_crm, R.id.sw_rep_crm, Settings.crmEnabled(this), on -> Settings.setCrmEnabled(this, on));
         bindSwitch(R.id.row_crm_me, R.id.sw_crm_me, Settings.crmFirstPerson(this), on -> Settings.setCrmFirstPerson(this, on));
         TextView myName = findViewById(R.id.my_name_value);
         myName.setText(Settings.myName(this).isEmpty() ? getString(R.string.my_name_none) : Settings.myName(this));

@@ -84,9 +84,10 @@ final class OptionsForm {
         template = audio ? Settings.template(a) : Templates.POST;
         TextView tplRow = Ui.choiceRow(a, Templates.label(template));
         tplRow.setOnClickListener(v -> Ui.dialog(a).setTitle(R.string.start_template)
-                .setSingleChoiceItems(Templates.LABELS, Templates.index(template), (d, w) -> {
-                    template = Templates.IDS[w];
-                    tplRow.setText(Templates.LABELS[w]);
+                .setSingleChoiceItems(Settings.templateLabels(Settings.templateIds(a, template)),
+                        Settings.templateIds(a, template).indexOf(template), (d, w) -> {
+                    template = Settings.templateIds(a, template).get(w);
+                    tplRow.setText(Templates.label(template));
                     d.dismiss();
                 }).show());
         Ui.add(col, tplRow);

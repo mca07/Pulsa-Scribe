@@ -4,10 +4,10 @@ package de.mca.pulsascribe.core;
 public final class Templates {
     private Templates() {}
 
-    public static final String STANDARD = "standard", MEETING = "meeting", LESSON = "lesson", INTERVIEW = "interview", POST = "post", CRM = "crm";
+    public static final String STANDARD = "standard", MEETING = "meeting", LESSON = "lesson", INTERVIEW = "interview", POST = "post", CRM = "crm", SERVICE = "service";
 
-    public static final String[] IDS = {STANDARD, MEETING, CRM, LESSON, INTERVIEW, POST};
-    public static final String[] LABELS = {"Allgemein", "Kundentermin / Besprechung", "CRM-Eintrag (Kundenkontakt)", "Kurs-Lektion (Lernzettel)", "Interview", "Beitrag / Artikel"};
+    public static final String[] IDS = {STANDARD, MEETING, CRM, SERVICE, LESSON, INTERVIEW, POST};
+    public static final String[] LABELS = {"Allgemein", "Kundentermin / Besprechung", "CRM-Eintrag (Kundenkontakt)", "Servicebericht (Support / Einsatz)", "Kurs-Lektion (Lernzettel)", "Interview", "Beitrag / Artikel"};
 
     // Länge der Zusammenfassung
     public static final String SHORT = "short", MEDIUM = "medium", LONG = "long";
@@ -38,6 +38,24 @@ public final class Templates {
         }
     }
 
+    /** Berichtsvorlagen mit festen Feldern (Kopieren/E-Mail als Bericht, Ich-Form möglich). */
+    public static boolean isReport(String id) {
+        String c = clean(id);
+        return CRM.equals(c) || SERVICE.equals(c);
+    }
+
+    /** Wählbare Vorlagen; ausgeschaltete Berichtsarten fehlen (außer sie sind gerade gewählt). */
+    public static java.util.List<String> available(boolean crm, boolean service, String current) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        String cur = clean(current);
+        for (String id : IDS) {
+            if (CRM.equals(id) && !crm && !CRM.equals(cur)) continue;
+            if (SERVICE.equals(id) && !service && !SERVICE.equals(cur)) continue;
+            out.add(id);
+        }
+        return out;
+    }
+
     public static String clean(String id) {
         for (String i : IDS) if (i.equals(id)) return i;
         return STANDARD;
@@ -57,6 +75,7 @@ public final class Templates {
     public static String[] headings(String id) {
         switch (clean(id)) {
             case MEETING: return new String[]{"Überblick", "Besprochene Punkte", "Aufgaben", "Entscheidungen", "Offene Fragen"};
+            case SERVICE: return new String[]{"Kurzbeschreibung", "Berichtsfelder", "Nächste Schritte", "Durchgeführte Arbeiten", "Offene Punkte"};
             case CRM: return new String[]{"Notiz", "CRM-Felder", "Nächste Schritte / Wiedervorlage", "Vereinbarungen", "Offen / im CRM aktualisieren"};
             case LESSON: return new String[]{"Worum es geht", "Lernzettel", "Übungen / To-dos", "Merksätze und Begriffe", "Prüfungsfragen"};
             case INTERVIEW: return new String[]{"Überblick", "Wichtigste Aussagen", "Nächste Schritte", "Zitate", "Offene Punkte"};
@@ -72,6 +91,21 @@ public final class Templates {
                 return "This is a business meeting or customer appointment. overview = 3 to 6 sentences: purpose, participants' roles if clear, outcome; "
                         + "points = topics discussed with the key facts (at most 12); tasks = action items (what, and who = person responsible as named, empty if unclear, "
                         + "include deadlines in 'what' if mentioned); decisions = agreements and decisions; questions = open issues and questions to clarify.";
+            case SERVICE:
+                return "This is a support call, remote session or on-site service job to be documented as a service report (Servicebericht) "
+                        + "for the customer file and for billing. Write factually, precise and technical, no filler. "
+                        + "overview = short description for the report: 2 to 5 sentences on the customer's issue or request, the cause if found, and the outcome; "
+                        + "points = report fields, each entry exactly in the form 'Field name: value', in this order and only if the information is in the transcript "
+                        + "(never guess company or person names, versions, times or prices; use the speaker names as given): "
+                        + "Topic (short, max 8 words), Type of service (phone support, remote session, on-site, training, consulting), Company, Contact person, "
+                        + "System / product / module (with version if mentioned), Issue / request, Cause, Solution, Status (solved / partially solved / open), "
+                        + "Time spent (only if explicitly mentioned), Billable (only if mentioned, e.g. under maintenance contract or billable), "
+                        + "Write the field names in the output language (e.g. German: Thema, Einsatzart, Firma, Ansprechpartner, System / Modul, Anliegen, "
+                        + "Ursache, Lösung, Status, Zeitaufwand, Abrechnung). "
+                        + "decisions = the work actually carried out, as concrete steps in the order they were done (settings changed, data corrected, "
+                        + "updates installed, explanations given), max 15; "
+                        + "tasks = follow-up actions still to be done (what, including deadline if mentioned; who = person responsible as named, empty if unclear); "
+                        + "questions = open points, risks or recommendations for the customer (e.g. backup, update, training).";
             case CRM:
                 return "This is a customer contact (call, visit, voice message or meeting) to be logged in a CRM system. Write factually, in third person, no filler. "
                         + "overview = the activity note for the CRM: 3 to 6 sentences on reason for contact, what was discussed and the result; "

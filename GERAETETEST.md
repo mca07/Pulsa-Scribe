@@ -215,3 +215,14 @@ Mit Todoist:
 - [ ] Langer Liste: beim Ziehen an den oberen/unteren Rand scrollt die Liste mit
 - [ ] Lange drücken und ohne zu ziehen loslassen → Eintrag bleibt einfach markiert (wie bisher)
 - [ ] Auf einem Transkript statt Ordner loslassen → nichts passiert
+
+## 24. Servicebericht, Berichte ein-/ausschalten (neu in 1.18)
+- [ ] Einstellungen → Standardwerte: Schalter „Serviceberichte“ und „CRM-Einträge“ (beide an)
+- [ ] Support-Gespräch → Tab Zusammenfassung → „Als Servicebericht erstellen“ → Kurzbeschreibung, Berichtsfelder (Thema, Einsatzart, Firma, Ansprechpartner, System/Modul, Anliegen, Ursache, Lösung, Status …), Durchgeführte Arbeiten, Nächste Schritte, Offene Punkte
+- [ ] Keine erfundenen Zeiten/Versionen/Preise; Zeitaufwand nur, wenn im Gespräch genannt
+- [ ] „Servicebericht kopieren“ → beginnt mit „SERVICEBERICHT“, Thema, Datum (Gesprächsdauer) → in myFactory/Ticket einfügen
+- [ ] „Servicebericht per E-Mail“ → Betreff „Servicebericht: …“
+- [ ] „Perspektive …“ → Ich-Form gilt auch für den Servicebericht („Ich habe … eingerichtet“)
+- [ ] „Serviceberichte“ ausschalten → Knopf und Vorlage verschwinden; bestehende Serviceberichte bleiben kopierbar
+- [ ] „CRM-Einträge“ ausschalten → ebenso für CRM
+- [ ] Neue Aufnahme mit Vorlage „Servicebericht (Support / Einsatz)“ → direkt im Berichtsformat

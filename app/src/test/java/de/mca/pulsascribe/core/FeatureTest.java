@@ -630,4 +630,37 @@ public class FeatureTest {
         assertEquals("gemini-3.8-flash", Transcript.fromJson(t.toJson()).sumModel);
         assertEquals("", Transcript.fromJson(t.toJson().replace("gemini-3.8-flash", "x y")).sumModel);
     }
+
+    @Test
+    public void serviceReport() {
+        assertEquals(Templates.SERVICE, Templates.clean("service"));
+        assertTrue(Templates.isReport(Templates.SERVICE));
+        assertTrue(Templates.isReport(Templates.CRM));
+        assertFalse(Templates.isReport(Templates.MEETING));
+        assertTrue(Templates.fields(Templates.SERVICE).contains("Servicebericht"));
+        assertFalse(Templates.available(true, false, Templates.STANDARD).contains(Templates.SERVICE));
+        assertTrue(Templates.available(true, false, Templates.SERVICE).contains(Templates.SERVICE)); // aktuell gewählt bleibt sichtbar
+        assertFalse(Templates.available(false, true, Templates.STANDARD).contains(Templates.CRM));
+        assertEquals(Templates.IDS.length, Templates.available(true, true, "").size());
+        Transcript t = new Transcript();
+        t.title = "Anruf";
+        t.template = Templates.SERVICE;
+        t.durationMs = 120_000;
+        Transcript.Summary s = new Transcript.Summary();
+        s.overview = "Drucker druckt keine Rechnungen.";
+        s.points.add("Thema: Rechnungsdruck");
+        s.points.add("Status: gelöst");
+        s.decisions.add("Druckerzuordnung im Formular korrigiert");
+        s.tasks.add(new Transcript.Task("Kunde testet morgen", "Kunde"));
+        s.questions.add("Update auf aktuelle Version empfohlen");
+        String e = Export.crmEntry(t, s);
+        assertTrue(e.startsWith("SERVICEBERICHT\nThema: Rechnungsdruck\n"));
+        assertTrue(e.contains("Gesprächsdauer"));
+        assertTrue(e.contains("Status: gelöst"));
+        assertEquals(1, e.split("Thema:", -1).length - 1);
+        assertTrue(e.indexOf("Durchgeführte Arbeiten:") < e.indexOf("Nächste Schritte:"));
+        t.firstPerson = true;
+        t.segments.add(new Transcript.Segment(0, "Sprecher 1", "Hallo"));
+        assertTrue(Gemini.summaryPrompt(t, "same").contains("FIRST PERSON"));
+    }
 }

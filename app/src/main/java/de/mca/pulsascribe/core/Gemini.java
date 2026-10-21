@@ -325,9 +325,9 @@ public final class Gemini {
 
     /** CRM-Eintrag in Ich-Form: wer „ich“ ist, kommt aus der Sprecherwahl oder dem Namen des Nutzers. */
     static void appendPerspective(StringBuilder p, Transcript t) {
-        if (!t.firstPerson || !Templates.CRM.equals(Templates.clean(t.template))) return;
+        if (!t.firstPerson || !Templates.isReport(t.template)) return;
         p.append("PERSPECTIVE: Write overview, points, decisions and questions in the FIRST PERSON from the point of view of the user, ")
-                .append("who logs this contact in the CRM (in German: 'Ich habe mit … telefoniert', 'Ich schicke …', 'Der Kunde hat mir …'). ")
+                .append("who logs this contact or writes this report (in German: 'Ich habe mit … telefoniert', 'Ich habe … eingerichtet', 'Der Kunde hat mir …'). ")
                 .append("Refer to the other party in the third person ('der Kunde', or by name). ");
         String label = cleanForPrompt(t.me, Transcript.MAX_SPEAKER);
         String shown = label.isEmpty() ? "" : cleanForPrompt(t.speakerName(t.me), Transcript.MAX_SPEAKER);
