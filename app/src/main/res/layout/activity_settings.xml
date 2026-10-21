@@ -147,6 +147,33 @@
                 <LinearLayout android:id="@+id/off_models" android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" />
             </LinearLayout>
+            <TextView style="@style/SettingsHeader" android:text="@string/call_section" />
+            <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_calls" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/call_folder" />
+                        <TextView android:id="@+id/call_status" style="@style/SettingsSub" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_call_auto" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/call_auto" />
+                        <TextView style="@style/SettingsSub" android:text="@string/call_auto_sub" />
+                    </LinearLayout>
+                    <Switch android:id="@+id/sw_call_auto" android:layout_width="wrap_content" android:layout_height="48dp"
+                        android:contentDescription="@string/call_auto" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_call_template" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/call_template" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/call_template_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+            </LinearLayout>
+
             <TextView style="@style/SettingsHeader" android:text="@string/td_section" />
             <LinearLayout style="@style/SettingsCard">
                 <LinearLayout android:id="@+id/row_td_token" style="@style/SettingsRow">

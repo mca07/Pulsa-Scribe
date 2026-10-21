@@ -15,6 +15,8 @@ public final class Transcript {
     public static final String RECORDING = "recording";
     public static final String QUEUED = "queued", PREPARE = "prepare", TRANSCRIBE = "transcribe",
             SUMMARY = "summary", DONE = "done", ERROR = "error", CANCELED = "canceled";
+    /** Automatisch übernommenes Telefonat, wartet auf „Transkribieren“. */
+    public static final String WAITING = "waiting";
 
     public static final int MAX_SEGMENTS = 20000;
     public static final int MAX_TEXT = 4000;
@@ -502,7 +504,7 @@ public final class Transcript {
 
     static boolean isStatus(String s) {
         return RECORDING.equals(s) || QUEUED.equals(s) || PREPARE.equals(s) || TRANSCRIBE.equals(s) || SUMMARY.equals(s)
-                || DONE.equals(s) || ERROR.equals(s) || CANCELED.equals(s);
+                || DONE.equals(s) || ERROR.equals(s) || CANCELED.equals(s) || WAITING.equals(s);
     }
 
     static long clamp(long v, long lo, long hi) {

@@ -152,6 +152,7 @@ final class Ui {
                 return c.getString(res) + (live != null && live[1] >= 0 && res != R.string.st_summary ? " · " + live[1] + " %" : " …");
             }
             case Transcript.CANCELED: return c.getString(R.string.st_canceled);
+            case Transcript.WAITING: return c.getString(R.string.st_waiting);
             case Transcript.ERROR: return t.error.isEmpty() ? c.getString(R.string.st_error) : t.error;
             default: return t.error.isEmpty() ? null : t.error;
         }

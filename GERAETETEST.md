@@ -226,3 +226,14 @@ Mit Todoist:
 - [ ] „Serviceberichte“ ausschalten → Knopf und Vorlage verschwinden; bestehende Serviceberichte bleiben kopierbar
 - [ ] „CRM-Einträge“ ausschalten → ebenso für CRM
 - [ ] Neue Aufnahme mit Vorlage „Servicebericht (Support / Einsatz)“ → direkt im Berichtsformat
+
+## 25. Anrufaufnahmen automatisch übernehmen (neu in 1.19)
+- [ ] Einstellungen → Telefonate → „Anrufaufnahmen übernehmen“ → Ordner wählen (Samsung: Recordings → Call) → „Diesen Ordner verwenden“ → Benachrichtigungen erlauben
+- [ ] Testanruf mit Aufnahme (Telefon-App) → nach Auflegen innerhalb ca. 1–2 Minuten Benachrichtigung „Neues Telefonat übernommen“
+- [ ] „Transkribieren“ in der Benachrichtigung → Transkription startet sofort, ohne die App zu öffnen
+- [ ] Benachrichtigung antippen → Eintrag öffnet und startet (wenn „Beim Öffnen sofort transkribieren“ an)
+- [ ] App öffnen statt Benachrichtigung → wartende Telefonate starten automatisch (Schalter an) bzw. Knopf „Transkribieren“ am Eintrag (Schalter aus)
+- [ ] „Vorlage für Telefonate“ z. B. Servicebericht → neue Telefonate kommen direkt als Servicebericht
+- [ ] Alte Aufnahmen von vor dem Einschalten werden NICHT übernommen; keine Doppelten
+- [ ] Handy neu starten → nächster Anruf wird trotzdem übernommen (spätestens nach 30 Minuten oder beim Öffnen der App)
+- [ ] „Ausschalten“ → keine weiteren Übernahmen, Freigabe entfernt

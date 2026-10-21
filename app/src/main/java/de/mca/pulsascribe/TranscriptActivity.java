@@ -65,6 +65,7 @@ public final class TranscriptActivity extends Activity {
     static final String EXTRA_READ_WHEN_DONE = "read_when_done";
     static final String EXTRA_QUERY = "query";
     static final String EXTRA_TAB_SUMMARY = "tab_summary";
+    static final String EXTRA_START_WAITING = "start_waiting";
     private static final int REQ_SAVE = 5;
     private static final int TAB_TEXT = 0, TAB_SUMMARY = 1, TAB_ASK = 2;
 
@@ -219,6 +220,9 @@ public final class TranscriptActivity extends Activity {
             if (!first.isAudio() && readWhenDone) startTab = first.summarize ? TAB_SUMMARY : TAB_TEXT;
             if (getIntent().getBooleanExtra(EXTRA_TAB_SUMMARY, false)) startTab = TAB_SUMMARY;
         }
+        if (state == null && getIntent().getBooleanExtra(EXTRA_START_WAITING, false) && Transcript.WAITING.equals(first.status)) {
+            try { TranscribeService.start(this, id, null); } catch (RuntimeException ignored) { }
+        }
         reload();
         setTab(startTab);
         String q = getIntent().getStringExtra(EXTRA_QUERY);
@@ -304,10 +308,11 @@ public final class TranscriptActivity extends Activity {
         note.setText(status == null ? "" : status);
         note.setVisibility(status == null ? View.GONE : View.VISIBLE);
         note.setTextColor(Design.color(this, Transcript.ERROR.equals(t.status) ? R.attr.pl_error : R.attr.pl_text));
-        boolean failed = Transcript.ERROR.equals(t.status) || Transcript.CANCELED.equals(t.status);
-        boolean canRetry = failed && (t.isAudio() || t.aggregate || Transcript.KIND_IMAGE.equals(t.kind) || !t.segments.isEmpty());
+        boolean failed = Transcript.ERROR.equals(t.status) || Transcript.CANCELED.equals(t.status) || Transcript.WAITING.equals(t.status);
+        boolean canRetry = failed && (t.isAudio() || t.aggregate || Transcript.KIND_IMAGE.equals(t.kind)
+                || Transcript.KIND_WEB.equals(t.kind) || Transcript.KIND_PDF.equals(t.kind) || !t.segments.isEmpty());
         retry.setVisibility(canRetry || t.isWorking() ? View.VISIBLE : View.GONE);
-        ((TextView) retry).setText(t.isWorking() ? R.string.cancel : R.string.retry);
+        ((TextView) retry).setText(t.isWorking() ? R.string.cancel : Transcript.WAITING.equals(t.status) ? R.string.call_transcribe : R.string.retry);
         boolean hasAudio = t.isAudio() && t.audioReady && Store.audioFile(this, id).isFile();
         findViewById(R.id.tr_player).setVisibility(hasAudio && !Transcript.PREPARE.equals(t.status) ? View.VISIBLE : View.GONE);
         if (!hasAudio && player != null) {

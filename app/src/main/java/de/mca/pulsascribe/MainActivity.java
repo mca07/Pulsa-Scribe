@@ -146,6 +146,7 @@ public final class MainActivity extends Activity {
         Store.addListener(onChange);
         refresh();
         TodoistSync.pull(this, false, null);
+        CallImport.scanAsync(this);
         startPendingRecording(this);
         handler.removeCallbacks(recTick);
         handler.postDelayed(recTick, 1000);
@@ -701,6 +702,13 @@ public final class MainActivity extends Activity {
         return fallback;
     }
 
+    /** Für die Telefonat-Übernahme sind Benachrichtigungen nötig: einmal fragen, falls noch nicht erlaubt. */
+    static void askNotificationsFrom(Activity a) {
+        if (Build.VERSION.SDK_INT < 33) return;
+        if (a.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return;
+        a.requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIF);
+    }
+
     private void askNotifications() {
         if (Build.VERSION.SDK_INT < 33 || Settings.askedNotifications(this)) return;
         if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return;
@@ -869,11 +877,12 @@ public final class MainActivity extends Activity {
             String status = Ui.status(MainActivity.this, t);
             st.setText(status == null ? "" : status);
             st.setVisibility(status == null ? View.GONE : View.VISIBLE);
-            boolean failed = Transcript.ERROR.equals(t.status) || Transcript.CANCELED.equals(t.status);
+            boolean failed = Transcript.ERROR.equals(t.status) || Transcript.CANCELED.equals(t.status) || Transcript.WAITING.equals(t.status);
             st.setTextColor(Design.color(MainActivity.this, Transcript.ERROR.equals(t.status) ? R.attr.pl_error : R.attr.pl_muted));
             Button retry = v.findViewById(R.id.it_retry);
             retry.setEnabled(selected.isEmpty());
             retry.setVisibility(failed ? View.VISIBLE : View.GONE);
+            retry.setText(Transcript.WAITING.equals(t.status) ? R.string.call_transcribe : R.string.retry);
             retry.setOnClickListener(x -> {
                 askNotifications();
                 if (t.aggregate) {

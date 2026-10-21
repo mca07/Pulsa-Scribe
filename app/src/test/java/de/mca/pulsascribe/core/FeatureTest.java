@@ -663,4 +663,16 @@ public class FeatureTest {
         t.segments.add(new Transcript.Segment(0, "Sprecher 1", "Hallo"));
         assertTrue(Gemini.summaryPrompt(t, "same").contains("FIRST PERSON"));
     }
+
+    @Test
+    public void waitingCallsSurviveReload() {
+        Transcript t = new Transcript();
+        t.id = "abcdefgh12";
+        t.status = Transcript.WAITING;
+        t.sourceUri = "content://com.android.externalstorage.documents/tree/primary%3ARecordings%2FCall/document/x";
+        Transcript r = Transcript.fromJson(t.toJson());
+        assertEquals(Transcript.WAITING, r.status);
+        assertFalse(r.isWorking());
+        assertEquals(t.sourceUri, r.sourceUri);
+    }
 }

@@ -564,4 +564,24 @@
     <string name="service_mail">Servicebericht per E-Mail</string>
     <string name="service_copied">Servicebericht kopiert – in myFactory oder Ticket einfügen</string>
     <string name="service_mail_subject">Servicebericht: %1$s</string>
+    <!-- Telefonate übernehmen (1.19) -->
+    <string name="call_section">Telefonate</string>
+    <string name="call_folder">Anrufaufnahmen übernehmen</string>
+    <string name="call_status_off">Aus – Ordner der Anrufaufnahmen freigeben</string>
+    <string name="call_status_on">An – Ordner „%1$s“</string>
+    <string name="call_folder_info">Wähle im nächsten Schritt den Ordner, in dem dein Handy Anrufaufnahmen speichert (Samsung: „Recordings“ → „Call“). Pulsa Scribe darf dann nur diesen Ordner lesen. Jede neue Aufnahme erscheint automatisch als Eintrag mit Benachrichtigung „Transkribieren“. Ältere Aufnahmen werden nicht übernommen.\n\nWichtig: Telefonate nur mit Einverständnis des Gesprächspartners aufzeichnen.</string>
+    <string name="call_folder_active">Überwacht wird: „%1$s“.</string>
+    <string name="call_choose">Ordner wählen</string>
+    <string name="call_change">Anderen Ordner</string>
+    <string name="call_off">Ausschalten</string>
+    <string name="call_enabled">Ab jetzt werden neue Anrufaufnahmen übernommen.</string>
+    <string name="call_failed">Der Ordner konnte nicht freigegeben werden.</string>
+    <string name="call_auto">Beim Öffnen sofort transkribieren</string>
+    <string name="call_auto_sub">Neue Telefonate starten, sobald du die App oder die Benachrichtigung öffnest. Aus: erst auf „Transkribieren“ tippen.</string>
+    <string name="call_template">Vorlage für Telefonate</string>
+    <string name="call_title">Telefonat %1$s</string>
+    <string name="call_new_title">Neues Telefonat übernommen</string>
+    <string name="call_transcribe">Transkribieren</string>
+    <string name="st_waiting">Neues Telefonat – bereit zum Transkribieren</string>
+    <string name="ch_calls">Neue Telefonate</string>
 </resources>

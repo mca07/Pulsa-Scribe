@@ -217,6 +217,14 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 - ✅ Weitergabe nur durch Nutzeraktion (Zwischenablage sensibel markiert, E-Mail-Entwurf)
 - ✅ Unit-Test `serviceReport`
 
+## 9p. Anrufaufnahmen übernehmen (ab 1.19)
+- ✅ Keine Speicher-Berechtigung: Zugriff nur auf den einen vom Nutzer gewählten Ordner (Storage Access Framework, nur Lesen, dauerhafte Freigabe), wird beim Ausschalten/Wechsel freigegeben; entzogene Freigabe = Funktion aus
+- ✅ Die App nimmt selbst keine Anrufe auf (Android verbietet es; nutzt nur Dateien der Telefon-App); Hinweis auf Einverständnis (§ 201 StGB) beim Einrichten
+- ✅ Nur Audiodateien (MIME audio/* oder bekannte Endung, ≥ 2 KB), nur neuer als der Einschaltzeitpunkt, erst wenn 20 s unverändert; Dopplungsschutz über Dokument-IDs + Zeitstempel; max. 2000 Dateien, 1 Unterordnerebene
+- ✅ Hintergrund nur über JobScheduler (Inhaltsänderung im Medienspeicher + alle 30 min, nach Neustart über RECEIVE_BOOT_COMPLETED); JobService nicht exportiert, nur BIND_JOB_SERVICE
+- ✅ Transkription startet nur durch Nutzeraktion (Benachrichtigung, App öffnen) – kein heimlicher Upload; Benachrichtigung VISIBILITY_PRIVATE (Sperrbildschirm ohne Inhalt), PendingIntents IMMUTABLE
+- ✅ Neuer Status „waiting“ auf der Positivliste; Unit-Test `waitingCallsSurviveReload`
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB

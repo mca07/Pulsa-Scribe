@@ -31,6 +31,32 @@ public final class SettingsActivity extends Activity {
             } catch (RuntimeException ignored) { }
         });
 
+        updateCalls();
+        findViewById(R.id.row_calls).setOnClickListener(v -> {
+            if (CallImport.enabled(this)) {
+                Ui.dialog(this).setTitle(R.string.call_folder).setMessage(getString(R.string.call_folder_active, CallImport.folderName(this)))
+                        .setPositiveButton(R.string.call_change, (d, w) -> pickCallFolder())
+                        .setNeutralButton(R.string.call_off, (d, w) -> { CallImport.disable(this); updateCalls(); })
+                        .setNegativeButton(R.string.cancel, null).show();
+            } else {
+                Ui.dialog(this).setTitle(R.string.call_folder).setMessage(R.string.call_folder_info)
+                        .setPositiveButton(R.string.call_choose, (d, w) -> pickCallFolder())
+                        .setNegativeButton(R.string.cancel, null).show();
+            }
+        });
+        bindSwitch(R.id.row_call_auto, R.id.sw_call_auto, CallImport.autoStart(this), on -> CallImport.setAutoStart(this, on));
+        TextView callTpl = findViewById(R.id.call_template_value);
+        callTpl.setText(de.mca.pulsascribe.core.Templates.label(CallImport.template(this)));
+        findViewById(R.id.row_call_template).setOnClickListener(v -> {
+            java.util.List<String> ids = Settings.templateIds(this, CallImport.template(this));
+            Ui.dialog(this).setTitle(R.string.call_template)
+                    .setSingleChoiceItems(Settings.templateLabels(ids), ids.indexOf(CallImport.template(this)), (d, w) -> {
+                        CallImport.setTemplate(this, ids.get(w));
+                        callTpl.setText(de.mca.pulsascribe.core.Templates.label(ids.get(w)));
+                        d.dismiss();
+                    }).setNegativeButton(R.string.cancel, null).show();
+        });
+
         updateTodoist();
         findViewById(R.id.row_td_token).setOnClickListener(v -> TodoistDialog.show(this, this::updateTodoist));
         findViewById(R.id.row_td_get).setOnClickListener(v -> {
@@ -290,6 +316,18 @@ public final class SettingsActivity extends Activity {
 
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
+        if (req == REQ_CALLS) {
+            if (res == RESULT_OK && data != null && data.getData() != null) {
+                if (CallImport.setTree(this, data.getData())) {
+                    Toast.makeText(this, R.string.call_enabled, Toast.LENGTH_LONG).show();
+                    MainActivity.askNotificationsFrom(this);
+                } else {
+                    Toast.makeText(this, R.string.call_failed, Toast.LENGTH_LONG).show();
+                }
+                updateCalls();
+            }
+            return;
+        }
         super.onActivityResult(req, res, data);
         if (res != RESULT_OK || data == null || data.getData() == null) { clearPw(); return; }
         Uri uri = data.getData();
@@ -575,6 +613,23 @@ public final class SettingsActivity extends Activity {
                         Toast.makeText(this, R.string.no_app, Toast.LENGTH_SHORT).show();
                     }
                 }).show();
+    }
+
+    private static final int REQ_CALLS = 77;
+
+    private void pickCallFolder() {
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        try {
+            startActivityForResult(i, REQ_CALLS);
+        } catch (RuntimeException e) {
+            Toast.makeText(this, R.string.no_app, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void updateCalls() {
+        ((TextView) findViewById(R.id.call_status)).setText(CallImport.enabled(this)
+                ? getString(R.string.call_status_on, CallImport.folderName(this)) : getString(R.string.call_status_off));
     }
 
     private void updateTodoist() {
