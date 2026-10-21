@@ -252,6 +252,24 @@ public final class Export {
         return b.toString().trim() + "\n";
     }
 
+    /** Zusammenfassung als Klartext mit den Überschriften der Vorlage (zum Kopieren). */
+    public static String summaryText(Transcript t, Transcript.Summary s) {
+        if (s == null) return "";
+        String[] h = Templates.headings(t.template);
+        StringBuilder b = new StringBuilder();
+        b.append(t.title).append('\n');
+        if (!s.overview.isEmpty()) b.append('\n').append(h[0]).append(":\n").append(s.overview).append('\n');
+        crmList(b, h[1], s.points);
+        if (!s.tasks.isEmpty()) {
+            List<String> l = new ArrayList<>();
+            for (Transcript.Task k : s.tasks) l.add(k.who.isEmpty() ? k.what : k.what + " (" + k.who + ")");
+            crmList(b, h[2], l);
+        }
+        crmList(b, h[3], s.decisions);
+        crmList(b, h[4], s.questions);
+        return b.toString().trim() + "\n";
+    }
+
     private static boolean isSubject(String p) {
         String l = p.toLowerCase(Locale.ROOT);
         return l.startsWith("betreff:") || l.startsWith("subject:") || l.startsWith("thema:") || l.startsWith("topic:");

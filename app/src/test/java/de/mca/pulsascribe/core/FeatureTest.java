@@ -732,4 +732,20 @@ public class FeatureTest {
         assertTrue(back.answers.get(0).expert);
         assertEquals("Beispiel", back.answers.get(0).sources.get(0)[0]);
     }
+
+    @Test
+    public void summaryCopyText() {
+        Transcript t = new Transcript();
+        t.title = "Druckerproblem";
+        t.template = Templates.SERVICE;
+        Transcript.Summary s = new Transcript.Summary();
+        s.overview = "Update rückgängig gemacht.";
+        s.points.add("Status: gelöst");
+        s.decisions.add("Alte Version installiert");
+        String x = Export.summaryText(t, s);
+        assertTrue(x.startsWith("Druckerproblem\n\nKurzbeschreibung:\nUpdate"));
+        assertTrue(x.contains("Berichtsfelder:\n- Status: gelöst"));
+        assertTrue(x.contains("Durchgeführte Arbeiten:\n- Alte Version installiert"));
+        assertEquals("", Export.summaryText(t, null));
+    }
 }

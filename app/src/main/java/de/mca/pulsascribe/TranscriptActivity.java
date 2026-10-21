@@ -414,7 +414,11 @@ public final class TranscriptActivity extends Activity {
         tpl.setPadding(0, Ui.dp(this, 8), 0, 0);
         summaryBox.addView(tpl);
         section(h[0]);
-        if (!s.overview.isEmpty()) summaryBox.addView(Ui.body(this, s.overview));
+        if (!s.overview.isEmpty()) {
+            TextView ov = Ui.body(this, s.overview);
+            ov.setTextIsSelectable(true); // lange drücken → markieren und kopieren
+            summaryBox.addView(ov);
+        }
         bullets(h[1], s.points);
         if (!s.tasks.isEmpty()) {
             section(h[2]);
@@ -442,6 +446,12 @@ public final class TranscriptActivity extends Activity {
         summaryBox.addView(hint);
         summaryBox.addView(secondaryButton(R.string.read_summary, v -> reader.speak(Export.speechSummary(t, s), speechLang(true))),
                 new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout.LayoutParams cplp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        cplp.topMargin = Ui.dp(this, 8);
+        summaryBox.addView(secondaryButton(R.string.copy_summary, v -> {
+            Transcript c = shownCopy();
+            copyPlain(getString(R.string.copy_summary), Export.summaryText(c, c.summary != null ? c.summary : s));
+        }), cplp);
         // CRM: kopieren / per E-Mail; bei anderer Vorlage zuerst als CRM-Eintrag zusammenfassen lassen
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = Ui.dp(this, 8);
@@ -605,6 +615,7 @@ public final class TranscriptActivity extends Activity {
         for (String i : items) {
             TextView v = Ui.body(this, "•  " + i);
             v.setTextSize(15);
+            v.setTextIsSelectable(true);
             summaryBox.addView(v);
         }
     }
@@ -807,10 +818,15 @@ public final class TranscriptActivity extends Activity {
 
     private void answerMenu(View anchor, Transcript.Answer a) {
         PopupMenu m = new PopupMenu(this, anchor);
+        m.getMenu().add(0, 3, 0, R.string.copy_answer);
         m.getMenu().add(0, 1, 0, R.string.read_answer);
         m.getMenu().add(0, 2, 0, R.string.ask_delete);
         m.setOnMenuItemClickListener(mi -> {
-            if (mi.getItemId() == 1) {
+            if (mi.getItemId() == 3) {
+                StringBuilder b = new StringBuilder(a.answer);
+                for (String[] src : a.sources) b.append('\n').append(src[0]).append(": ").append(src[1]);
+                copyPlain(a.question, b.toString());
+            } else if (mi.getItemId() == 1) {
                 reader.speak(Reader.of(a.question, a.answer), speechLang(true));
             } else if (!t.isWorking()) {
                 Transcript n = Store.copy(t);
@@ -1433,6 +1449,53 @@ public final class TranscriptActivity extends Activity {
 
     // ------------------------------------------------------------------ Liste
 
+    /** Lange drücken auf einen Abschnitt: kopieren, bearbeiten, ab hier abspielen. */
+    private void segmentMenu(View anchor, int index) {
+        if (index < 0 || index >= t.segments.size()) return;
+        Transcript.Segment s = t.segments.get(index);
+        PopupMenu m = new PopupMenu(this, anchor);
+        m.getMenu().add(0, 1, 0, R.string.copy_line);
+        m.getMenu().add(0, 2, 0, R.string.copy_from_here);
+        m.getMenu().add(0, 3, 0, R.string.edit_line);
+        if (t.isAudio() && t.audioReady) m.getMenu().add(0, 4, 0, R.string.play_from_here);
+        m.setOnMenuItemClickListener(mi -> {
+            switch (mi.getItemId()) {
+                case 1: {
+                    String name = t.speakerName(s.speaker);
+                    copyPlain(t.title, (name.isEmpty() ? "" : name + ": ") + segText(index));
+                    return true;
+                }
+                case 2: {
+                    StringBuilder b = new StringBuilder();
+                    for (int i = index; i < t.segments.size(); i++) {
+                        Transcript.Segment x = t.segments.get(i);
+                        String name = t.speakerName(x.speaker);
+                        if (t.isAudio()) b.append('[').append(Times.clock(x.startMs)).append("] ");
+                        b.append(name.isEmpty() ? "" : name + ": ").append(segText(i)).append('\n');
+                    }
+                    copyPlain(t.title, b.toString().trim());
+                    return true;
+                }
+                case 3: editSegment(index); return true;
+                case 4: playFrom(s.startMs); return true;
+                default: return false;
+            }
+        });
+        m.show();
+    }
+
+    /** In die Zwischenablage (als sensibel markiert: keine Vorschau ab Android 13). */
+    private void copyPlain(String label, String text) {
+        ClipboardManager cm = getSystemService(ClipboardManager.class);
+        if (cm == null || text == null || text.isEmpty()) return;
+        ClipData clip = ClipData.newPlainText(Text.line(label, 60), text);
+        android.os.PersistableBundle extras = new android.os.PersistableBundle();
+        extras.putBoolean("android.content.extra.IS_SENSITIVE", true);
+        clip.getDescription().setExtras(extras);
+        cm.setPrimaryClip(clip);
+        Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show();
+    }
+
     private final class SegAdapter extends BaseAdapter {
         @Override public int getCount() { return rows.size(); }
         @Override public Object getItem(int p) { return t.segments.get(rows.get(p)); }
@@ -1473,7 +1536,7 @@ public final class TranscriptActivity extends Activity {
                 if (t.isAudio() && t.audioReady) playFrom(s.startMs);
             });
             root.setOnLongClickListener(x -> {
-                editSegment(index);
+                segmentMenu(x, index);
                 return true;
             });
             root.setContentDescription((t.isAudio() ? Times.clock(s.startMs) + ", " : "") + (name.isEmpty() ? "" : name + ": ") + text);

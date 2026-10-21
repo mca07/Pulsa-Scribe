@@ -294,3 +294,10 @@ Einstellungen → KI-Anbieter → „KI für alles“: Gemini / Claude / OpenAI 
 - [ ] Zusammengeführte Aufnahmen → wieder alle Teile, Markierungen bleiben
 - [ ] Screenshot/PDF/Webseite → wird neu gelesen; geteilter Text → Menüpunkt fehlt (nur „Zusammenfassung neu erstellen“)
 - [ ] Ton gelöscht und Quelle weg → Hinweis „Ton bzw. Quelle ist nicht mehr vorhanden“
+
+## 32. Text kopieren (neu in 1.26)
+- [ ] Zusammenfassung: Absatz oder Punkt lange drücken → Text markieren (Ziehpunkte) → „Kopieren“
+- [ ] Knopf „Zusammenfassung kopieren“ → kompletter Text mit Überschriften in der Zwischenablage
+- [ ] Transkript: Abschnitt lange drücken → Menü „Abschnitt kopieren“ / „Ab hier alles kopieren“ / „Bearbeiten“ / „Ab hier abspielen“
+- [ ] Fragen: Antwort lange drücken → „Antwort kopieren“ (inkl. Quellen)
+- [ ] Hinweis unter der Zusammenfassung lautet „Von KI erstellt …“ (nicht mehr „Gemini“)

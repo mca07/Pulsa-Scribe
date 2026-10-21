@@ -85,7 +85,7 @@
     <string name="sum_tasks">Aufgaben</string>
     <string name="sum_decisions">Entscheidungen</string>
     <string name="sum_questions">Offene Fragen</string>
-    <string name="sum_hint">Von Gemini erstellt – bitte vor dem Weitergeben prüfen.</string>
+    <string name="sum_hint">Von KI erstellt – bitte vor dem Weitergeben prüfen.</string>
     <string name="delete_audio_title">Ton löschen?</string>
     <string name="delete_audio_text">Text und Zusammenfassung bleiben erhalten. Abspielen und erneutes Transkribieren sind danach nicht mehr möglich.</string>
     <string name="search_hint">Im Transkript suchen</string>
@@ -644,4 +644,11 @@
     <string name="retr_info">Text und Zusammenfassung werden mit den Einstellungen unten neu erstellt (mit dem gewählten KI-Anbieter). Übersetzungen und eigene Sprechernamen werden zurückgesetzt, gestellte Fragen bleiben.</string>
     <string name="retr_go">Neu transkribieren</string>
     <string name="retr_impossible">Ton bzw. Quelle ist nicht mehr vorhanden – bitte die Datei neu öffnen.</string>
+    <!-- Kopieren (1.26) -->
+    <string name="copy_summary">Zusammenfassung kopieren</string>
+    <string name="copy_line">Abschnitt kopieren</string>
+    <string name="copy_from_here">Ab hier alles kopieren</string>
+    <string name="edit_line">Bearbeiten</string>
+    <string name="play_from_here">Ab hier abspielen</string>
+    <string name="copy_answer">Antwort kopieren</string>
 </resources>
