@@ -90,6 +90,10 @@ final class CallImport {
 
     static boolean autoStart(Context c) { return p(c).getBoolean(K_AUTO, true); }
     static void setAutoStart(Context c, boolean v) { p(c).edit().putBoolean(K_AUTO, v).apply(); }
+    /** Zielordner für übernommene Telefonate ("" = oberste Ebene). */
+    static String folder(Context c) { return Store.folders(c).clean(p(c).getString("folder", de.mca.pulsascribe.core.Folders.ROOT)); }
+    static void setFolder(Context c, String f) { p(c).edit().putString("folder", f == null ? "" : f).apply(); }
+
     static String template(Context c) { return de.mca.pulsascribe.core.Templates.clean(p(c).getString(K_TEMPLATE, Settings.template(c))); }
     static void setTemplate(Context c, String t) { p(c).edit().putString(K_TEMPLATE, de.mca.pulsascribe.core.Templates.clean(t)).apply(); }
 
@@ -220,6 +224,7 @@ final class CallImport {
         t.meName = Settings.myName(c);
         t.engine = Settings.engine(c);
         t.source = Text.line(name, 120);
+        t.folder = folder(c);
         t.sourceUri = Transcript.cleanUri(doc.toString());
         if (t.sourceUri.isEmpty()) return false;
         t.status = Transcript.WAITING;

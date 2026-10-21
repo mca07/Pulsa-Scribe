@@ -28,7 +28,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import de.mca.pulsascribe.core.Folders;
 import de.mca.pulsascribe.core.Gemini;
 import de.mca.pulsascribe.core.Transcript;
 import de.mca.pulsascribe.core.WebPage;
@@ -267,7 +266,7 @@ public final class BrowserActivity extends Activity {
         info.setTextSize(13);
         info.setTextColor(Design.color(this, R.attr.pl_muted));
         Ui.add(col, info);
-        OptionsForm form = new OptionsForm(this, col, title, Folders.ROOT, false);
+        OptionsForm form = new OptionsForm(this, col, title, Settings.lastFolder(this), false);
         android.widget.ScrollView sc = new android.widget.ScrollView(this);
         sc.addView(col);
         Ui.dialog(this).setTitle(R.string.br_read).setView(sc)

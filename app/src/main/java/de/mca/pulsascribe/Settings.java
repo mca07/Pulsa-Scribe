@@ -140,4 +140,11 @@ final class Settings {
         for (int i = 0; i < l.length; i++) l[i] = de.mca.pulsascribe.core.Templates.label(ids.get(i));
         return l;
     }
+
+    /** Zuletzt geöffneter Ordner = Ziel für neue Einträge (Aufnahme, Datei, Link, Browser, Kachel, Widget). */
+    static String lastFolder(Context c) {
+        String f = p(c).getString("last_folder", de.mca.pulsascribe.core.Folders.ROOT);
+        return Store.folders(c).clean(f);
+    }
+    static void setLastFolder(Context c, String f) { p(c).edit().putString("last_folder", f == null ? "" : f).apply(); }
 }

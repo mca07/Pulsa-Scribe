@@ -593,4 +593,5 @@
     <string name="multi_only_audio">Mehrere Dateien gehen nur bei Audio- und Videodateien.</string>
     <string name="multi_skipped">Nur die Audio- und Videodateien werden übernommen.</string>
     <string name="multi_parts">Aus %1$d Aufnahmen: %2$s</string>
+    <string name="call_target">Ordner für Telefonate</string>
 </resources>

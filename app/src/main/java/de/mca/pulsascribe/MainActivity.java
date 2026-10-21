@@ -131,6 +131,7 @@ public final class MainActivity extends Activity {
             String f = state.getString(STATE_FOLDER);
             if (f != null) folder = f;
         } else {
+            folder = Settings.lastFolder(this); // dort weitermachen, wo du zuletzt warst
             handleShare(getIntent());
         }
     }
@@ -200,6 +201,7 @@ public final class MainActivity extends Activity {
     private void refresh() {
         Folders f = Store.folders(this);
         folder = f.clean(folder);
+        Settings.setLastFolder(this, folder);
         rows.clear();
         boolean searching = searchBar.getVisibility() == View.VISIBLE && !query.isEmpty();
         if (searching) {
@@ -856,7 +858,7 @@ public final class MainActivity extends Activity {
 
     private void openItem(Transcript t, Search.Hit hit) {
         if (Transcript.RECORDING.equals(t.status) && RecordService.isRecording()) {
-            startActivity(new Intent(this, RecordActivity.class));
+            startActivity(new Intent(this, RecordActivity.class).putExtra(EXTRA_FOLDER, folder));
             return;
         }
         Intent i = new Intent(this, TranscriptActivity.class).putExtra(TranscribeService.EXTRA_ID, t.id);

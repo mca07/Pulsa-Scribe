@@ -45,6 +45,12 @@ public final class SettingsActivity extends Activity {
             }
         });
         bindSwitch(R.id.row_call_auto, R.id.sw_call_auto, CallImport.autoStart(this), on -> CallImport.setAutoStart(this, on));
+        TextView callFolder = findViewById(R.id.call_folder_value);
+        callFolder.setText(OptionsForm.folderLabel(this, Store.folders(this), CallImport.folder(this)));
+        findViewById(R.id.row_call_folder).setOnClickListener(v -> FolderPicker.show(this, getString(R.string.call_target), null, picked -> {
+            CallImport.setFolder(this, picked);
+            callFolder.setText(OptionsForm.folderLabel(this, Store.folders(this), CallImport.folder(this)));
+        }));
         TextView callTpl = findViewById(R.id.call_template_value);
         callTpl.setText(de.mca.pulsascribe.core.Templates.label(CallImport.template(this)));
         findViewById(R.id.row_call_template).setOnClickListener(v -> {

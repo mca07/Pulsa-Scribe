@@ -58,6 +58,7 @@ public final class RecordActivity extends Activity {
         LinearLayout col = findViewById(R.id.rec_form);
         String date = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY).format(new Date());
         String folder = getIntent().getStringExtra(MainActivity.EXTRA_FOLDER);
+        if (folder == null) folder = Settings.lastFolder(this); // Kachel, Widget: zuletzt geöffneter Ordner
         form = new OptionsForm(this, col, getString(R.string.rec_default_title, date), folder, true);
 
         findViewById(R.id.rec_back).setOnClickListener(v -> finish());

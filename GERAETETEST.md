@@ -249,3 +249,11 @@ Mit Todoist:
 - [ ] In „Eigene Dateien“ mehrere Aufnahmen markieren → Teilen → Pulsa Scribe → gleicher Dialog
 - [ ] Bilder/PDF mit ausgewählt → Hinweis, nur Audio/Video wird übernommen
 - [ ] Zusammengeführten Eintrag in Papierkorb → endgültig löschen → keine Fehler
+
+## 27. Geöffneter Ordner ist Ziel (neu in 1.21)
+- [ ] In „Nerps › Support“ wechseln → Aufnehmen / Datei / Link → im Dialog steht „Support“ als Ordner → Eintrag landet dort
+- [ ] Mehrere Dateien zusammenführen → landet im geöffneten Ordner
+- [ ] App schließen und neu öffnen → startet wieder in „Support“
+- [ ] Schnellkachel oder Widget „Aufnehmen“ → Ziel ist der zuletzt geöffnete Ordner
+- [ ] App-Browser „Diese Seite lesen“ → Ziel ist der zuletzt geöffnete Ordner
+- [ ] Einstellungen → Telefonate → „Ordner für Telefonate“ z. B. „Nerps › Support“ → neue Anrufaufnahmen landen dort

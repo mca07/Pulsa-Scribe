@@ -165,6 +165,14 @@
                         android:contentDescription="@string/call_auto" />
                 </LinearLayout>
                 <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_call_folder" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/call_target" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/call_folder_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
                 <LinearLayout android:id="@+id/row_call_template" style="@style/SettingsRow">
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                         <TextView style="@style/SettingsTitle" android:text="@string/call_template" />
