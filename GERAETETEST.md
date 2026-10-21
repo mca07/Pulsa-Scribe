@@ -301,3 +301,19 @@ Einstellungen → KI-Anbieter → „KI für alles“: Gemini / Claude / OpenAI 
 - [ ] Transkript: Abschnitt lange drücken → Menü „Abschnitt kopieren“ / „Ab hier alles kopieren“ / „Bearbeiten“ / „Ab hier abspielen“
 - [ ] Fragen: Antwort lange drücken → „Antwort kopieren“ (inkl. Quellen)
 - [ ] Hinweis unter der Zusammenfassung lautet „Von KI erstellt …“ (nicht mehr „Gemini“)
+
+## 33. Datensicherung wie Fastflow (neu in 1.27)
+- [ ] Startseite: Aufgaben-Symbol ist jetzt das Klemmbrett mit Uhr („Offene Aufgaben“)
+- [ ] Einstellungen → Datensicherung → „Jetzt sichern“ ohne Ordner → Ordnerauswahl (z. B. Documents/Sicherungen) → Passwort zweimal, „Passwort merken“ an → „Gesichert als pulsa-scribe-sicherung-JJJJ-MM-TT.pscb“
+- [ ] Nochmal „Jetzt sichern“ → kein Ordner, kein Passwort gefragt; im Ordner liegt weiter nur eine Datei für heute (überschrieben)
+- [ ] „Speicherort“ zeigt den Ordnernamen; „Anderen Ordner wählen“ / „Ordner vergessen“ funktionieren
+- [ ] „Passwort merken“ → „Gemerktes Passwort entfernen“ → Hinweis, Automatik geht aus; „Jetzt sichern“ fragt wieder
+- [ ] „Sicherung wiederherstellen“ → Liste der Dateien im Ordner (neueste zuerst, „von Hand“/„automatisch“, Größe) → Datei wählen → ohne Passwortfrage wiederhergestellt
+- [ ] Datei mit anderem Passwort erstellt („Einmalig an anderem Ort speichern“) → wiederherstellen → erst danach Passwortfrage
+- [ ] „Einmal täglich automatisch sichern“ ohne Ordner/Passwort → Hinweis, Schalter bleibt aus
+- [ ] Automatik an → App schließen und öffnen → `pulsa-scribe-auto-JJJJ-MM-TT.pscb` im Ordner; erneut öffnen → keine zweite
+- [ ] Aufbewahrung 7 Tage, 7 Auto-Dateien vorhanden (ggf. umbenannt) → beim Öffnen Frage „Älteste löschen und sichern“ → älteste weg, neue da; „Heute nicht“ → heute keine Frage mehr
+- [ ] „Älteste automatisch löschen“ an → ohne Frage; von Hand erstellte Dateien bleiben immer
+- [ ] Ordner im Dateimanager löschen → beim Öffnen einmal Hinweis „Zugriff … nicht mehr da“
+- [ ] Letzte Sicherung > 30 Tage (bzw. nie, 30 Tage nach erster Nutzung) → einmal am Tag Erinnerung mit „Jetzt sichern“
+- [ ] App deinstallieren, neu installieren → Willkommen „Aus Sicherung wiederherstellen“ → „Ordner mit Sicherungen“ → Ordner wählen → Liste → Passwort eingeben → Daten wieder da

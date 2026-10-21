@@ -4,7 +4,7 @@
 |---|---|
 | **Projekt** | Pulsa Scribe – transkribiert Audio- und Videodateien sowie live aufgenommene Gespräche mit Google Gemini: Sprecher, Zeitstempel, Zusammenfassung (Kernpunkte, Aufgaben, Entscheidungen, offene Fragen), Suche, Wiedergabe mit Sprung zur Stelle, Export als PDF, Word, Text und SRT; Designs Pulsa und Academy |
 | **Art** | Android (Java, native Oberfläche, keine WebView, minSdk 29 / targetSdk 35) |
-| **Version / Stand** | 1.5, 17.10.2026 |
+| **Version / Stand** | 1.27, 21.10.2026 |
 | **Geprüft von** | Claude (Erstellung), Abnahme: Mario |
 
 **Legende:** ✅ erfüllt · 🔧 bei dieser Prüfung behoben · ⚠️ offen oder bewusst akzeptiert (mit Begründung) · – nicht relevant
@@ -256,6 +256,17 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 - ✅ Websuche-Quellen (Claude-Zitate, OpenAI url_citation) nur HTTPS über `WebPage.cleanUrl`
 - ⚠️ Datenschutz: je Anbieter eigene Bedingungen/Speicherorte (Mistral: EU); Hinweistext in der App angepasst
 - ✅ Unit-Tests `AiTest` (Anbieter, Schlüssel, Schema-Umwandlung, Anfragen, Antworten, Transkription)
+
+## 9u. Datensicherung wie Pulsa Fastflow (ab 1.27)
+- ✅ Speicherort einmal über die System-Ordnerauswahl; dauerhafte Freigabe nur für diesen Ordner (keine Speicher-Berechtigung). Ordner wechseln oder vergessen gibt die alte Freigabe zurück – außer derselbe Ordner dient auch für Anrufaufnahmen (gegenseitig geschützt)
+- ✅ „Passwort merken“ ist freiwillig: AES-256-GCM mit eigenem, nicht exportierbarem Keystore-Schlüssel (`pulsa_scribe_backup_pw_v1`) und eigener Einstellungsdatei; verlässt das Gerät nie, nicht in der Sicherung (allowBackup=false). Entfernen löscht Schlüssel und schaltet die Automatik aus. Klartext-Passwort wird nach Gebrauch überschrieben
+- ✅ Sicherungsdatei selbst unverändert: PBKDF2 (310 000) → AES-GCM in Blöcken, ZIP mit Positivliste, API-Schlüssel nie enthalten
+- ✅ Nur Dateien mit festem Namensmuster (`pulsa-scribe-sicherung|auto-JJJJ-MM-TT.pscb`) werden gelistet, überschrieben oder gelöscht; gelöscht werden ausschließlich automatische Sicherungen (Aufbewahrung 7/14/30 Tage), von Hand erstellte nie. Ohne „Älteste automatisch löschen“ wird vorher gefragt
+- ✅ Automatik höchstens einmal am Tag (beim App-Start und JobScheduler alle 6 h, nur bei ausreichendem Akku); nach Fehler kein endloses Wiederholen, höchstens ein Hinweis am Tag; nur ein Sicherungslauf gleichzeitig; halb geschriebene neue Datei wird bei Fehler gelöscht
+- ✅ Wiederherstellen versucht zuerst das gemerkte Passwort, fragt nur bei Misserfolg; ergänzt weiterhin nur Fehlendes
+- ⚠️ Gemerktes Passwort heißt: wer das entsperrte Handy hat, kann ohne Passwort neu sichern bzw. wiederherstellen (wie Fastflow, bewusst; die Datei im Ordner bleibt verschlüsselt)
+- ⚠️ Zweite Sicherung am selben Tag überschreibt die Datei des Tages (wie Fastflow)
+- ✅ Unit-Test `BackupTest.backupFileNamesAndRetention` (Namensmuster, Pfad-/Endungstricks, Aufbewahrung, gleicher Tag)
 
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
