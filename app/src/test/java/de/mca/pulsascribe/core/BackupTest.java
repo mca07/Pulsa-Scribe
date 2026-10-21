@@ -133,4 +133,29 @@ public class BackupTest {
         } catch (IOException expected) { }
         assertEquals(100, Backup.readLimited(new ByteArrayInputStream(new byte[100]), 100).length);
     }
+
+    @Test
+    public void backupFileNamesAndRetention() {
+        assertEquals("pulsa-scribe-auto-2026-10-22.pscb", BackupFiles.autoName("2026-10-22"));
+        assertEquals("pulsa-scribe-sicherung-2026-10-22.pscb", BackupFiles.manualName("2026-10-22"));
+        assertTrue(BackupFiles.isBackup("pulsa-scribe-sicherung-2026-10-22.pscb"));
+        assertTrue(BackupFiles.isBackup("pulsa-scribe-auto-2026-10-22 (1).pscb"));
+        assertFalse(BackupFiles.isBackup("pulsa-scribe-auto-2026-10-22.pscb.exe"));
+        assertFalse(BackupFiles.isBackup("../pulsa-scribe-auto-2026-10-22.pscb"));
+        assertFalse(BackupFiles.isBackup("foto.jpg"));
+        assertTrue(BackupFiles.isAuto("pulsa-scribe-auto-2026-10-22.pscb"));
+        assertFalse(BackupFiles.isAuto("pulsa-scribe-sicherung-2026-10-22.pscb"));
+        assertEquals(14, BackupFiles.cleanKeep(99));
+        java.util.List<String> names = new java.util.ArrayList<>();
+        for (int d = 10; d <= 16; d++) names.add(BackupFiles.autoName("2026-10-" + d));
+        names.add(BackupFiles.manualName("2026-10-01"));
+        names.add("andere.txt");
+        java.util.List<String> del = BackupFiles.toDelete(names, 7, "2026-10-17");
+        assertEquals(1, del.size());
+        assertEquals("pulsa-scribe-auto-2026-10-10.pscb", del.get(0));
+        // gleicher Tag wird überschrieben → nichts löschen
+        assertEquals(1, BackupFiles.toDelete(names, 7, "2026-10-16").size());
+        assertEquals(0, BackupFiles.toDelete(names, 14, "2026-10-17").size());
+        try { BackupFiles.autoName("../x"); throw new AssertionError("day"); } catch (IllegalArgumentException expected) { }
+    }
 }

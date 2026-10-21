@@ -154,6 +154,7 @@ public final class MainActivity extends Activity {
         refresh();
         TodoistSync.pull(this, false, null);
         CallImport.scanAsync(this);
+        BackupHints.onAppOpen(this);
         startPendingRecording(this);
         handler.removeCallbacks(recTick);
         handler.postDelayed(recTick, 1000);

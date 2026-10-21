@@ -292,6 +292,77 @@
                         android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
                 </LinearLayout>
             </LinearLayout>
+            <TextView style="@style/SettingsHeader" android:text="@string/set_sec_backup" />
+            <LinearLayout style="@style/SettingsCard">
+                <LinearLayout android:id="@+id/row_backup_now" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/bk_now" />
+                        <TextView android:id="@+id/bk_now_sub" style="@style/SettingsSub" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_restore" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/backup_restore" />
+                        <TextView style="@style/SettingsSub" android:text="@string/backup_restore_sub" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_backup_place" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/bk_place" />
+                        <TextView android:id="@+id/bk_place_sub" style="@style/SettingsSub" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_backup_pw" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/bk_pw" />
+                        <TextView android:id="@+id/bk_pw_sub" style="@style/SettingsSub" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_backup_media" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/backup_media" />
+                    </LinearLayout>
+                    <Switch android:id="@+id/sw_backup_media" android:layout_width="wrap_content" android:layout_height="48dp"
+                        android:contentDescription="@string/backup_media" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_backup_auto" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/bk_auto" />
+                        <TextView style="@style/SettingsSub" android:text="@string/bk_auto_sub" />
+                    </LinearLayout>
+                    <Switch android:id="@+id/sw_backup_auto" android:layout_width="wrap_content" android:layout_height="48dp"
+                        android:contentDescription="@string/bk_auto" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_backup_keep" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/bk_keep" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/bk_keep_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp" android:maxWidth="170dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="14sp" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_backup_autodel" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/bk_autodel" />
+                        <TextView style="@style/SettingsSub" android:text="@string/bk_autodel_sub" />
+                    </LinearLayout>
+                    <Switch android:id="@+id/sw_backup_autodel" android:layout_width="wrap_content" android:layout_height="48dp"
+                        android:contentDescription="@string/bk_autodel" />
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_backup" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/bk_once" />
+                        <TextView style="@style/SettingsSub" android:text="@string/bk_once_sub" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
             <TextView style="@style/SettingsHeader" android:text="@string/set_sec_data" />
             <LinearLayout style="@style/SettingsCard">
                 <LinearLayout android:id="@+id/row_browser_clear" style="@style/SettingsRow">
@@ -314,20 +385,6 @@
                     </LinearLayout>
                     <TextView android:id="@+id/trash_days_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:textColor="?attr/pl_accent" android:textSize="14sp" />
-                </LinearLayout>
-                <View style="@style/SettingsDivider" />
-                <LinearLayout android:id="@+id/row_backup" style="@style/SettingsRow">
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-                        <TextView style="@style/SettingsTitle" android:text="@string/backup_create" />
-                        <TextView style="@style/SettingsSub" android:text="@string/backup_create_sub" />
-                    </LinearLayout>
-                </LinearLayout>
-                <View style="@style/SettingsDivider" />
-                <LinearLayout android:id="@+id/row_restore" style="@style/SettingsRow">
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-                        <TextView style="@style/SettingsTitle" android:text="@string/backup_restore" />
-                        <TextView style="@style/SettingsSub" android:text="@string/backup_restore_sub" />
-                    </LinearLayout>
                 </LinearLayout>
                 <View style="@style/SettingsDivider" />
                 <LinearLayout android:id="@+id/row_privacy" style="@style/SettingsRow">

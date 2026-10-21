@@ -260,14 +260,8 @@ public final class SettingsActivity extends Activity {
                 }).setNegativeButton(R.string.cancel, null).show());
 
         findViewById(R.id.row_backup).setOnClickListener(v -> backupDialog());
-        findViewById(R.id.row_restore).setOnClickListener(v -> {
-            if (Store.anyWorking(this) || RecordService.isRecording()) {
-                Toast.makeText(this, R.string.backup_busy, Toast.LENGTH_LONG).show();
-                return;
-            }
-            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
-            try { startActivityForResult(i, REQ_RESTORE); } catch (RuntimeException e) { Toast.makeText(this, R.string.no_app, Toast.LENGTH_SHORT).show(); }
-        });
+        findViewById(R.id.row_restore).setOnClickListener(v -> restoreChooser());
+        setupBackup();
 
         TextView engine = findViewById(R.id.engine_value);
         String[] engLabels = {getString(R.string.off_engine_gemini), getString(R.string.off_engine_whisper)};
@@ -315,13 +309,13 @@ public final class SettingsActivity extends Activity {
         gap.setMinimumHeight(Ui.dp(this, 8));
         Ui.add(col, gap);
         Ui.add(col, p2);
-        Switch media = Ui.switchRow(this, R.string.backup_media, false);
+        Switch media = Ui.switchRow(this, R.string.backup_media, BackupPlace.media(this));
         Ui.add(col, media);
         TextView warn = Ui.body(this, getString(R.string.backup_warn));
         warn.setTextSize(13);
         warn.setTextColor(Design.color(this, R.attr.pl_muted));
         Ui.add(col, warn);
-        android.app.AlertDialog d = Ui.dialog(this).setTitle(R.string.backup_create).setView(col)
+        android.app.AlertDialog d = Ui.dialog(this).setTitle(R.string.bk_once).setView(col)
                 .setPositiveButton(R.string.save, null).setNegativeButton(R.string.cancel, null).create();
         if (d.getWindow() != null) d.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
         d.setOnShowListener(x -> d.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
@@ -361,7 +355,7 @@ public final class SettingsActivity extends Activity {
             return;
         }
         super.onActivityResult(req, res, data);
-        if (res != RESULT_OK || data == null || data.getData() == null) { clearPw(); return; }
+        if (res != RESULT_OK || data == null || data.getData() == null) { clearPw(); pendingTreeAction = 0; return; }
         Uri uri = data.getData();
         if (req == REQ_BACKUP && pendingPw != null) {
             char[] pw = pendingPw;
@@ -369,24 +363,22 @@ public final class SettingsActivity extends Activity {
             boolean media = pendingMedia;
             runTask(R.string.backup_running, () -> {
                 BackupManager.create(this, uri, pw, media, (dn, tot) -> { });
+                BackupPlace.markBackup(this);
                 return getString(R.string.backup_done);
             }, pw);
         } else if (req == REQ_RESTORE) {
-            android.widget.LinearLayout col = Ui.column(this);
-            android.widget.EditText p1 = pwField(R.string.backup_pw);
-            Ui.add(col, p1);
-            android.app.AlertDialog d = Ui.dialog(this).setTitle(R.string.backup_restore).setView(col)
-                    .setPositiveButton(R.string.ok, (dd, w) -> {
-                        char[] pw = p1.getText().toString().toCharArray();
-                        p1.setText("");
-                        runTask(R.string.restore_running, () -> {
-                            BackupManager.Result r = BackupManager.restore(this, uri, pw, (dn, tot) -> { });
-                            return getString(R.string.restore_done, r.added, r.skipped, r.rejected);
-                        }, pw);
-                    })
-                    .setNegativeButton(R.string.cancel, null).create();
-            if (d.getWindow() != null) d.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
-            d.show();
+            restoreFrom(uri);
+        } else if (req == REQ_BACKUP_TREE) {
+            int next = pendingTreeAction;
+            pendingTreeAction = 0;
+            if (!BackupPlace.setTree(this, uri)) {
+                Toast.makeText(this, R.string.bk_place_failed, Toast.LENGTH_LONG).show();
+                updateBackup();
+                return;
+            }
+            updateBackup();
+            if (next == ACT_NOW) backupNow();
+            else if (next == ACT_RESTORE) restoreChooser();
         }
     }
 
@@ -396,6 +388,10 @@ public final class SettingsActivity extends Activity {
 
     /** Läuft im Hintergrund mit einfachem Fortschrittsfenster; Passwort wird danach überschrieben. */
     private void runTask(int msg, Task task, char[] pw) {
+        runTask(msg, task, pw, null);
+    }
+
+    private void runTask(int msg, Task task, char[] pw, Runnable onBadPw) {
         android.widget.LinearLayout col = Ui.column(this);
         android.widget.ProgressBar pb = new android.widget.ProgressBar(this);
         pb.setIndeterminate(true);
@@ -407,7 +403,7 @@ public final class SettingsActivity extends Activity {
             try {
                 result = task.run();
             } catch (de.mca.pulsascribe.core.Backup.BadPasswordException e) {
-                result = getString(R.string.restore_bad_pw);
+                result = onBadPw != null ? null : getString(R.string.restore_bad_pw);
             } catch (de.mca.pulsascribe.core.Backup.FormatException e) {
                 result = getString(R.string.restore_bad_file);
             } catch (Exception e) {
@@ -419,9 +415,255 @@ public final class SettingsActivity extends Activity {
             runOnUiThread(() -> {
                 if (progressDialog != null) progressDialog.dismiss();
                 progressDialog = null;
-                if (!isFinishing()) Ui.dialog(this).setMessage(r).setPositiveButton(R.string.ok, null).show();
+                if (isFinishing()) return;
+                updateBackup();
+                if (r == null) onBadPw.run();
+                else Ui.dialog(this).setMessage(r).setPositiveButton(R.string.ok, null).show();
             });
         }, "backup").start();
+    }
+
+    // ------------------------------------------------------------------ Datensicherung (wie Pulsa Fastflow)
+
+    static final String EXTRA_RESTORE = "restore", EXTRA_BACKUP_NOW = "backup_now";
+    private static final int REQ_BACKUP_TREE = 23, ACT_NOW = 1, ACT_RESTORE = 2;
+    private int pendingTreeAction;
+
+    private void setupBackup() {
+        findViewById(R.id.row_backup_now).setOnClickListener(v -> backupNow());
+        findViewById(R.id.row_backup_place).setOnClickListener(v -> {
+            if (BackupPlace.tree(this) == null) { pickTree(0); return; }
+            String[] items = {getString(R.string.bk_place_change), getString(R.string.bk_place_forget)};
+            Ui.dialog(this).setTitle(R.string.bk_place).setItems(items, (d, w) -> {
+                if (w == 0) pickTree(0);
+                else { BackupPlace.forgetTree(this); updateBackup(); }
+            }).setNegativeButton(R.string.cancel, null).show();
+        });
+        findViewById(R.id.row_backup_pw).setOnClickListener(v -> {
+            if (!BackupPlace.hasPassword(this)) { passwordDialog(true, null); return; }
+            String[] items = {getString(R.string.bk_pw_change), getString(R.string.bk_pw_remove)};
+            Ui.dialog(this).setTitle(R.string.bk_pw).setItems(items, (d, w) -> {
+                if (w == 0) passwordDialog(true, null);
+                else {
+                    BackupPlace.removePassword(this);
+                    Toast.makeText(this, R.string.bk_pw_removed, Toast.LENGTH_LONG).show();
+                    updateBackup();
+                }
+            }).setNegativeButton(R.string.cancel, null).show();
+        });
+        bindSwitch(R.id.row_backup_media, R.id.sw_backup_media, BackupPlace.media(this), on -> BackupPlace.setMedia(this, on));
+        Switch auto = findViewById(R.id.sw_backup_auto);
+        auto.setChecked(BackupPlace.auto(this));
+        auto.setOnCheckedChangeListener((b, on) -> {
+            if (on && (BackupPlace.tree(this) == null || !BackupPlace.hasPassword(this))) {
+                b.setChecked(false);
+                Toast.makeText(this, R.string.bk_auto_need, Toast.LENGTH_LONG).show();
+                return;
+            }
+            BackupPlace.setAuto(this, on);
+            updateBackup();
+        });
+        findViewById(R.id.row_backup_auto).setOnClickListener(v -> auto.toggle());
+        findViewById(R.id.row_backup_keep).setOnClickListener(v -> {
+            int[] k = de.mca.pulsascribe.core.BackupFiles.KEEP;
+            String[] l = new String[k.length];
+            int sel = 0;
+            for (int i = 0; i < k.length; i++) {
+                l[i] = getString(R.string.bk_keep_n, k[i]);
+                if (k[i] == BackupPlace.keep(this)) sel = i;
+            }
+            Ui.dialog(this).setTitle(R.string.bk_keep).setSingleChoiceItems(l, sel, (d, w) -> {
+                BackupPlace.setKeep(this, k[w]);
+                updateBackup();
+                d.dismiss();
+            }).setNegativeButton(R.string.cancel, null).show();
+        });
+        bindSwitch(R.id.row_backup_autodel, R.id.sw_backup_autodel, BackupPlace.autoDelete(this), on -> BackupPlace.setAutoDelete(this, on));
+        updateBackup();
+        if (getIntent().getBooleanExtra(EXTRA_RESTORE, false)) {
+            getIntent().removeExtra(EXTRA_RESTORE);
+            findViewById(R.id.row_restore).post(this::restoreChooser);
+        } else if (getIntent().getBooleanExtra(EXTRA_BACKUP_NOW, false)) {
+            getIntent().removeExtra(EXTRA_BACKUP_NOW);
+            findViewById(R.id.row_backup_now).post(this::backupNow);
+        }
+    }
+
+    private void updateBackup() {
+        TextView now = findViewById(R.id.bk_now_sub);
+        if (now == null) return;
+        long last = BackupPlace.lastBackup(this);
+        if (last == 0) now.setText(R.string.bk_never);
+        else {
+            String when = android.text.format.DateUtils.formatDateTime(this, last,
+                    android.text.format.DateUtils.FORMAT_SHOW_DATE | android.text.format.DateUtils.FORMAT_SHOW_TIME);
+            now.setText(getString(BackupPlace.autoReady(this) && BackupPlace.autoDoneToday(this) ? R.string.bk_last_auto : R.string.bk_last, when));
+        }
+        String label = BackupPlace.label(this);
+        ((TextView) findViewById(R.id.bk_place_sub)).setText(label != null ? label
+                : getString(BackupPlace.lost(this) ? R.string.bk_place_lost : R.string.bk_place_none));
+        ((TextView) findViewById(R.id.bk_pw_sub)).setText(BackupPlace.hasPassword(this) ? R.string.bk_pw_on : R.string.bk_pw_off);
+        Switch auto = findViewById(R.id.sw_backup_auto);
+        boolean on = BackupPlace.auto(this);
+        if (auto.isChecked() != on) auto.setChecked(on);
+        ((TextView) findViewById(R.id.bk_keep_value)).setText(getString(R.string.bk_keep_n, BackupPlace.keep(this)));
+        findViewById(R.id.row_backup_keep).setAlpha(on ? 1f : 0.5f);
+        findViewById(R.id.row_backup_autodel).setAlpha(on ? 1f : 0.5f);
+    }
+
+    private void pickTree(int then) {
+        pendingTreeAction = then;
+        try {
+            startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION), REQ_BACKUP_TREE);
+        } catch (RuntimeException e) {
+            pendingTreeAction = 0;
+            Toast.makeText(this, R.string.no_app, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean busy() {
+        if (Store.anyWorking(this) || RecordService.isRecording() || BackupPlace.running()) {
+            Toast.makeText(this, R.string.backup_busy, Toast.LENGTH_LONG).show();
+            return true;
+        }
+        return false;
+    }
+
+    /** Ein Tipp: gemerkter Ordner, gemerktes Passwort – sonst einmal fragen. */
+    private void backupNow() {
+        if (busy()) return;
+        if (BackupPlace.tree(this) == null) {
+            if (BackupPlace.lost(this)) Toast.makeText(this, R.string.bk_place_lost, Toast.LENGTH_LONG).show();
+            pickTree(ACT_NOW);
+            return;
+        }
+        char[] pw = BackupPlace.password(this);
+        if (pw != null) runBackupNow(pw);
+        else passwordDialog(false, this::runBackupNow);
+    }
+
+    private void runBackupNow(char[] pw) {
+        runTask(R.string.backup_running, () -> {
+            BackupPlace.Outcome o = BackupPlace.backup(this, pw, false, false);
+            if (!o.ok) throw o.error != null ? o.error : new java.io.IOException();
+            return getString(R.string.bk_saved_as, o.name);
+        }, pw);
+    }
+
+    private interface PwUse {
+        void use(char[] pw);
+    }
+
+    /** Neues Passwort zweimal eingeben. onlyRemember: nur merken; sonst danach verwenden (Merken wählbar). */
+    private void passwordDialog(boolean onlyRemember, PwUse then) {
+        android.widget.LinearLayout col = Ui.column(this);
+        android.widget.EditText p1 = pwField(R.string.backup_pw), p2 = pwField(R.string.backup_pw2);
+        Ui.add(col, p1);
+        android.view.View gap = new android.view.View(this);
+        gap.setMinimumHeight(Ui.dp(this, 8));
+        Ui.add(col, gap);
+        Ui.add(col, p2);
+        Switch remember = null;
+        if (!onlyRemember) {
+            remember = Ui.switchRow(this, R.string.bk_pw_remember, true);
+            Ui.add(col, remember);
+        }
+        TextView warn = Ui.body(this, getString(R.string.backup_warn) + " " + getString(R.string.bk_pw_note));
+        warn.setTextSize(13);
+        warn.setTextColor(Design.color(this, R.attr.pl_muted));
+        Ui.add(col, warn);
+        Switch rem = remember;
+        android.app.AlertDialog d = Ui.dialog(this).setTitle(onlyRemember ? R.string.bk_pw : R.string.bk_now).setView(col)
+                .setPositiveButton(onlyRemember ? R.string.save : R.string.bk_now, null).setNegativeButton(R.string.cancel, null).create();
+        if (d.getWindow() != null) d.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+        d.setOnShowListener(x -> d.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String a = p1.getText().toString(), b = p2.getText().toString();
+            if (a.length() < de.mca.pulsascribe.core.Backup.MIN_PASSWORD) { p1.setError(getString(R.string.backup_pw_short)); return; }
+            if (!a.equals(b)) { p2.setError(getString(R.string.backup_pw_mismatch)); return; }
+            char[] pw = a.toCharArray();
+            p1.setText("");
+            p2.setText("");
+            d.dismiss();
+            if (onlyRemember || (rem != null && rem.isChecked())) {
+                if (BackupPlace.setPassword(this, pw)) Toast.makeText(this, R.string.bk_pw_saved, Toast.LENGTH_SHORT).show();
+                else Toast.makeText(this, R.string.backup_failed, Toast.LENGTH_SHORT).show();
+            }
+            updateBackup();
+            if (then != null) then.use(pw);
+            else java.util.Arrays.fill(pw, '\0');
+        }));
+        d.show();
+    }
+
+    /** Sicherungen im gemerkten Ordner zur Auswahl (neueste zuerst, höchstens 20). */
+    private void restoreChooser() {
+        if (busy()) return;
+        if (BackupPlace.tree(this) == null) {
+            String[] items = {getString(R.string.bk_restore_folder), getString(R.string.bk_restore_file)};
+            Ui.dialog(this).setTitle(R.string.backup_restore).setItems(items, (d, w) -> {
+                if (w == 0) pickTree(ACT_RESTORE);
+                else pickFile();
+            }).setNegativeButton(R.string.cancel, null).show();
+            return;
+        }
+        new Thread(() -> {
+            java.util.List<BackupPlace.Entry> list = BackupPlace.list(this);
+            runOnUiThread(() -> {
+                if (isFinishing()) return;
+                if (list.isEmpty()) {
+                    Ui.dialog(this).setTitle(R.string.bk_pick_title).setMessage(R.string.bk_pick_empty)
+                            .setPositiveButton(R.string.bk_pick_other, (d, w) -> pickFile())
+                            .setNegativeButton(R.string.cancel, null).show();
+                    return;
+                }
+                String[] labels = new String[list.size()];
+                for (int i = 0; i < labels.length; i++) {
+                    BackupPlace.Entry e = list.get(i);
+                    String kind = getString(e.auto() ? R.string.bk_entry_auto : R.string.bk_entry_manual);
+                    String size = e.size >= 0 ? " · " + android.text.format.Formatter.formatShortFileSize(this, e.size) : "";
+                    labels[i] = getString(R.string.bk_entry, e.day(), kind) + size;
+                }
+                Ui.dialog(this).setTitle(R.string.bk_pick_title).setItems(labels, (d, w) -> restoreFrom(list.get(w).uri))
+                        .setNeutralButton(R.string.bk_pick_other, (d, w) -> pickFile())
+                        .setNegativeButton(R.string.cancel, null).show();
+            });
+        }, "backup-list").start();
+    }
+
+    private void pickFile() {
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
+        try { startActivityForResult(i, REQ_RESTORE); } catch (RuntimeException e) { Toast.makeText(this, R.string.no_app, Toast.LENGTH_SHORT).show(); }
+    }
+
+    /** Erst mit dem gemerkten Passwort versuchen, nur bei Misserfolg fragen. */
+    private void restoreFrom(Uri uri) {
+        if (busy()) return;
+        char[] saved = BackupPlace.password(this);
+        if (saved == null) { askRestorePw(uri); return; }
+        runTask(R.string.restore_running, () -> {
+            BackupManager.Result r = BackupManager.restore(this, uri, saved, (dn, tot) -> { });
+            return getString(R.string.restore_done, r.added, r.skipped, r.rejected);
+        }, saved, () -> askRestorePw(uri));
+    }
+
+    private void askRestorePw(Uri uri) {
+        android.widget.LinearLayout col = Ui.column(this);
+        android.widget.EditText p1 = pwField(R.string.backup_pw);
+        Ui.add(col, p1);
+        android.app.AlertDialog d = Ui.dialog(this).setTitle(R.string.backup_restore).setView(col)
+                .setPositiveButton(R.string.ok, (dd, w) -> {
+                    char[] pw = p1.getText().toString().toCharArray();
+                    p1.setText("");
+                    runTask(R.string.restore_running, () -> {
+                        BackupManager.Result r = BackupManager.restore(this, uri, pw, (dn, tot) -> { });
+                        return getString(R.string.restore_done, r.added, r.skipped, r.rejected);
+                    }, pw);
+                })
+                .setNegativeButton(R.string.cancel, null).create();
+        if (d.getWindow() != null) d.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+        d.show();
     }
 
     // ------------------------------------------------------------------ Offline-Modelle
@@ -440,6 +682,7 @@ public final class SettingsActivity extends Activity {
     protected void onResume() {
         super.onResume();
         updateTrash();
+        updateBackup();
         handler.post(modelTick);
     }
 

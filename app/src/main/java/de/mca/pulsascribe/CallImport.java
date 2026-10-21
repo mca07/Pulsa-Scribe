@@ -83,6 +83,7 @@ final class CallImport {
     }
 
     private static void release(Context c, Uri u) {
+        if (u.equals(BackupPlace.storedTree(c))) return; // derselbe Ordner dient auch als Sicherungsort
         try {
             c.getContentResolver().releasePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } catch (SecurityException ignored) { }
