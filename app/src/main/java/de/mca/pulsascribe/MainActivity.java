@@ -339,8 +339,8 @@ public final class MainActivity extends Activity {
 
     /** Ordner (mit Unterordnern) gemeinsam auswerten; Ergebnis wird ein neuer Eintrag im Ordner. */
     private void folderSummary(String id) {
-        if (!GeminiKey.has(this)) {
-            KeyDialog.show(this, null);
+        if (!AiKeys.ready(this)) {
+            KeyDialog.showActive(this, null);
             return;
         }
         Folders f = Store.folders(this);
@@ -482,10 +482,10 @@ public final class MainActivity extends Activity {
                     .show();
             return;
         }
-        if (!GeminiKey.has(this)) {
+        if (!AiKeys.ready(this)) {
             Ui.dialog(this).setTitle(R.string.key_title).setMessage(R.string.start_need_key)
-                    .setPositiveButton(R.string.start_set_key, (d, w) -> KeyDialog.show(this, () -> {
-                        if (GeminiKey.has(this) && (pendingUri != null || pendingText != null || pendingLink != null || pendingUris != null)) begin(pendingUri, pendingText);
+                    .setPositiveButton(R.string.start_set_key, (d, w) -> KeyDialog.showActive(this, () -> {
+                        if (AiKeys.ready(this) && (pendingUri != null || pendingText != null || pendingLink != null || pendingUris != null)) begin(pendingUri, pendingText);
                     }))
                     .setNegativeButton(R.string.cancel, (d, w) -> { pendingUri = null; pendingText = null; pendingLink = null; pendingUris = null; })
                     .show();

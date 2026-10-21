@@ -293,7 +293,7 @@ final class CallImport {
 
     /** Wartende Telefonate starten (beim Öffnen der App, wenn „automatisch“ an ist). */
     static void startWaiting(Context a) {
-        if (!autoStart(a) || !GeminiKey.has(a) && !"whisper".equals(Settings.engine(a))) return;
+        if (!autoStart(a) || !AiKeys.ready(a) && !"whisper".equals(Settings.engine(a))) return;
         for (Transcript t : Store.all(a)) {
             if (!Transcript.WAITING.equals(t.status)) continue;
             try {

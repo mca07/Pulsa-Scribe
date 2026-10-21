@@ -119,9 +119,9 @@ public final class RecordActivity extends Activity {
                     .setNegativeButton(R.string.cancel, null).show();
             return;
         }
-        if (!GeminiKey.has(this)) {
+        if (!AiKeys.ready(this)) {
             Ui.dialog(this).setTitle(R.string.key_title).setMessage(R.string.start_need_key)
-                    .setPositiveButton(R.string.start_set_key, (d, w) -> KeyDialog.show(this, null))
+                    .setPositiveButton(R.string.start_set_key, (d, w) -> KeyDialog.showActive(this, null))
                     .setNegativeButton(R.string.cancel, null).show();
             return;
         }

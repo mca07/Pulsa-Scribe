@@ -710,9 +710,9 @@ public class FeatureTest {
         t.segments.add(new Transcript.Segment(0, "Sprecher 1", "Wir müssen die Druckformulare anpassen."));
         String plain = Gemini.questionPrompt(t, "Wie lange dauert das?", "same");
         assertTrue(plain.contains("using only the transcript"));
-        assertFalse(plain.contains("Google Search"));
+        assertFalse(plain.contains("web search"));
         String p = Gemini.questionPrompt(t, "Wie lange dauert das?", "same", true, "IT-Berater ERP", null);
-        assertTrue(p.contains("Google Search"));
+        assertTrue(p.contains("web search"));
         assertTrue(p.contains("range in hours"));
         assertTrue(p.contains("About the user"));
         String body = Gemini.expertRequest(p);

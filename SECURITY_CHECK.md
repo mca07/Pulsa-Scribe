@@ -247,6 +247,16 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 - ⚠️ Google erhält Frage und Transkript-Ausschnitt wie bei jeder Gemini-Anfrage; Websuche kann zusätzliche Kosten/Kontingent verbrauchen
 - ✅ Unit-Test `expertEstimatesUseWebSearch`
 
+## 9t. Weitere KI-Anbieter: Claude, OpenAI, Mistral (ab 1.24)
+- ✅ Ein Schalter „KI für alles“; Standard bleibt Gemini. Nur der gewählte Anbieter bekommt Daten; fehlende Fähigkeiten (Claude: Ton/YouTube; Mistral: PDF/Websuche/Stimme) laufen über Gemini nur, wenn dafür ein Gemini-Schlüssel hinterlegt ist – sonst Offline-Modell/Handy-Stimme oder klare Meldung
+- ✅ Schlüssel je Anbieter: AES-256-GCM, eigener nicht exportierbarer Keystore-Schlüssel und eigene Datei, nicht in der Datensicherung; Eingabe mit FLAG_SECURE, Formatprüfung je Anbieter
+- ✅ Nur HTTPS zu festem Host je Anbieter (`api.anthropic.com`, `api.openai.com`, `api.mistral.ai`), keine Weiterleitungen, Schlüssel nur im Header (x-api-key bzw. Bearer), Zeitlimits, Antwort max. 6 MB
+- ✅ OpenAI: `store:false` (Antworten nicht gespeichert); strikte JSON-Schemas bei allen Anbietern (`additionalProperties:false`), Antworten durch dieselbe Prüfung wie bei Gemini
+- ✅ Ton für OpenAI/Mistral: Teil wird ohne Neukodierung in .m4a (MediaMuxer) im Cache verpackt und danach gelöscht; max. 24 MB je Teil
+- ✅ Websuche-Quellen (Claude-Zitate, OpenAI url_citation) nur HTTPS über `WebPage.cleanUrl`
+- ⚠️ Datenschutz: je Anbieter eigene Bedingungen/Speicherorte (Mistral: EU); Hinweistext in der App angepasst
+- ✅ Unit-Tests `AiTest` (Anbieter, Schlüssel, Schema-Umwandlung, Anfragen, Antworten, Transkription)
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB

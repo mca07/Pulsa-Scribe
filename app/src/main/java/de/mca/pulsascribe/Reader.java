@@ -67,7 +67,7 @@ final class Reader {
             if (listener != null) listener.onError(R.string.read_unavailable);
             return;
         }
-        if (Settings.naturalVoice(ctx) && GeminiKey.has(ctx)) {
+        if (Settings.naturalVoice(ctx) && naturalAvailable(ctx)) {
             speakNatural(items, language);
             return;
         }
@@ -79,16 +79,36 @@ final class Reader {
         start.run();
     }
 
+    /** OpenAI-Stimme, wenn OpenAI der Anbieter ist; sonst Gemini-Stimme, wenn ein Gemini-Schlüssel da ist. */
+    static boolean naturalAvailable(Context c) {
+        return (de.mca.pulsascribe.core.Ai.OPENAI.equals(Settings.provider(c)) && AiKeys.has(c, de.mca.pulsascribe.core.Ai.OPENAI))
+                || GeminiKey.has(c);
+    }
+
+    static boolean usesOpenAiVoice(Context c) {
+        return de.mca.pulsascribe.core.Ai.OPENAI.equals(Settings.provider(c)) && AiKeys.has(c, de.mca.pulsascribe.core.Ai.OPENAI);
+    }
+
+    private String naturalKind;
+
     private void speakNatural(List<String> items, String language) {
         if (tts != null) tts.stop();
+        String kind = usesOpenAiVoice(ctx) ? "openai" : "gemini";
+        if (natural != null && !kind.equals(naturalKind)) { natural.stop(); natural = null; }
         if (natural == null) {
-            String key = GeminiKey.get(ctx);
-            if (key == null) { doSpeakWhenReady(items, language, 0); return; }
-            natural = new GeminiSpeaker(key);
+            if ("openai".equals(kind)) {
+                natural = GeminiSpeaker.openAi(AiKeys.get(ctx, de.mca.pulsascribe.core.Ai.OPENAI));
+            } else {
+                String key = GeminiKey.get(ctx);
+                if (key == null) { doSpeakWhenReady(items, language, 0); return; }
+                natural = new GeminiSpeaker(key);
+            }
+            naturalKind = kind;
         }
         speaking = true;
         if (listener != null) listener.onState(true, 0);
-        natural.start(items, language, Settings.voice(ctx), Settings.speechRate(ctx), new GeminiSpeaker.Callback() {
+        String voice = "openai".equals(kind) ? Settings.openAiVoice(ctx) : Settings.voice(ctx);
+        natural.start(items, language, voice, Settings.speechRate(ctx), new GeminiSpeaker.Callback() {
             @Override
             public void onItem(int index) {
                 setSpeaking(true, index);

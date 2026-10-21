@@ -115,6 +115,14 @@ public final class Speech {
         }
     }
 
+    /** Rohes PCM eines anderen Anbieters (z. B. OpenAI, 24 kHz). */
+    public static Audio pcm(byte[] pcm, int rate) {
+        if (pcm == null || pcm.length < 2 || pcm.length > MAX_AUDIO_BYTES * 2 || rate < 8000 || rate > 48000) return null;
+        int n = pcm.length - (pcm.length % 2);
+        byte[] b = n == pcm.length ? pcm : java.util.Arrays.copyOf(pcm, n);
+        return new Audio(b, rate);
+    }
+
     private static final Pattern RATE_P = Pattern.compile("rate=([0-9]{4,6})");
 
     /** Audio aus der Antwort; null, wenn keins (z. B. Modell hat Text statt Audio geliefert). */

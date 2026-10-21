@@ -274,3 +274,14 @@ Mit Todoist:
 - [ ] Darüber Hinweis „Einschätzung anhand vergleichbarer Fälle aus dem Netz – bitte prüfen“, darunter „Quellen“ mit Links → öffnen im Browser
 - [ ] Schalter „Mit Einschätzung (Websuche)“ an → eigene Fragen werden ebenfalls mit Websuche beantwortet; aus → nur aus dem Gespräch (wie bisher)
 - [ ] Fakten zum Fall stammen nur aus dem Gespräch, nichts Erfundenes über den Kunden
+
+## 30. Andere KI-Anbieter (neu in 1.24)
+Einstellungen → KI-Anbieter → „KI für alles“: Gemini / Claude / OpenAI / Mistral, dann Schlüssel eintragen (Dialog hat „Schlüssel holen“).
+- [ ] **Claude:** Zusammenfassung, CRM-Eintrag, Servicebericht, Fragen, „Aufwand schätzen“ (mit Quellen), Screenshot lesen, PDF lesen → funktioniert, unter der Zusammenfassung „Modell: claude-…“
+- [ ] **Claude + Aufnahme:** mit Gemini-Schlüssel → Transkript über Gemini, Rest über Claude; ohne Gemini-Schlüssel, aber mit Offline-Modell → offline; ohne beides → klare Meldung
+- [ ] **OpenAI:** Aufnahme → Transkript mit „Sprecher 1/2“ und Zeiten; Zusammenfassung usw.; „Aufwand schätzen“ mit Quellen; Vorlesen mit OpenAI-Stimme (Einstellungen → Sprecher: Marin, Cedar …)
+- [ ] **Mistral:** Aufnahme → Transkript mit Sprechern und Zeiten; Zusammenfassung usw.; „Aufwand schätzen“ zeigt „ohne Websuche“; PDF → mit Gemini-Schlüssel über Gemini, sonst Meldung
+- [ ] Mehrteilige Aufnahme (> 15 min) mit OpenAI/Mistral → Sprecher über die Teile möglichst gleich benannt (kann abweichen)
+- [ ] YouTube-Link mit Claude/OpenAI/Mistral → über Gemini (Schlüssel nötig), sonst Meldung
+- [ ] Falscher Schlüssel → „Schlüssel abgelehnt“, nichts hängt
+- [ ] Zurück auf Gemini → alles wie vorher

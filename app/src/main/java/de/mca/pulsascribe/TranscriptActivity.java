@@ -492,7 +492,7 @@ public final class TranscriptActivity extends Activity {
     /** Perspektive des CRM-Eintrags: Ich-Form (mit Wahl, welcher Sprecher „ich“ ist) oder neutral; danach neu erstellen. */
     private void crmPerspective() {
         if (!editable() || t.segments.isEmpty()) return;
-        if (!GeminiKey.has(this)) { KeyDialog.show(this, null); return; }
+        if (!AiKeys.ready(this)) { KeyDialog.showActive(this, null); return; }
         LinearLayout col = Ui.column(this);
         RadioGroup rg = new RadioGroup(this);
         RadioButton me = new RadioButton(this);
@@ -551,7 +551,7 @@ public final class TranscriptActivity extends Activity {
     /** Vorlage auf CRM-Eintrag bzw. Servicebericht umstellen und Zusammenfassung neu erstellen. */
     private void makeReport(String template) {
         if (!editable() || t.segments.isEmpty()) return;
-        if (!GeminiKey.has(this)) { KeyDialog.show(this, null); return; }
+        if (!AiKeys.ready(this)) { KeyDialog.showActive(this, null); return; }
         Ui.dialog(this).setMessage(Templates.SERVICE.equals(template) ? R.string.service_make_confirm : R.string.crm_make_confirm)
                 .setPositiveButton(R.string.summary_create, (d, w) -> {
                     Transcript n = Store.copy(t);
@@ -750,7 +750,7 @@ public final class TranscriptActivity extends Activity {
             answersBox.addView(q);
             if (a.expert) {
                 TextView tag = new TextView(this);
-                tag.setText(R.string.ask_expert_label);
+                tag.setText(a.sources.isEmpty() ? R.string.ask_expert_label_plain : R.string.ask_expert_label);
                 tag.setTextSize(12);
                 tag.setTextColor(Design.color(this, R.attr.pl_accent));
                 answersBox.addView(tag);
@@ -837,8 +837,8 @@ public final class TranscriptActivity extends Activity {
             Toast.makeText(this, R.string.ask_busy, Toast.LENGTH_SHORT).show();
             return false;
         }
-        if (!GeminiKey.has(this)) {
-            KeyDialog.show(this, null);
+        if (!AiKeys.ready(this)) {
+            KeyDialog.showActive(this, null);
             return false;
         }
         InputMethodManager im = getSystemService(InputMethodManager.class);
@@ -1145,7 +1145,7 @@ public final class TranscriptActivity extends Activity {
     /** Zusammenfassung (neu) erstellen: Länge und Sprache wählbar. */
     private void resummarize() {
         if (!editable() || t.segments.isEmpty()) return;
-        if (!GeminiKey.has(this)) { KeyDialog.show(this, null); return; }
+        if (!AiKeys.ready(this)) { KeyDialog.showActive(this, null); return; }
         LinearLayout col = Ui.column(this);
         Ui.add(col, Ui.label(this, R.string.sum_length));
         final String[] len = {t.summaryLength};
@@ -1186,7 +1186,7 @@ public final class TranscriptActivity extends Activity {
         System.arraycopy(Languages.LABELS, 1, labels, 0, labels.length);
         Ui.dialog(this).setTitle(R.string.translate_title)
                 .setItems(labels, (d, w) -> {
-                    if (!GeminiKey.has(this)) { KeyDialog.show(this, null); return; }
+                    if (!AiKeys.ready(this)) { KeyDialog.showActive(this, null); return; }
                     String code = Languages.CODES[w + 1];
                     wantLang = code;
                     TranscribeService.translate(this, id, code);

@@ -32,12 +32,26 @@ final class GeminiSpeaker {
     private static final Object END = new Object();
 
     private final String key;
+    private final String openAiKey;
     private volatile int generation;
     private volatile GeminiClient client;
+    private volatile AiClient openAi;
     private volatile AudioTrack track;
 
+    /** Gemini-Stimme. */
     GeminiSpeaker(String key) {
         this.key = key;
+        this.openAiKey = null;
+    }
+
+    /** Stimme eines anderen Anbieters (derzeit OpenAI). */
+    static GeminiSpeaker openAi(String key) {
+        return new GeminiSpeaker(null, key);
+    }
+
+    private GeminiSpeaker(String geminiKey, String openAiKey) {
+        this.key = geminiKey;
+        this.openAiKey = openAiKey;
     }
 
     private static final class Piece {
@@ -59,14 +73,16 @@ final class GeminiSpeaker {
         if (chunks.isEmpty()) { cb.onDone(); return; }
         String lc = Speech.languageCode(language);
         BlockingQueue<Object> queue = new ArrayBlockingQueue<>(2);
-        GeminiClient c = new GeminiClient(key);
+        GeminiClient c = key != null ? new GeminiClient(key) : null;
+        AiClient oa = openAiKey != null ? new AiClient(de.mca.pulsascribe.core.Ai.OPENAI, openAiKey) : null;
         client = c;
+        openAi = oa;
 
         Thread fetcher = new Thread(() -> {
             try {
                 for (Speech.Chunk ch : chunks) {
                     if (gen != generation) return;
-                    Piece p = fetch(c, ch, voice, lc, gen);
+                    Piece p = oa != null ? fetchOpenAi(oa, ch, voice, gen) : fetch(c, ch, voice, lc, gen);
                     if (gen != generation) return;
                     queue.put(p);
                     if (p.audio == null) return; // Fehler: Abspieler meldet ihn nach dem bisher Geholten
@@ -96,6 +112,31 @@ final class GeminiSpeaker {
         }, "tts-play");
         fetcher.start();
         player.start();
+    }
+
+    private Piece fetchOpenAi(AiClient oa, Speech.Chunk ch, String voice, int gen) {
+        String body = de.mca.pulsascribe.core.Ai.speechRequest(ch.text, voice);
+        int fail = R.string.voice_failed;
+        for (int attempt = 0; attempt < 3; attempt++) {
+            if (gen != generation) return new Piece(null, ch.item, fail);
+            try {
+                int[] code = new int[1];
+                byte[] pcm = oa.speech(body, code);
+                if (pcm != null) {
+                    Speech.Audio a = Speech.pcm(pcm, 24_000);
+                    if (a != null) return new Piece(a, ch.item, 0);
+                    continue;
+                }
+                if (code[0] == 401 || code[0] == 403 || code[0] == 400) return new Piece(null, ch.item, R.string.voice_failed);
+                if (code[0] == 429) fail = R.string.voice_quota;
+                if (!Gemini.tryNextModel(code[0])) return new Piece(null, ch.item, fail);
+                SystemClock.sleep(1500);
+            } catch (IOException e) {
+                fail = R.string.voice_offline_msg;
+                if (gen != generation) break;
+            }
+        }
+        return new Piece(null, ch.item, fail);
     }
 
     private Piece fetch(GeminiClient c, Speech.Chunk ch, String voice, String lc, int gen) {
@@ -168,6 +209,9 @@ final class GeminiSpeaker {
         GeminiClient c = client;
         if (c != null) c.cancel();
         client = null;
+        AiClient oa = openAi;
+        if (oa != null) oa.cancel();
+        openAi = null;
         AudioTrack t = track;
         if (t != null) {
             try { t.pause(); t.flush(); } catch (RuntimeException ignored) { }

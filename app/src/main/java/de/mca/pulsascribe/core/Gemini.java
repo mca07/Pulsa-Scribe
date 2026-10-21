@@ -557,7 +557,7 @@ public final class Gemini {
     // ------------------------------------------------------------------ Fragen an ein Transkript
 
     public static String questionPrompt(Transcript t, String question, String summaryLang) {
-        return questionPrompt(t, question, summaryLang, false, "", null);
+        return questionPrompt(t, question, summaryLang, false, "", null, true);
     }
 
     /**
@@ -566,6 +566,12 @@ public final class Gemini {
      */
     public static String questionPrompt(Transcript t, String question, String summaryLang, boolean expert, String about,
                                         List<Transcript> refs) {
+        return questionPrompt(t, question, summaryLang, expert, about, refs, true);
+    }
+
+    /** web = der Anbieter kann im Netz suchen; sonst Einschätzung aus allgemeinem Fachwissen. */
+    public static String questionPrompt(Transcript t, String question, String summaryLang, boolean expert, String about,
+                                        List<Transcript> refs, boolean web) {
         StringBuilder p = new StringBuilder();
         boolean audio = t.isAudio();
         String what = audio ? "transcript" : "text";
@@ -576,8 +582,10 @@ public final class Gemini {
             p.append("Answer the question as an experienced practitioner. Take the facts of this case ONLY from the ").append(what)
                     .append(" below (never invent facts about it). Where the ").append(what)
                     .append(" does not contain the answer - e.g. effort or time estimates, recommendations, typical approach - ")
-                    .append("use Google Search to find comparable scenarios and typical figures (vendor documentation, experience reports, ")
-                    .append("consulting price lists, forums) and give your best professional estimate based on them.\n");
+                    .append(web ? "use web search to find comparable scenarios and typical figures (vendor documentation, experience reports, "
+                            + "consulting price lists, forums) and give your best professional estimate based on them.\n"
+                            : "give your best professional estimate based on comparable typical scenarios from your general expertise "
+                            + "(no web search is available; say so in one short line).\n");
             p.append("For time or effort estimates: give a realistic range in hours (minimum - maximum) and the most likely value, ")
                     .append("broken down into concrete work steps with hours each, then the main assumptions and the risks that would increase the effort. ")
                     .append("Start with one sentence stating that this is an estimate. Use plain text, no Markdown: short lines, one item per line starting with '- ', ")

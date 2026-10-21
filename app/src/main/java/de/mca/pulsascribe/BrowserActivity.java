@@ -276,8 +276,8 @@ public final class BrowserActivity extends Activity {
     }
 
     private void create(String url, WebPage.Page page, OptionsForm form, boolean readOnly) {
-        if (!readOnly && !GeminiKey.has(this)) {
-            KeyDialog.show(this, null);
+        if (!readOnly && !AiKeys.ready(this)) {
+            KeyDialog.showActive(this, null);
             return;
         }
         Transcript t = form.build();

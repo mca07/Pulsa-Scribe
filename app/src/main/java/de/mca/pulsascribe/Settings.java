@@ -113,17 +113,30 @@ final class Settings {
     static void setMyName(Context c, String v) { p(c).edit().putString("my_name", de.mca.pulsascribe.core.Text.line(v, 40)).apply(); }
 
     /** Modelle in Qualitätsreihenfolge; solche in der Sperrzeit (Kontingent, nicht gefunden) kommen zuletzt. */
-    static int[] modelOrder(Context c) {
-        int n = Gemini.MODELS.length;
+    static int[] modelOrder(Context c) { return modelOrder(c, de.mca.pulsascribe.core.Ai.GEMINI); }
+
+    private static String cdKey(String provider, int i) {
+        String pr = de.mca.pulsascribe.core.Ai.clean(provider);
+        return de.mca.pulsascribe.core.Ai.GEMINI.equals(pr) ? "model_cd_" + i : "model_cd_" + pr + "_" + i;
+    }
+
+    static int[] modelOrder(Context c, String provider) {
+        int n = de.mca.pulsascribe.core.Ai.models(provider).length;
         long now = System.currentTimeMillis();
         int[] out = new int[n];
         int k = 0;
-        for (int i = 0; i < n; i++) if (p(c).getLong("model_cd_" + i, 0) <= now) out[k++] = i;
-        for (int i = 0; i < n; i++) if (p(c).getLong("model_cd_" + i, 0) > now) out[k++] = i;
+        for (int i = 0; i < n; i++) if (p(c).getLong(cdKey(provider, i), 0) <= now) out[k++] = i;
+        for (int i = 0; i < n; i++) if (p(c).getLong(cdKey(provider, i), 0) > now) out[k++] = i;
         return out;
     }
-    static void setModelCooldown(Context c, int i, long ms) { p(c).edit().putLong("model_cd_" + i, System.currentTimeMillis() + ms).apply(); }
-    static void clearModelCooldown(Context c, int i) { p(c).edit().remove("model_cd_" + i).apply(); }
+    static void setModelCooldown(Context c, String provider, int i, long ms) { p(c).edit().putLong(cdKey(provider, i), System.currentTimeMillis() + ms).apply(); }
+    static void clearModelCooldown(Context c, String provider, int i) { p(c).edit().remove(cdKey(provider, i)).apply(); }
+
+    /** Aktiver KI-Anbieter (alles läuft darüber; was er nicht kann, übernimmt Gemini bzw. das Handy). */
+    static String provider(Context c) { return de.mca.pulsascribe.core.Ai.clean(p(c).getString("provider", de.mca.pulsascribe.core.Ai.GEMINI)); }
+    static void setProvider(Context c, String v) { p(c).edit().putString("provider", de.mca.pulsascribe.core.Ai.clean(v)).apply(); }
+    static String openAiVoice(Context c) { return de.mca.pulsascribe.core.Ai.cleanOpenAiVoice(p(c).getString("oa_voice", "")); }
+    static void setOpenAiVoice(Context c, String v) { p(c).edit().putString("oa_voice", de.mca.pulsascribe.core.Ai.cleanOpenAiVoice(v)).apply(); }
 
     /** Berichtsarten ein-/ausschalten (Vorlagenliste und Knöpfe in der Zusammenfassung). */
     static boolean crmEnabled(Context c) { return p(c).getBoolean("rep_crm", true); }

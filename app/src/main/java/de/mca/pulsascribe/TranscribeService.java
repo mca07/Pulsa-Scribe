@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.mca.pulsascribe.core.Adts;
+import de.mca.pulsascribe.core.Ai;
 import de.mca.pulsascribe.core.Chunker;
 import de.mca.pulsascribe.core.Folders;
 import de.mca.pulsascribe.core.Gemini;
@@ -155,6 +156,9 @@ public final class TranscribeService extends Service {
     private Thread worker;
     private volatile String runningId;
     private volatile boolean cancelCurrent;
+    /** Aktiver KI-Anbieter und dessen Client (null bei Gemini); client = Gemini (auch als Ausweg, wenn Schlüssel da). */
+    private volatile String provider = Ai.GEMINI;
+    private volatile AiClient ai;
     private volatile GeminiClient client;
     private PowerManager.WakeLock wakeLock;
 
@@ -245,6 +249,8 @@ public final class TranscribeService extends Service {
             OfflineRunner.abort(true);
             GeminiClient c = client;
             if (c != null) c.cancel();
+            AiClient a = ai;
+            if (a != null) a.cancel();
             return;
         }
         for (Job j : queue) {
@@ -296,16 +302,21 @@ public final class TranscribeService extends Service {
             Job job;
             while ((job = next()) != null) {
                 try {
+                    provider = Settings.provider(this);
                     String key = GeminiKey.get(this);
+                    String pkey = Ai.GEMINI.equals(provider) ? key : AiKeys.get(this, provider);
                     Transcript jt = Store.get(this, job.id);
                     boolean offline = job.type == T_FULL && jt != null && jt.isAudio()
                             && Transcript.ENGINE_WHISPER.equals(jt.engine);
-                    if (key == null && !offline) {
-                        if (job.type == T_FULL || job.type == T_FOLDER) fail(job.id, getString(R.string.err_no_key));
-                        else restore(job, getString(R.string.err_no_key));
+                    if (pkey == null && !offline) {
+                        String msg = Ai.GEMINI.equals(provider) ? getString(R.string.err_no_key)
+                                : getString(R.string.err_no_key_provider, Ai.label(provider));
+                        if (job.type == T_FULL || job.type == T_FOLDER) fail(job.id, msg);
+                        else restore(job, msg);
                         continue;
                     }
                     client = key == null ? null : new GeminiClient(key);
+                    ai = Ai.GEMINI.equals(provider) || pkey == null ? null : new AiClient(provider, pkey);
                     switch (job.type) {
                         case T_FULL: process(job, false); break;
                         case T_SUMMARY: process(job, true); break;
@@ -325,6 +336,7 @@ public final class TranscribeService extends Service {
                     setLive(job.id, 0, 0);
                     synchronized (this) { runningId = null; }
                     client = null;
+                    ai = null;
                 }
             }
         } finally {
@@ -348,6 +360,8 @@ public final class TranscribeService extends Service {
             cancelCurrent = true;
             GeminiClient c = client;
             if (c != null) c.cancel();
+            AiClient a = ai;
+            if (a != null) a.cancel();
         }
         stopSelf();
     }
@@ -378,15 +392,15 @@ public final class TranscribeService extends Service {
         }
 
         // Zusammenfassung (offline ohne Schlüssel: keine)
-        if ((t.summarize || summaryOnly) && !t.segments.isEmpty() && client != null) {
+        if ((t.summarize || summaryOnly) && !t.segments.isEmpty() && textReady()) {
             if (cancelCurrent) { finishCanceled(job, t, summaryOnly); return; }
             t.status = Transcript.SUMMARY;
             persist(t);
             setLive(t.id, R.string.st_summary, -1);
             if (!summaryOnly) notifyWork(t.id, getString(R.string.st_summary), -1);
-            String body = Gemini.summaryRequest(Gemini.summaryPrompt(t, Settings.summaryLanguage(this)));
+            String sumPrompt = Gemini.summaryPrompt(t, Settings.summaryLanguage(this));
             List<String> tags = new ArrayList<>();
-            Outcome o = call(model -> client.json(model, body), (reply, oc) -> {
+            Outcome o = callText(sumPrompt, Gemini.summarySchema(), 0, (reply, oc) -> {
                 oc.summary = Gemini.parseSummary(reply.text);
                 if (oc.summary != null) tags.addAll(Gemini.parseTags(reply.text));
                 return oc.summary != null;
@@ -508,6 +522,16 @@ public final class TranscribeService extends Service {
         t.incomplete = false;
         persist(t);
 
+        // Wer transkribiert? Gewählter Anbieter; kann er keinen Ton (Claude), dann Gemini oder das Offline-Modell.
+        boolean whisper = Transcript.ENGINE_WHISPER.equals(t.engine);
+        boolean external = !whisper && !Ai.GEMINI.equals(provider) && Ai.canAudio(provider) && ai != null;
+        boolean viaGemini = !whisper && !external && client != null;
+        if (!whisper && !external && !viaGemini) {
+            if (OfflineModels.usable(this) != null) whisper = true;
+            else { fail(t.id, getString(R.string.err_provider_audio, Ai.label(provider))); return false; }
+        }
+        java.util.Map<String, String> speakerMap = new java.util.LinkedHashMap<>();
+
         while (t.chunksDone < t.cuts.length) {
             if (cancelCurrent) { markCanceled(t.id); return false; }
             int i = t.chunksDone;
@@ -524,7 +548,18 @@ public final class TranscribeService extends Service {
             info.durationMs = idx.frameToMs(endFrame) - idx.frameToMs(startFrame);
             info.knownSpeakers = Gemini.knownSpeakers(t);
             info.previousTail = i > 0 ? Gemini.tail(t, 300) : "";
-            if (Transcript.ENGINE_WHISPER.equals(t.engine)) {
+            if (external) {
+                long offsetMs = idx.frameToMs(startFrame);
+                Gemini.Segments segs = transcribeExternal(t, audio, idx, startFrame, endFrame, info.durationMs, offsetMs, speakerMap);
+                if (cancelCurrent) { markCanceled(t.id); return false; }
+                if (segs == null) return false; // Fehler schon gemeldet
+                t.segments.addAll(segs.list);
+                t.model = Ai.transcriptionModel(provider, false);
+                t.chunksDone = i + 1;
+                persist(t);
+                continue;
+            }
+            if (whisper) {
                 // Offline: whisper.cpp auf dem Gerät
                 List<Transcript.Segment> segs;
                 try {
@@ -616,6 +651,56 @@ public final class TranscribeService extends Service {
         return true;
     }
 
+    /** Ein Teil per OpenAI/Mistral: als .m4a verpacken, hochladen, Abschnitte mit Zeiten und Sprechern. null = Fehler (gemeldet). */
+    private Gemini.Segments transcribeExternal(Transcript t, File audio, Adts.Index idx, int startFrame, int endFrame,
+                                               long chunkMs, long offsetMs, java.util.Map<String, String> speakerMap) {
+        File m4a = new File(getCacheDir(), "chunk_" + t.id + ".m4a");
+        try {
+            M4a.write(audio, idx, startFrame, endFrame, m4a);
+        } catch (IOException e) {
+            fail(t.id, getString(R.string.err_audio_broken));
+            return null;
+        }
+        try {
+            String last = "";
+            boolean quota = false;
+            for (int mi = 0; mi < 2; mi++) {
+                String model = Ai.transcriptionModel(provider, mi == 1);
+                for (int attempt = 0; attempt < 3; attempt++) {
+                    if (cancelCurrent) return null;
+                    if (attempt > 0) pause(attempt == 1 ? 3000 : 20_000);
+                    GeminiClient.Response r;
+                    try {
+                        r = ai.transcribe(Ai.transcriptionFields(provider, model, t.language, t.diarize, t.terms), m4a, "audio.m4a", "audio/mp4");
+                    } catch (IOException e) {
+                        if (cancelCurrent) return null;
+                        last = e.getClass().getSimpleName();
+                        continue;
+                    }
+                    if (r.code == 200) {
+                        Gemini.Segments s = Ai.parseTranscription(r.body, chunkMs, offsetMs, t.diarize, speakerMap);
+                        if (s != null) return s;
+                        last = "200 · " + model;
+                        continue;
+                    }
+                    String status = Ai.errorStatus(provider, r.body);
+                    last = r.code + (status.isEmpty() ? "" : " " + status) + " · " + model;
+                    if (r.code == 401 || r.code == 403) {
+                        fail(t.id, getString(R.string.err_key_rejected, last));
+                        return null;
+                    }
+                    if (r.code == 400 || r.code == 404 || r.code == 422) break; // anderes Modell versuchen
+                    if (r.code == 429) quota = true;
+                }
+            }
+            fail(t.id, getString(quota ? R.string.err_quota : R.string.err_all_models, last));
+            return null;
+        } finally {
+            //noinspection ResultOfMethodCallIgnored
+            m4a.delete();
+        }
+    }
+
     /** Text aus dem Bild lesen. false = Fehler (schon gemeldet). */
     private boolean readImage(Transcript t) {
         File img = Store.imageFile(this, t.id);
@@ -629,7 +714,7 @@ public final class TranscribeService extends Service {
         notifyWork(t.id, getString(R.string.st_ocr), -1);
         String prompt = Gemini.ocrPrompt(t.language);
         final Gemini.Ocr[] res = new Gemini.Ocr[1];
-        Outcome o = call(model -> client.image(model, prompt, img), (reply, oc) -> {
+        Outcome o = callAttach(prompt, Gemini.ocrSchema(), img, Ai.JPEG, (reply, oc) -> {
             res[0] = Gemini.parseOcr(reply.text);
             return res[0] != null;
         });
@@ -715,13 +800,16 @@ public final class TranscribeService extends Service {
     }
 
     private boolean readPdf(Transcript t, File pdf) {
-        if (client == null) {
-            fail(t.id, getString(R.string.start_need_key));
+        if (!pdfReady() && client == null) {
+            fail(t.id, getString(R.string.err_pdf_provider, Ai.label(provider)));
             return false;
         }
         String prompt = WebPage.pdfPrompt(t.language);
         final Gemini.Ocr[] res = new Gemini.Ocr[1];
-        Outcome o = call(model -> client.pdf(model, prompt, pdf), (reply, oc) -> {
+        Outcome o = pdfReady() ? callAttach(prompt, Gemini.ocrSchema(), pdf, Ai.PDF, (reply, oc) -> {
+            res[0] = Gemini.parseOcr(reply.text);
+            return res[0] != null;
+        }) : call(model -> client.pdf(model, prompt, pdf), (reply, oc) -> {
             res[0] = Gemini.parseOcr(reply.text);
             return res[0] != null;
         });
@@ -743,7 +831,7 @@ public final class TranscribeService extends Service {
     /** Öffentliches YouTube-Video: Gemini sieht/hört es selbst, Ergebnis wie bei einer Aufnahme (mit Zeiten). */
     private boolean readYouTube(Transcript t, String video) {
         if (client == null) {
-            fail(t.id, getString(R.string.start_need_key));
+            fail(t.id, getString(R.string.err_youtube_gemini));
             return false;
         }
         setLive(t.id, R.string.st_youtube, -1);
@@ -811,14 +899,16 @@ public final class TranscribeService extends Service {
         if (base == null) return;
         if (base.segments.isEmpty()) { restore(job, getString(R.string.err_summary_empty)); return; }
         boolean expert = "expert".equals(job.arg2);
-        String prompt = Gemini.questionPrompt(base, job.arg, Settings.summaryLanguage(this), expert, Settings.aboutMe(this), null);
-        String body = expert ? Gemini.expertRequest(prompt) : Gemini.textRequest(prompt, Gemini.answerSchema(), 0.1);
+        String prompt = Gemini.questionPrompt(base, job.arg, Settings.summaryLanguage(this), expert, Settings.aboutMe(this), null,
+                webReady());
+        // (Prompt wurde oben für den aktiven Anbieter gebaut)
         long maxMs = Math.max(base.durationMs, base.segments.get(base.segments.size() - 1).startMs) + 60_000;
         final Transcript.Answer[] ans = new Transcript.Answer[1];
-        Outcome o = call(model -> client.json(model, body), (reply, oc) -> {
+        Accept acceptAnswer = (reply, oc) -> {
             ans[0] = expert ? Gemini.parseExpert(reply, job.arg) : Gemini.parseAnswer(reply.text, job.arg, maxMs);
             return ans[0] != null;
-        });
+        };
+        Outcome o = expert ? callExpert(prompt, acceptAnswer) : callText(prompt, Gemini.answerSchema(), 0.1, acceptAnswer);
         if (cancelCurrent) { restore(job, null); return; }
         Transcript cur = Store.get(this, job.id);
         if (cur == null) return;
@@ -844,9 +934,9 @@ public final class TranscribeService extends Service {
             setLive(job.id, R.string.st_translate, total == 0 ? -1 : (int) (100L * i / total));
             List<String> lines = new ArrayList<>();
             for (int k = i; k < Math.min(total, i + Gemini.TRANSLATE_BATCH); k++) lines.add(base.segments.get(k).text);
-            String body = Gemini.textRequest(Gemini.translatePrompt(lines, job.arg), Gemini.linesSchema(), 0);
+            String trPrompt = Gemini.translatePrompt(lines, job.arg);
             final List<String>[] got = new List[1];
-            Outcome o = call(model -> client.json(model, body), (reply, oc) -> {
+            Outcome o = callText(trPrompt, Gemini.linesSchema(), 0, (reply, oc) -> {
                 got[0] = Gemini.parseLines(reply.text, lines.size());
                 return got[0] != null;
             });
@@ -858,8 +948,8 @@ public final class TranscribeService extends Service {
             tr.segments.addAll(got[0]);
         }
         if (base.summary != null) {
-            String body = Gemini.summaryRequest(Gemini.translateSummaryPrompt(base.summary, job.arg));
-            Outcome o = call(model -> client.json(model, body), (reply, oc) -> {
+            String tsPrompt = Gemini.translateSummaryPrompt(base.summary, job.arg);
+            Outcome o = callText(tsPrompt, Gemini.summarySchema(), 0, (reply, oc) -> {
                 oc.summary = Gemini.parseSummary(reply.text);
                 return oc.summary != null;
             });
@@ -905,9 +995,9 @@ public final class TranscribeService extends Service {
         setLive(t.id, R.string.st_folder, -1);
         notifyWork(t.id, getString(R.string.st_folder), -1);
         String name = job.arg.isEmpty() ? getString(R.string.folder_all) : folders.pathText(job.arg);
-        String body = Gemini.summaryRequest(Gemini.folderPrompt(name, items, job.arg2, Settings.summaryLanguage(this)));
+        String fPrompt = Gemini.folderPrompt(name, items, job.arg2, Settings.summaryLanguage(this));
         List<String> tags = new ArrayList<>();
-        Outcome o = call(model -> client.json(model, body), (reply, oc) -> {
+        Outcome o = callText(fPrompt, Gemini.summarySchema(), 0, (reply, oc) -> {
             oc.summary = Gemini.parseSummary(reply.text);
             if (oc.summary != null) tags.addAll(Gemini.parseTags(reply.text));
             return oc.summary != null;
@@ -967,16 +1057,67 @@ public final class TranscribeService extends Service {
      * dauerhafte (400/401/403) brechen sofort ab. Nie eine Endlosschleife: höchstens 2 Runden.
      */
     private Outcome call(Request req, Accept accept) {
+        return callWith(Ai.GEMINI, req, accept);
+    }
+
+    private boolean textReady() {
+        return Ai.GEMINI.equals(provider) ? client != null : ai != null;
+    }
+
+    private boolean pdfReady() {
+        return Ai.canPdf(provider) && textReady();
+    }
+
+    private boolean webReady() {
+        return Ai.canWeb(provider);
+    }
+
+    /** Text mit festem Antwortschema beim aktiven Anbieter. */
+    private Outcome callText(String prompt, String schema, double temperature, Accept accept) {
+        if (!Ai.GEMINI.equals(provider) && ai != null) {
+            AiClient a = ai;
+            return callWith(provider, m -> a.json(Ai.request(provider, m, prompt, schema, null, false).prefix), accept);
+        }
+        String body = Gemini.textRequest(prompt, schema, temperature);
+        return call(m -> client.json(m, body), accept);
+    }
+
+    /** Bild oder PDF lesen (Schema wie beim Bildlesen). */
+    private Outcome callAttach(String prompt, String schema, File file, String mime, Accept accept) {
+        if (!Ai.GEMINI.equals(provider) && ai != null && (Ai.JPEG.equals(mime) || Ai.canPdf(provider))) {
+            AiClient a = ai;
+            return callWith(provider, m -> a.withFile(Ai.request(provider, m, prompt, schema, mime, false), file), accept);
+        }
+        if (Ai.PDF.equals(mime)) return call(m -> client.pdf(m, prompt, file), accept);
+        return call(m -> client.image(m, prompt, file), accept);
+    }
+
+    /** Einschätzung: mit Websuche, wenn der Anbieter eine hat. */
+    private Outcome callExpert(String prompt, Accept accept) {
+        if (!Ai.GEMINI.equals(provider) && ai != null) {
+            AiClient a = ai;
+            boolean web = Ai.canWeb(provider);
+            return callWith(provider, m -> a.json(Ai.request(provider, m, prompt, null, null, web).prefix), accept);
+        }
+        String body = Gemini.expertRequest(prompt);
+        return call(m -> client.json(m, body), accept);
+    }
+
+    /**
+     * Modelle des Anbieters der Reihe nach (bestes zuerst, gesperrte zuletzt). Fehler 404/408/429/5xx → nächstes
+     * Modell, dauerhafte (400/401/403) brechen sofort ab. Höchstens 2 Runden.
+     */
+    private Outcome callWith(String p, Request req, Accept accept) {
         Outcome o = new Outcome();
-        // Immer zuerst das beste Modell; Modelle mit kürzlichem Kontingent-/Verfügbarkeitsfehler ans Ende
-        int[] order = Settings.modelOrder(this);
-        int models = Gemini.MODELS.length;
+        String[] list = Ai.models(p);
+        int[] order = Settings.modelOrder(this, p);
+        int models = list.length;
         String lastDetail = "";
         boolean quota = false, network = false;
         for (int attempt = 0; attempt < models * 2; attempt++) {
             if (cancelCurrent) { o.error = getString(R.string.canceled); return o; }
             int mi = order[attempt % models];
-            String model = Gemini.MODELS[mi];
+            String model = list[mi];
             if (attempt > 0) pause(attempt < models ? 2000 : 20_000); // zweite Runde mit längerer Pause
             GeminiClient.Response r;
             try {
@@ -989,24 +1130,24 @@ public final class TranscribeService extends Service {
             }
             network = false;
             if (r.code == 200) {
-                Gemini.Reply reply = Gemini.reply(r.body);
+                Gemini.Reply reply = Ai.reply(p, r.body);
                 if (reply != null && !reply.blockReason.isEmpty()) {
                     o.error = getString(R.string.err_blocked, reply.blockReason);
                     return o;
                 }
                 if (reply != null && accept.accept(reply, o)) {
                     o.model = model;
-                    Settings.clearModelCooldown(this, mi);
+                    Settings.clearModelCooldown(this, p, mi);
                     return o;
                 }
                 lastDetail = "200 · " + model + (reply != null && !reply.finishReason.isEmpty() ? " · " + reply.finishReason : "");
                 continue;
             }
-            String status = Gemini.errorStatus(r.body);
+            String status = Ai.errorStatus(p, r.body);
             lastDetail = r.code + (status.isEmpty() ? "" : " " + status) + " · " + model;
-            if (r.code == 429) { quota = true; Settings.setModelCooldown(this, mi, 10 * 60_000L); }
-            if (r.code == 404) Settings.setModelCooldown(this, mi, 24 * 3600_000L);
-            if (!Gemini.tryNextModel(r.code)) {
+            if (r.code == 429) { quota = true; Settings.setModelCooldown(this, p, mi, 10 * 60_000L); }
+            if (r.code == 404) Settings.setModelCooldown(this, p, mi, 24 * 3600_000L);
+            if (!Ai.tryNextModel(r.code)) {
                 o.error = (r.code == 401 || r.code == 403 || (r.code == 400 && status.contains("INVALID_ARGUMENT") && r.body.contains("API key")))
                         ? getString(R.string.err_key_rejected, lastDetail)
                         : getString(R.string.err_request, lastDetail);

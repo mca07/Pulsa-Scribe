@@ -47,11 +47,11 @@
     <string name="start_go">Transkribieren</string>
     <string name="start_info">Die Tonspur wird als verkleinerte Audiodatei an Google Gemini gesendet. Nur auf diesen Knopfdruck.</string>
     <string name="start_file_unreadable">Die Datei lässt sich nicht öffnen.</string>
-    <string name="start_need_key">Für die Transkription wird ein Gemini-Schlüssel benötigt.</string>
+    <string name="start_need_key">Für die Transkription wird ein Schlüssel des gewählten KI-Anbieters benötigt (Einstellungen → KI-Anbieter).</string>
     <string name="start_set_key">Schlüssel hinterlegen</string>
 
     <string name="hint_title">Kurz vorab</string>
-    <string name="hint_text">• Pulsa Scribe sendet die Tonspur zur Transkription an Google Gemini (mit deinem eigenen Schlüssel). Kunden-, Personal- oder andere vertrauliche Gespräche nur, wenn das für dich und die Beteiligten in Ordnung ist.\n\n• Gespräche nur mit Einverständnis aller Beteiligten aufnehmen und transkribieren. Heimliches Aufnehmen nicht-öffentlich gesprochener Worte ist in Deutschland strafbar (§ 201 StGB).\n\n• Mit dem kostenlosen Kontingent gelten die Bedingungen von Google für die Gemini API. Für Kundendaten die bezahlte Variante und eine Vereinbarung zur Auftragsverarbeitung nutzen.\n\n• Transkripte und Ton bleiben auf deinem Handy. Der Ton wird direkt in der Anfrage gesendet und nicht als Datei bei Google abgelegt; wie Google Anfragen verarbeitet, regeln die Bedingungen der Gemini API.\n\n• Gelöschte Transkripte liegen bis zum endgültigen Löschen im Papierkorb (Standard: 30 Tage) weiterhin auf dem Handy.</string>
+    <string name="hint_text">• Pulsa Scribe sendet die Tonspur bzw. den Text an den gewählten KI-Anbieter (Google Gemini, Anthropic Claude, OpenAI oder Mistral – jeweils mit deinem eigenen Schlüssel). Kunden-, Personal- oder andere vertrauliche Gespräche nur, wenn das für dich und die Beteiligten in Ordnung ist.\n\n• Gespräche nur mit Einverständnis aller Beteiligten aufnehmen und transkribieren. Heimliches Aufnehmen nicht-öffentlich gesprochener Worte ist in Deutschland strafbar (§ 201 StGB).\n\n• Mit dem kostenlosen Kontingent gelten die Bedingungen von Google für die Gemini API. Für Kundendaten die bezahlte Variante und eine Vereinbarung zur Auftragsverarbeitung nutzen.\n\n• Transkripte und Ton bleiben auf deinem Handy. Der Ton wird direkt in der Anfrage gesendet und nicht als Datei bei Google abgelegt; wie Google Anfragen verarbeitet, regeln die Bedingungen der Gemini API.\n\n• Gelöschte Transkripte liegen bis zum endgültigen Löschen im Papierkorb (Standard: 30 Tage) weiterhin auf dem Handy.</string>
     <string name="hint_ok">Verstanden</string>
 
     <!-- Transkript -->
@@ -108,7 +108,7 @@
     <string name="exp_failed">Export fehlgeschlagen.</string>
 
     <!-- Einstellungen -->
-    <string name="set_sec_key">Google Gemini</string>
+    <string name="set_sec_key">Google Gemini (Standard und Ausweg)</string>
     <string name="set_key">Gemini-Schlüssel</string>
     <string name="set_key_set">Hinterlegt (verschlüsselt auf diesem Gerät)</string>
     <string name="set_key_missing">Nicht hinterlegt</string>
@@ -324,7 +324,7 @@
     <string name="off_section">Offline-Erkennung (Whisper)</string>
     <string name="off_engine">Transkription</string>
     <string name="off_engine_sub">Offline bleibt der Ton auf dem Handy, ist aber langsamer und ohne Sprechererkennung. Zusammenfassung und Fragen nutzen weiterhin Gemini, wenn ein Schlüssel hinterlegt ist.</string>
-    <string name="off_engine_gemini">Online (Gemini)</string>
+    <string name="off_engine_gemini">Online (gewählter KI-Anbieter)</string>
     <string name="off_engine_whisper">Offline (Whisper)</string>
     <string name="off_need_model">Für die Offline-Erkennung zuerst unter Einstellungen ein Modell herunterladen.</string>
     <string name="off_dl_title">Whisper-Modell: %1$s</string>
@@ -511,11 +511,11 @@
     <string name="kind_pdf">PDF</string>
     <!-- Stimme (1.14) -->
     <string name="voice_engine">Stimme</string>
-    <string name="voice_natural">Natürlich (Gemini) – klingt wie ein Mensch</string>
+    <string name="voice_natural">Natürlich (KI-Stimme) – klingt wie ein Mensch</string>
     <string name="voice_device">Handy-Stimme (offline)</string>
     <string name="voice_natural_short">Natürlich</string>
     <string name="voice_device_short">Handy</string>
-    <string name="voice_natural_sub">Der vorzulesende Text wird dafür an Google Gemini gesendet; braucht Internet und zählt zu deinem Kontingent.</string>
+    <string name="voice_natural_sub">Der vorzulesende Text wird dafür an OpenAI (wenn OpenAI der KI-Anbieter ist) bzw. an Google Gemini gesendet; braucht Internet und zählt zu deinem Kontingent.</string>
     <string name="voice_device_sub">Bleibt auf dem Handy. Klingt je nach installierter Stimme künstlicher.</string>
     <string name="voice_pick">Sprecher</string>
     <string name="voice_pick_sub">Antippen spielt eine Hörprobe</string>
@@ -622,4 +622,20 @@
     <string name="about_me_sub">z. B. Beruf, Fachgebiet, typische Aufgaben – macht Aufwandsschätzungen genauer</string>
     <string name="about_me_hint">z. B. IT-Berater, ERP/CRM-Einführung und Support für KMU</string>
     <string name="ask_sources">Quellen</string>
+    <!-- KI-Anbieter (1.24) -->
+    <string name="ai_section">KI-Anbieter</string>
+    <string name="ai_provider">KI für alles</string>
+    <string name="ai_sub_gemini">Google Gemini: Transkript, Zusammenfassung, Berichte, Fragen mit Websuche, Bilder, PDFs, Webseiten, YouTube, Stimme.</string>
+    <string name="ai_sub_claude">Anthropic Claude: Zusammenfassung, Berichte, Fragen mit Websuche, Bilder, PDFs. Ton und YouTube kann Claude nicht – dafür wird Gemini (falls Schlüssel da) oder das Offline-Modell genutzt; Stimme: Gemini bzw. Handy.</string>
+    <string name="ai_sub_openai">OpenAI: Transkript mit Sprechern, Zusammenfassung, Berichte, Fragen mit Websuche, Bilder, PDFs, eigene Stimme. YouTube und schwer lesbare Webseiten nur mit Gemini-Schlüssel.</string>
+    <string name="ai_sub_mistral">Mistral (EU-Server): Transkript mit Sprechern, Zusammenfassung, Berichte, Fragen (ohne Websuche), Bilder. PDFs, YouTube und Stimme über Gemini (falls Schlüssel da) bzw. Handy.</string>
+    <string name="ai_key_title">Schlüssel für %1$s</string>
+    <string name="ai_key_text">Füge deinen API-Schlüssel für %1$s ein. Er wird verschlüsselt auf dem Handy gespeichert und nur an diesen Anbieter gesendet.</string>
+    <string name="ai_key_hint">API-Schlüssel</string>
+    <string name="ai_key_get">Schlüssel holen</string>
+    <string name="err_no_key_provider">Kein Schlüssel für %1$s hinterlegt (Einstellungen → KI-Anbieter).</string>
+    <string name="err_provider_audio">%1$s kann keinen Ton transkribieren. Bitte einen Gemini-Schlüssel hinterlegen oder ein Offline-Modell laden.</string>
+    <string name="err_pdf_provider">%1$s kann keine PDFs lesen. Bitte einen Gemini-Schlüssel hinterlegen oder einen anderen Anbieter wählen.</string>
+    <string name="err_youtube_gemini">YouTube-Videos kann nur Gemini ansehen. Bitte in den Einstellungen einen Gemini-Schlüssel hinterlegen.</string>
+    <string name="ask_expert_label_plain">Einschätzung aus allgemeinem Fachwissen (ohne Websuche) – bitte prüfen</string>
 </resources>

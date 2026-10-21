@@ -23,6 +23,17 @@ public final class SettingsActivity extends Activity {
 
         updateKey();
         findViewById(R.id.row_key).setOnClickListener(v -> KeyDialog.show(this, this::updateKey));
+        updateProvider();
+        findViewById(R.id.row_provider).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.ai_provider)
+                .setSingleChoiceItems(de.mca.pulsascribe.core.Ai.LABELS, de.mca.pulsascribe.core.Ai.index(Settings.provider(this)), (d, w) -> {
+                    d.dismiss();
+                    String p = de.mca.pulsascribe.core.Ai.IDS[w];
+                    Settings.setProvider(this, p);
+                    updateProvider();
+                    if (!AiKeys.has(this, p)) KeyDialog.showFor(this, p, this::updateProvider);
+                })
+                .setNegativeButton(R.string.cancel, null).show());
+        findViewById(R.id.row_provider_key).setOnClickListener(v -> KeyDialog.showFor(this, Settings.provider(this), this::updateProvider));
         findViewById(R.id.row_key_get).setOnClickListener(v -> {
             Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/app/apikey"))
                     .addCategory(Intent.CATEGORY_BROWSABLE);
@@ -168,7 +179,7 @@ public final class SettingsActivity extends Activity {
             Ui.dialog(this).setTitle(R.string.voice_engine)
                     .setSingleChoiceItems(labels, Settings.naturalVoice(this) ? 0 : 1, (d, w) -> {
                         d.dismiss();
-                        if (w == 0 && !GeminiKey.has(this)) { KeyDialog.show(this, this::updateVoice); }
+                        if (w == 0 && !Reader.naturalAvailable(this)) { KeyDialog.show(this, this::updateVoice); }
                         Settings.setNaturalVoice(this, w == 0);
                         updateVoice();
                         playSample();
@@ -582,16 +593,29 @@ public final class SettingsActivity extends Activity {
     }
 
     private void updateVoice() {
-        boolean nat = Settings.naturalVoice(this) && GeminiKey.has(this);
+        boolean nat = Settings.naturalVoice(this) && Reader.naturalAvailable(this);
         ((TextView) findViewById(R.id.voice_engine_value)).setText(nat ? R.string.voice_natural_short : R.string.voice_device_short);
         ((TextView) findViewById(R.id.voice_engine_sub)).setText(nat ? R.string.voice_natural_sub : R.string.voice_device_sub);
         String dv = Settings.deviceVoice(this);
-        ((TextView) findViewById(R.id.voice_value)).setText(nat
-                ? de.mca.pulsascribe.core.Speech.VOICE_LABELS[de.mca.pulsascribe.core.Speech.voiceIndex(Settings.voice(this))]
-                : dv.isEmpty() ? getString(R.string.voice_auto) : dv);
+        String natLabel = Reader.usesOpenAiVoice(this)
+                ? de.mca.pulsascribe.core.Ai.OPENAI_VOICE_LABELS[java.util.Arrays.asList(de.mca.pulsascribe.core.Ai.OPENAI_VOICES).indexOf(Settings.openAiVoice(this))]
+                : de.mca.pulsascribe.core.Speech.VOICE_LABELS[de.mca.pulsascribe.core.Speech.voiceIndex(Settings.voice(this))];
+        ((TextView) findViewById(R.id.voice_value)).setText(nat ? natLabel : dv.isEmpty() ? getString(R.string.voice_auto) : dv);
     }
 
     private void pickVoice() {
+        if (Settings.naturalVoice(this) && Reader.usesOpenAiVoice(this)) {
+            String[] ids = de.mca.pulsascribe.core.Ai.OPENAI_VOICES;
+            Ui.dialog(this).setTitle(R.string.voice_pick)
+                    .setSingleChoiceItems(de.mca.pulsascribe.core.Ai.OPENAI_VOICE_LABELS,
+                            java.util.Arrays.asList(ids).indexOf(Settings.openAiVoice(this)), (d, w) -> {
+                        Settings.setOpenAiVoice(this, ids[w]);
+                        updateVoice();
+                        playSample();
+                    })
+                    .setPositiveButton(R.string.ok, null).show();
+            return;
+        }
         if (Settings.naturalVoice(this) && GeminiKey.has(this)) {
             Ui.dialog(this).setTitle(R.string.voice_pick)
                     .setSingleChoiceItems(de.mca.pulsascribe.core.Speech.VOICE_LABELS,
@@ -655,6 +679,25 @@ public final class SettingsActivity extends Activity {
 
     private void updateTodoist() {
         ((TextView) findViewById(R.id.td_status)).setText(TodoistToken.has(this) ? R.string.td_status_on : R.string.td_status_off);
+    }
+
+    private void updateProvider() {
+        String p = Settings.provider(this);
+        boolean gemini = de.mca.pulsascribe.core.Ai.GEMINI.equals(p);
+        ((TextView) findViewById(R.id.provider_value)).setText(de.mca.pulsascribe.core.Ai.label(p));
+        int sub;
+        switch (p) {
+            case de.mca.pulsascribe.core.Ai.CLAUDE: sub = R.string.ai_sub_claude; break;
+            case de.mca.pulsascribe.core.Ai.OPENAI: sub = R.string.ai_sub_openai; break;
+            case de.mca.pulsascribe.core.Ai.MISTRAL: sub = R.string.ai_sub_mistral; break;
+            default: sub = R.string.ai_sub_gemini;
+        }
+        ((TextView) findViewById(R.id.provider_sub)).setText(sub);
+        findViewById(R.id.row_provider_key).setVisibility(gemini ? android.view.View.GONE : android.view.View.VISIBLE);
+        findViewById(R.id.provider_key_div).setVisibility(gemini ? android.view.View.GONE : android.view.View.VISIBLE);
+        ((TextView) findViewById(R.id.provider_key_title)).setText(getString(R.string.ai_key_title, de.mca.pulsascribe.core.Ai.label(p)));
+        ((TextView) findViewById(R.id.provider_key_status)).setText(AiKeys.has(this, p) ? R.string.set_key_set : R.string.set_key_missing);
+        updateKey();
     }
 
     private void updateKey() {
