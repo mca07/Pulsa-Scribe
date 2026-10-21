@@ -288,13 +288,81 @@ public final class SettingsActivity extends Activity {
     private static final int REQ_BACKUP = 21, REQ_RESTORE = 22;
     private char[] pendingPw;
     private boolean pendingMedia;
+    private String pendingHint = "";
     private android.app.AlertDialog progressDialog;
 
     private android.widget.EditText pwField(int hint) {
         android.widget.EditText e = Ui.input(this, "", 128, false);
         e.setHint(hint);
-        e.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        e.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         return e;
+    }
+
+    /** Neues Passwort: zweimal eingeben (mit Anzeige, ob beide gleich sind) und optionaler Passwort-Hinweis. */
+    private final class PwForm {
+        final android.widget.EditText p1 = pwField(R.string.backup_pw), p2 = pwField(R.string.backup_pw2);
+        final android.widget.EditText hint = Ui.input(SettingsActivity.this, BackupPlace.hint(SettingsActivity.this),
+                de.mca.pulsascribe.core.Backup.MAX_HINT, false);
+        final TextView match = Ui.body(SettingsActivity.this, "");
+
+        PwForm(android.widget.LinearLayout col) {
+            Ui.add(col, Ui.passwordRow(SettingsActivity.this, p1));
+            android.view.View gap = new android.view.View(SettingsActivity.this);
+            gap.setMinimumHeight(Ui.dp(SettingsActivity.this, 8));
+            Ui.add(col, gap);
+            Ui.add(col, Ui.passwordRow(SettingsActivity.this, p2));
+            match.setTextSize(13);
+            Ui.add(col, match);
+            android.text.TextWatcher w = new android.text.TextWatcher() {
+                public void beforeTextChanged(CharSequence a, int b, int c, int d) { }
+                public void onTextChanged(CharSequence a, int b, int c, int d) { }
+                public void afterTextChanged(android.text.Editable e) { updateMatch(); }
+            };
+            p1.addTextChangedListener(w);
+            p2.addTextChangedListener(w);
+            updateMatch();
+            hint.setHint(R.string.bk_hint_field);
+            hint.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                    | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+            android.view.View gap2 = new android.view.View(SettingsActivity.this);
+            gap2.setMinimumHeight(Ui.dp(SettingsActivity.this, 8));
+            Ui.add(col, gap2);
+            Ui.add(col, hint);
+        }
+
+        private void updateMatch() {
+            String a = p1.getText().toString(), b = p2.getText().toString();
+            if (b.isEmpty()) {
+                match.setText("");
+                match.setVisibility(android.view.View.GONE);
+                return;
+            }
+            boolean ok = a.equals(b);
+            match.setVisibility(android.view.View.VISIBLE);
+            match.setText(ok ? R.string.bk_pw_match : R.string.backup_pw_mismatch);
+            match.setTextColor(Design.color(SettingsActivity.this, ok ? R.attr.pl_accent : R.attr.pl_muted));
+        }
+
+        /** Prüft alles; liefert das Passwort oder null (Fehler am Feld angezeigt). Leert die Felder bei Erfolg. */
+        char[] take() {
+            String a = p1.getText().toString(), b = p2.getText().toString();
+            if (a.length() < de.mca.pulsascribe.core.Backup.MIN_PASSWORD) { p1.setError(getString(R.string.backup_pw_short)); return null; }
+            if (!a.equals(b)) { p2.setError(getString(R.string.backup_pw_mismatch)); return null; }
+            char[] pw = a.toCharArray();
+            if (de.mca.pulsascribe.core.Backup.hintRevealsPassword(de.mca.pulsascribe.core.Backup.cleanHint(hint.getText().toString()), pw)) {
+                hint.setError(getString(R.string.bk_hint_reveals));
+                java.util.Arrays.fill(pw, '\0');
+                return null;
+            }
+            p1.setText("");
+            p2.setText("");
+            return pw;
+        }
+
+        String hintText() {
+            return de.mca.pulsascribe.core.Backup.cleanHint(hint.getText().toString());
+        }
     }
 
     private void backupDialog() {
@@ -303,29 +371,24 @@ public final class SettingsActivity extends Activity {
             return;
         }
         android.widget.LinearLayout col = Ui.column(this);
-        android.widget.EditText p1 = pwField(R.string.backup_pw), p2 = pwField(R.string.backup_pw2);
-        Ui.add(col, p1);
-        android.view.View gap = new android.view.View(this);
-        gap.setMinimumHeight(Ui.dp(this, 8));
-        Ui.add(col, gap);
-        Ui.add(col, p2);
+        PwForm f = new PwForm(col);
         Switch media = Ui.switchRow(this, R.string.backup_media, BackupPlace.media(this));
         Ui.add(col, media);
         TextView warn = Ui.body(this, getString(R.string.backup_warn));
         warn.setTextSize(13);
         warn.setTextColor(Design.color(this, R.attr.pl_muted));
         Ui.add(col, warn);
-        android.app.AlertDialog d = Ui.dialog(this).setTitle(R.string.bk_once).setView(col)
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.addView(col);
+        android.app.AlertDialog d = Ui.dialog(this).setTitle(R.string.bk_once).setView(sc)
                 .setPositiveButton(R.string.save, null).setNegativeButton(R.string.cancel, null).create();
         if (d.getWindow() != null) d.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
         d.setOnShowListener(x -> d.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String a = p1.getText().toString(), b = p2.getText().toString();
-            if (a.length() < de.mca.pulsascribe.core.Backup.MIN_PASSWORD) { p1.setError(getString(R.string.backup_pw_short)); return; }
-            if (!a.equals(b)) { p2.setError(getString(R.string.backup_pw_mismatch)); return; }
-            pendingPw = a.toCharArray();
+            char[] pw = f.take();
+            if (pw == null) return;
+            pendingPw = pw;
+            pendingHint = f.hintText();
             pendingMedia = media.isChecked();
-            p1.setText("");
-            p2.setText("");
             d.dismiss();
             String date = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.ROOT).format(new java.util.Date());
             Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
@@ -361,8 +424,9 @@ public final class SettingsActivity extends Activity {
             char[] pw = pendingPw;
             pendingPw = null;
             boolean media = pendingMedia;
+            String hint = pendingHint;
             runTask(R.string.backup_running, () -> {
-                BackupManager.create(this, uri, pw, media, (dn, tot) -> { });
+                BackupManager.create(this, uri, pw, hint, media, (dn, tot) -> { });
                 BackupPlace.markBackup(this);
                 return getString(R.string.backup_done);
             }, pw);
@@ -441,9 +505,10 @@ public final class SettingsActivity extends Activity {
         });
         findViewById(R.id.row_backup_pw).setOnClickListener(v -> {
             if (!BackupPlace.hasPassword(this)) { passwordDialog(true, null); return; }
-            String[] items = {getString(R.string.bk_pw_change), getString(R.string.bk_pw_remove)};
+            String[] items = {getString(R.string.bk_pw_change), getString(R.string.bk_hint_change), getString(R.string.bk_pw_remove)};
             Ui.dialog(this).setTitle(R.string.bk_pw).setItems(items, (d, w) -> {
                 if (w == 0) passwordDialog(true, null);
+                else if (w == 1) hintDialog();
                 else {
                     BackupPlace.removePassword(this);
                     Toast.makeText(this, R.string.bk_pw_removed, Toast.LENGTH_LONG).show();
@@ -502,7 +567,9 @@ public final class SettingsActivity extends Activity {
         String label = BackupPlace.label(this);
         ((TextView) findViewById(R.id.bk_place_sub)).setText(label != null ? label
                 : getString(BackupPlace.lost(this) ? R.string.bk_place_lost : R.string.bk_place_none));
-        ((TextView) findViewById(R.id.bk_pw_sub)).setText(BackupPlace.hasPassword(this) ? R.string.bk_pw_on : R.string.bk_pw_off);
+        String hint = BackupPlace.hint(this);
+        ((TextView) findViewById(R.id.bk_pw_sub)).setText(getString(BackupPlace.hasPassword(this) ? R.string.bk_pw_on : R.string.bk_pw_off)
+                + (hint.isEmpty() ? "" : "\n" + getString(R.string.bk_hint_show, hint)));
         Switch auto = findViewById(R.id.sw_backup_auto);
         boolean on = BackupPlace.auto(this);
         if (auto.isChecked() != on) auto.setChecked(on);
@@ -559,12 +626,7 @@ public final class SettingsActivity extends Activity {
     /** Neues Passwort zweimal eingeben. onlyRemember: nur merken; sonst danach verwenden (Merken wählbar). */
     private void passwordDialog(boolean onlyRemember, PwUse then) {
         android.widget.LinearLayout col = Ui.column(this);
-        android.widget.EditText p1 = pwField(R.string.backup_pw), p2 = pwField(R.string.backup_pw2);
-        Ui.add(col, p1);
-        android.view.View gap = new android.view.View(this);
-        gap.setMinimumHeight(Ui.dp(this, 8));
-        Ui.add(col, gap);
-        Ui.add(col, p2);
+        PwForm f = new PwForm(col);
         Switch remember = null;
         if (!onlyRemember) {
             remember = Ui.switchRow(this, R.string.bk_pw_remember, true);
@@ -575,16 +637,15 @@ public final class SettingsActivity extends Activity {
         warn.setTextColor(Design.color(this, R.attr.pl_muted));
         Ui.add(col, warn);
         Switch rem = remember;
-        android.app.AlertDialog d = Ui.dialog(this).setTitle(onlyRemember ? R.string.bk_pw : R.string.bk_now).setView(col)
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.addView(col);
+        android.app.AlertDialog d = Ui.dialog(this).setTitle(onlyRemember ? R.string.bk_pw : R.string.bk_now).setView(sc)
                 .setPositiveButton(onlyRemember ? R.string.save : R.string.bk_now, null).setNegativeButton(R.string.cancel, null).create();
         if (d.getWindow() != null) d.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
         d.setOnShowListener(x -> d.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String a = p1.getText().toString(), b = p2.getText().toString();
-            if (a.length() < de.mca.pulsascribe.core.Backup.MIN_PASSWORD) { p1.setError(getString(R.string.backup_pw_short)); return; }
-            if (!a.equals(b)) { p2.setError(getString(R.string.backup_pw_mismatch)); return; }
-            char[] pw = a.toCharArray();
-            p1.setText("");
-            p2.setText("");
+            char[] pw = f.take();
+            if (pw == null) return;
+            BackupPlace.setHint(this, f.hintText());
             d.dismiss();
             if (onlyRemember || (rem != null && rem.isChecked())) {
                 if (BackupPlace.setPassword(this, pw)) Toast.makeText(this, R.string.bk_pw_saved, Toast.LENGTH_SHORT).show();
@@ -593,6 +654,27 @@ public final class SettingsActivity extends Activity {
             updateBackup();
             if (then != null) then.use(pw);
             else java.util.Arrays.fill(pw, '\0');
+        }));
+        d.show();
+    }
+
+    /** Nur den Hinweis ändern (gilt für künftige Sicherungen); darf das gemerkte Passwort nicht verraten. */
+    private void hintDialog() {
+        android.widget.LinearLayout col = Ui.column(this);
+        android.widget.EditText e = Ui.input(this, BackupPlace.hint(this), de.mca.pulsascribe.core.Backup.MAX_HINT, false);
+        e.setHint(R.string.bk_hint_field);
+        Ui.add(col, e);
+        android.app.AlertDialog d = Ui.dialog(this).setTitle(R.string.bk_hint_change).setView(col)
+                .setPositiveButton(R.string.save, null).setNegativeButton(R.string.cancel, null).create();
+        d.setOnShowListener(x -> d.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String h = de.mca.pulsascribe.core.Backup.cleanHint(e.getText().toString());
+            char[] pw = BackupPlace.password(this);
+            boolean bad = pw != null && de.mca.pulsascribe.core.Backup.hintRevealsPassword(h, pw);
+            if (pw != null) java.util.Arrays.fill(pw, '\0');
+            if (bad) { e.setError(getString(R.string.bk_hint_reveals)); return; }
+            BackupPlace.setHint(this, h);
+            d.dismiss();
+            updateBackup();
         }));
         d.show();
     }
@@ -649,9 +731,21 @@ public final class SettingsActivity extends Activity {
     }
 
     private void askRestorePw(Uri uri) {
+        new Thread(() -> {
+            String hint = BackupManager.hint(this, uri);
+            runOnUiThread(() -> { if (!isFinishing()) askRestorePw(uri, hint); });
+        }, "backup-hint").start();
+    }
+
+    private void askRestorePw(Uri uri, String hint) {
         android.widget.LinearLayout col = Ui.column(this);
         android.widget.EditText p1 = pwField(R.string.backup_pw);
-        Ui.add(col, p1);
+        Ui.add(col, Ui.passwordRow(this, p1));
+        TextView h = Ui.body(this, hint.isEmpty() ? getString(R.string.bk_hint_none) : getString(R.string.bk_hint_show, hint));
+        h.setTextSize(14);
+        h.setTextColor(Design.color(this, hint.isEmpty() ? R.attr.pl_muted : R.attr.pl_text));
+        h.setPadding(0, Ui.dp(this, 8), 0, 0);
+        Ui.add(col, h);
         android.app.AlertDialog d = Ui.dialog(this).setTitle(R.string.backup_restore).setView(col)
                 .setPositiveButton(R.string.ok, (dd, w) -> {
                     char[] pw = p1.getText().toString().toCharArray();
@@ -659,7 +753,10 @@ public final class SettingsActivity extends Activity {
                     runTask(R.string.restore_running, () -> {
                         BackupManager.Result r = BackupManager.restore(this, uri, pw, (dn, tot) -> { });
                         return getString(R.string.restore_done, r.added, r.skipped, r.rejected);
-                    }, pw);
+                    }, pw, () -> {
+                        Toast.makeText(this, R.string.restore_bad_pw, Toast.LENGTH_LONG).show();
+                        askRestorePw(uri, hint);
+                    });
                 })
                 .setNegativeButton(R.string.cancel, null).create();
         if (d.getWindow() != null) d.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);

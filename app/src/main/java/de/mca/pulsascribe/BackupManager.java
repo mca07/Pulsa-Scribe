@@ -41,12 +41,12 @@ final class BackupManager {
         int added, skipped, rejected;
     }
 
-    static void create(Context c, Uri target, char[] password, boolean withMedia, Progress p) throws IOException {
+    static void create(Context c, Uri target, char[] password, String hint, boolean withMedia, Progress p) throws IOException {
         List<Transcript> all = Store.all(c);
         int total = all.size() + 1, done = 0;
         try (OutputStream raw = c.getContentResolver().openOutputStream(target, "wt")) {
             if (raw == null) throw new IOException("Ziel");
-            try (ZipOutputStream z = new ZipOutputStream(Backup.encrypt(new BufferedOutputStream(raw, 64 * 1024), password))) {
+            try (ZipOutputStream z = new ZipOutputStream(Backup.encrypt(new BufferedOutputStream(raw, 64 * 1024), password, hint))) {
                 z.setLevel(5);
                 put(z, "folders.json", Store.folders(c).toJson().getBytes(StandardCharsets.UTF_8));
                 p.on(++done, total);
@@ -84,6 +84,15 @@ final class BackupManager {
      * Erst alles in einen Zwischenordner entschlüsseln und prüfen; erst wenn die ganze Datei
      * echt und vollständig ist, werden fehlende Einträge übernommen.
      */
+    /** Passwort-Hinweis aus der Datei ("" wenn keiner oder nicht lesbar). */
+    static String hint(Context c, Uri source) {
+        try (InputStream raw = c.getContentResolver().openInputStream(source)) {
+            return raw == null ? "" : Backup.readHint(new BufferedInputStream(raw, 1024));
+        } catch (IOException | RuntimeException e) {
+            return "";
+        }
+    }
+
     static Result restore(Context c, Uri source, char[] password, Progress p) throws IOException {
         File tmp = new File(c.getCacheDir(), "restore");
         deleteTree(tmp);

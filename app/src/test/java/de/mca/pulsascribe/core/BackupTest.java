@@ -158,4 +158,45 @@ public class BackupTest {
         assertEquals(0, BackupFiles.toDelete(names, 14, "2026-10-17").size());
         try { BackupFiles.autoName("../x"); throw new AssertionError("day"); } catch (IllegalArgumentException expected) { }
     }
+
+    private static byte[] enc(String hint, byte[] data) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (OutputStream os = Backup.encrypt(bos, PW, Backup.MIN_ITERATIONS, hint)) { os.write(data); }
+        return bos.toByteArray();
+    }
+
+    private static byte[] decH(byte[] file, char[] pw) throws IOException {
+        try (InputStream in = Backup.decrypt(new ByteArrayInputStream(file), pw)) { return Backup.readLimited(in, 1 << 20); }
+    }
+
+    @Test
+    public void passwordHint() throws IOException {
+        byte[] data = "Hallo Sicherung".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] f = enc("Hund + Geburtsjahr\nzweite Zeile\u202E", data);
+        assertEquals(2, f[4]);
+        assertEquals("Hund + Geburtsjahr zweite Zeile", Backup.readHint(new ByteArrayInputStream(f)));
+        assertTrue(Arrays.equals(data, decH(f, PW)));
+        // Hinweis austauschen → Datei gilt als verändert
+        byte[] t = f.clone();
+        t[4 + 1 + 4 + 16 + 8 + 2] ^= 1;
+        try { decH(t, PW); throw new AssertionError("Hinweis manipuliert"); } catch (Backup.BadPasswordException expected) { }
+        // altes Format (Version 1) bleibt lesbar, Hinweis leer
+        byte[] v1 = enc(null, data);
+        assertEquals(1, v1[4]);
+        assertEquals("", Backup.readHint(new ByteArrayInputStream(v1)));
+        assertTrue(Arrays.equals(data, decH(v1, PW)));
+        // leerer Hinweis
+        assertEquals("", Backup.readHint(new ByteArrayInputStream(enc("", data))));
+        // Hinweis darf das Passwort nicht verraten
+        assertTrue(Backup.hintRevealsPassword("es ist " + new String(PW).toUpperCase(java.util.Locale.ROOT), PW));
+        assertTrue(Backup.hintRevealsPassword(new StringBuilder(new String(PW)).reverse().toString(), PW));
+        assertFalse(Backup.hintRevealsPassword("Name vom Hund", PW));
+        try { enc("pw: " + new String(PW), data); throw new AssertionError("Passwort im Hinweis"); } catch (IOException expected) { }
+        // zu langer Hinweis wird gekürzt
+        StringBuilder lng = new StringBuilder();
+        for (int i = 0; i < 300; i++) lng.append('x');
+        assertEquals(Backup.MAX_HINT, Backup.readHint(new ByteArrayInputStream(enc(lng.toString(), data))).length());
+        // kaputter Kopf
+        try { Backup.readHint(new ByteArrayInputStream(new byte[]{'P', 'S'})); throw new AssertionError(); } catch (Backup.FormatException expected) { }
+    }
 }

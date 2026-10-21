@@ -130,6 +130,11 @@ final class BackupPlace {
 
     // ------------------------------------------------------------------ Einstellungen
 
+    /** Passwort-Hinweis (kein Geheimnis, steht auch lesbar in jeder Sicherungsdatei). */
+    static String hint(Context c) { return Backup.cleanHint(p(c).getString("hint", "")); }
+
+    static void setHint(Context c, String h) { p(c).edit().putString("hint", Backup.cleanHint(h)).apply(); }
+
     static boolean media(Context c) { return p(c).getBoolean("media", false); }
 
     static void setMedia(Context c, boolean on) { p(c).edit().putBoolean("media", on).apply(); }
@@ -347,7 +352,7 @@ final class BackupPlace {
                 if (newDoc == null) throw new java.io.IOException("Datei");
                 created = true;
             }
-            BackupManager.create(c, newDoc, pw, media(c), (d, n) -> { });
+            BackupManager.create(c, newDoc, pw, hint(c), media(c), (d, n) -> { });
             SharedPreferences.Editor e = p(c).edit().putLong("last", System.currentTimeMillis()).remove("err_day");
             if (auto) e.putString("auto_day", day);
             e.apply();

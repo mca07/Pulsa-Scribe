@@ -28,7 +28,7 @@ android {
                 arguments "-DANDROID_STL=c++_static", "-DCMAKE_BUILD_TYPE=Release"
             }
         }
-        versionName "1.27." + runNumber
+        versionName "1.28." + runNumber
     }
 
     signingConfigs {

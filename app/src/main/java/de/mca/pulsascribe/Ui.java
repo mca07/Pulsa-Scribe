@@ -99,6 +99,31 @@ final class Ui {
         return t;
     }
 
+    /** Passwortfeld mit Augen-Knopf zum Anzeigen/Verbergen (sichtbar ohne Tastatur-Lernen). */
+    static LinearLayout passwordRow(Context c, EditText e) {
+        LinearLayout row = new LinearLayout(c);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(e, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        android.widget.ImageButton eye = new android.widget.ImageButton(c);
+        eye.setBackgroundResource(android.R.drawable.list_selector_background);
+        eye.setColorFilter(Design.color(c, R.attr.pl_muted));
+        int s = dp(c, 48);
+        row.addView(eye, new LinearLayout.LayoutParams(s, s));
+        boolean[] shown = {false};
+        Runnable apply = () -> {
+            int sel = e.getSelectionEnd();
+            e.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+                    | (shown[0] ? InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD : InputType.TYPE_TEXT_VARIATION_PASSWORD));
+            if (sel >= 0) e.setSelection(Math.min(sel, e.length()));
+            eye.setImageResource(shown[0] ? R.drawable.ic_visibility_off : R.drawable.ic_visibility);
+            eye.setContentDescription(c.getString(shown[0] ? R.string.pw_hide : R.string.pw_show));
+        };
+        apply.run();
+        eye.setOnClickListener(v -> { shown[0] = !shown[0]; apply.run(); });
+        return row;
+    }
+
     static void add(LinearLayout parent, View v) {
         parent.addView(v, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     }

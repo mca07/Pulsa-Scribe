@@ -319,6 +319,14 @@
     <string name="restore_bad_pw">Falsches Passwort oder die Datei wurde verändert.</string>
     <string name="restore_bad_file">Die Datei ist keine gültige oder vollständige Pulsa-Scribe-Sicherung.</string>
     <string name="backup_busy">Bitte zuerst laufende Transkriptionen und Aufnahmen beenden.</string>
+    <string name="bk_pw_match">✓ Beide Passwörter stimmen überein.</string>
+    <string name="bk_hint_field">Passwort-Hinweis (optional), z. B. „Name vom ersten Hund + Jahr“</string>
+    <string name="bk_hint_reveals">Der Hinweis darf das Passwort nicht enthalten – er steht lesbar in der Sicherungsdatei.</string>
+    <string name="bk_hint_show">Hinweis: %1$s</string>
+    <string name="bk_hint_none">Für diese Sicherung wurde kein Hinweis hinterlegt.</string>
+    <string name="bk_hint_change">Passwort-Hinweis ändern</string>
+    <string name="pw_show">Passwort anzeigen</string>
+    <string name="pw_hide">Passwort verbergen</string>
     <string name="set_sec_backup">Datensicherung</string>
     <string name="bk_now">Jetzt sichern</string>
     <string name="bk_never">Noch keine Sicherung.</string>

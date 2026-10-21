@@ -28,14 +28,17 @@ import javax.crypto.spec.SecretKeySpec;
  * Blocknummer und „letzter Block“ stecken in den Zusatzdaten (AAD), so fallen Vertauschen, Weglassen
  * und Abschneiden auf.
  *
- * Aufbau: "PSCB" | Version (1 Byte) | Iterationen (int) | Salt (16) | Nonce-Basis (8) | Blöcke …
+ * Aufbau: "PSCB" | Version (1 Byte) | Iterationen (int) | Salt (16) | Nonce-Basis (8) | [ab Version 2: Länge (short) |
+ * Passwort-Hinweis UTF-8, unverschlüsselt, aber über die AAD jedes Blocks gegen Austausch geschützt] | Blöcke …
  * Block: Länge des Chiffrats (int) | Chiffrat mit Tag.
  */
 public final class Backup {
     private Backup() {}
 
     public static final byte[] MAGIC = {'P', 'S', 'C', 'B'};
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
+    /** Passwort-Hinweis: lesbar ohne Passwort, deshalb kurz und einzeilig. */
+    public static final int MAX_HINT = 100;
     public static final int ITERATIONS = 310_000;
     public static final int MIN_ITERATIONS = 100_000, MAX_ITERATIONS = 2_000_000;
     public static final int CHUNK = 1024 * 1024;
@@ -64,19 +67,49 @@ public final class Backup {
         return ByteBuffer.allocate(12).put(base).putInt((int) index).array();
     }
 
-    private static byte[] aad(long index, boolean last) {
-        return ByteBuffer.allocate(13).put(MAGIC).putLong(index).put((byte) (last ? 1 : 0)).array();
+    private static byte[] aad(long index, boolean last, byte[] hint) {
+        int extra = hint == null ? 0 : 2 + hint.length; // Version 1: ohne Hinweis
+        ByteBuffer b = ByteBuffer.allocate(13 + extra).put(MAGIC).putLong(index).put((byte) (last ? 1 : 0));
+        if (hint != null) b.putShort((short) hint.length).put(hint);
+        return b.array();
+    }
+
+    /** Hinweis bereinigen: eine Zeile, höchstens MAX_HINT Zeichen. */
+    public static String cleanHint(String h) {
+        String c = Text.line(h, MAX_HINT);
+        while (c.getBytes(StandardCharsets.UTF_8).length > 400) c = c.substring(0, c.length() - 1);
+        return c;
+    }
+
+    /** Verrät der Hinweis das Passwort (enthält es, auch ohne Groß-/Kleinschreibung)? */
+    public static boolean hintRevealsPassword(String hint, char[] password) {
+        if (hint == null || hint.isEmpty() || password == null || password.length == 0) return false;
+        String h = hint.toLowerCase(java.util.Locale.ROOT).replaceAll("\\s+", "");
+        String p = new String(password).toLowerCase(java.util.Locale.ROOT).replaceAll("\\s+", "");
+        return !p.isEmpty() && (h.contains(p) || new StringBuilder(h).reverse().toString().contains(p));
     }
 
     // ------------------------------------------------------------------ Schreiben
 
     /** Öffnet einen verschlüsselnden Strom; close() schreibt den letzten Block. */
     public static OutputStream encrypt(OutputStream out, char[] password) throws IOException {
-        return encrypt(out, password, ITERATIONS);
+        return encrypt(out, password, ITERATIONS, "");
+    }
+
+    public static OutputStream encrypt(OutputStream out, char[] password, String hint) throws IOException {
+        return encrypt(out, password, ITERATIONS, hint);
     }
 
     static OutputStream encrypt(OutputStream out, char[] password, int iterations) throws IOException {
+        return encrypt(out, password, iterations, "");
+    }
+
+    static OutputStream encrypt(OutputStream out, char[] password, int iterations, String hint) throws IOException {
         if (password == null || password.length < MIN_PASSWORD) throw new IOException("Passwort zu kurz");
+        // hint == null nur für Tests: altes Format Version 1 ohne Hinweis
+        String h = hint == null ? "" : cleanHint(hint);
+        if (hintRevealsPassword(h, password)) throw new IOException("Hinweis enthält das Passwort");
+        byte[] hb = hint == null ? null : h.getBytes(StandardCharsets.UTF_8);
         SecureRandom r = new SecureRandom();
         byte[] salt = new byte[16], base = new byte[8];
         r.nextBytes(salt);
@@ -89,26 +122,31 @@ public final class Backup {
         }
         DataOutputStream d = new DataOutputStream(out);
         d.write(MAGIC);
-        d.writeByte(VERSION);
+        d.writeByte(hb == null ? 1 : VERSION);
         d.writeInt(iterations);
         d.write(salt);
         d.write(base);
-        return new EncryptStream(d, key, base);
+        if (hb != null) {
+            d.writeShort(hb.length);
+            d.write(hb);
+        }
+        return new EncryptStream(d, key, base, hb);
     }
 
     private static final class EncryptStream extends OutputStream {
         private final DataOutputStream out;
         private final SecretKey key;
-        private final byte[] base;
+        private final byte[] base, hint;
         private final byte[] buf = new byte[CHUNK];
         private int len;
         private long index;
         private boolean closed;
 
-        EncryptStream(DataOutputStream out, SecretKey key, byte[] base) {
+        EncryptStream(DataOutputStream out, SecretKey key, byte[] base, byte[] hint) {
             this.out = out;
             this.key = key;
             this.base = base;
+            this.hint = hint;
         }
 
         @Override
@@ -133,7 +171,7 @@ public final class Backup {
             try {
                 Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
                 c.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(TAG_BITS, nonce(base, index)));
-                c.updateAAD(aad(index, last));
+                c.updateAAD(aad(index, last, hint));
                 byte[] ct = c.doFinal(buf, 0, len);
                 out.writeInt(ct.length);
                 out.write(ct);
@@ -159,43 +197,67 @@ public final class Backup {
     /** Öffnet einen entschlüsselnden Strom. Fehler beim ersten Block bedeutet meist: falsches Passwort. */
     public static InputStream decrypt(InputStream in, char[] password) throws IOException {
         DataInputStream d = new DataInputStream(in);
-        byte[] magic = new byte[4];
-        try {
-            d.readFully(magic);
-        } catch (EOFException e) {
-            throw new FormatException("Keine Pulsa-Scribe-Sicherung");
-        }
-        if (!Arrays.equals(magic, MAGIC)) throw new FormatException("Keine Pulsa-Scribe-Sicherung");
-        int version = d.readUnsignedByte();
-        if (version != VERSION) throw new FormatException("Unbekannte Version");
-        int iterations = d.readInt();
-        if (iterations < MIN_ITERATIONS || iterations > MAX_ITERATIONS) throw new FormatException("Ungültige Parameter");
-        byte[] salt = new byte[16], base = new byte[8];
-        d.readFully(salt);
-        d.readFully(base);
+        Header h = header(d);
         SecretKey key;
         try {
-            key = derive(password, salt, iterations);
+            key = derive(password, h.salt, h.iterations);
         } catch (GeneralSecurityException e) {
             throw new IOException("Schlüssel", e);
         }
-        return new DecryptStream(d, key, base);
+        return new DecryptStream(d, key, h.base, h.hint);
+    }
+
+    private static final class Header {
+        int iterations;
+        byte[] salt = new byte[16], base = new byte[8];
+        byte[] hint; // null bei Version 1
+    }
+
+    private static Header header(DataInputStream d) throws IOException {
+        byte[] magic = new byte[4];
+        Header h = new Header();
+        try {
+            d.readFully(magic);
+            if (!Arrays.equals(magic, MAGIC)) throw new FormatException("Keine Pulsa-Scribe-Sicherung");
+            int version = d.readUnsignedByte();
+            if (version != 1 && version != 2) throw new FormatException("Unbekannte Version");
+            h.iterations = d.readInt();
+            if (h.iterations < MIN_ITERATIONS || h.iterations > MAX_ITERATIONS) throw new FormatException("Ungültige Parameter");
+            d.readFully(h.salt);
+            d.readFully(h.base);
+            if (version >= 2) {
+                int n = d.readUnsignedShort();
+                if (n > 400) throw new FormatException("Ungültiger Hinweis");
+                h.hint = new byte[n];
+                d.readFully(h.hint);
+            }
+        } catch (EOFException e) {
+            throw new FormatException("Keine Pulsa-Scribe-Sicherung");
+        }
+        return h;
+    }
+
+    /** Passwort-Hinweis aus dem Dateikopf, ohne Passwort lesbar ("" wenn keiner). Nur zur Anzeige. */
+    public static String readHint(InputStream in) throws IOException {
+        Header h = header(new DataInputStream(in));
+        return h.hint == null ? "" : cleanHint(new String(h.hint, StandardCharsets.UTF_8));
     }
 
     private static final class DecryptStream extends FilterInputStream {
         private final DataInputStream in;
         private final SecretKey key;
-        private final byte[] base;
+        private final byte[] base, hint;
         private byte[] plain = new byte[0];
         private int pos;
         private long index;
         private boolean done;
 
-        DecryptStream(DataInputStream in, SecretKey key, byte[] base) {
+        DecryptStream(DataInputStream in, SecretKey key, byte[] base, byte[] hint) {
             super(in);
             this.in = in;
             this.key = key;
             this.base = base;
+            this.hint = hint;
         }
 
         private boolean next() throws IOException {
@@ -238,7 +300,7 @@ public final class Backup {
             try {
                 Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
                 c.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(TAG_BITS, nonce(base, index)));
-                c.updateAAD(aad(index, last));
+                c.updateAAD(aad(index, last, hint));
                 return c.doFinal(ct);
             } catch (GeneralSecurityException e) {
                 return null;
