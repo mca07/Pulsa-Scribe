@@ -257,3 +257,13 @@ Mit Todoist:
 - [ ] Schnellkachel oder Widget „Aufnehmen“ → Ziel ist der zuletzt geöffnete Ordner
 - [ ] App-Browser „Diese Seite lesen“ → Ziel ist der zuletzt geöffnete Ordner
 - [ ] Einstellungen → Telefonate → „Ordner für Telefonate“ z. B. „Nerps › Support“ → neue Anrufaufnahmen landen dort
+
+## 28. Aufnahmen vorhören (neu in 1.22)
+- [ ] Einstellungen → Telefonate → „Anrufaufnahmen übernehmen“ → Ordner Documents → CubeCallRecorder → All freigeben
+- [ ] Startbildschirm „Datei“ → eigene Liste „Aufnahmen“, neueste oben, Titel z. B. „21.10.2026, 11:53 · 4917… · Telefon“ bzw. „· WhatsApp“
+- [ ] ▶ antippen → spielt ab, unten Leiste mit Pause und Schieberegler; anderes ▶ → wechselt
+- [ ] Suche nach Nummer/Datum filtert die Liste
+- [ ] Eine Aufnahme antippen → „1 Aufnahme transkribieren“ → bekannter Startdialog
+- [ ] Mehrere antippen → „3 Aufnahmen übernehmen“ → Dialog Zusammenführen/Einzeln
+- [ ] ⋮ → „Andere Datei (Android-Auswahl) …“ → normale Dateiauswahl wie bisher (z. B. für Videos, PDFs)
+- [ ] Ohne freigegebenen Ordner: „Datei“ öffnet direkt die Android-Auswahl (wie bisher)

@@ -47,7 +47,7 @@ import de.mca.pulsascribe.core.WebPage;
 
 /** Ordner und Transkripte, Datei wählen, Suche über alles, Teilen-Ziel. */
 public final class MainActivity extends Activity {
-    private static final int REQ_PICK = 1, REQ_NOTIF = 2;
+    private static final int REQ_PICK = 1, REQ_NOTIF = 2, REQ_RECS = 3;
     private static final String STATE_PENDING = "pending_uri", STATE_FOLDER = "folder";
     static final String EXTRA_FOLDER = "folder";
 
@@ -107,7 +107,11 @@ public final class MainActivity extends Activity {
         list.setAdapter(adapter);
         setupDropTargets(list);
         findViewById(R.id.main_settings).setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
-        findViewById(R.id.main_pick).setOnClickListener(v -> pick());
+        findViewById(R.id.main_pick).setOnClickListener(v -> {
+            // Mit freigegebenem Aufnahme-Ordner: eigene Auswahl mit Vorhören, sonst Android-Dateiauswahl
+            if (CallImport.enabled(this)) startActivityForResult(new Intent(this, RecordingsActivity.class), REQ_RECS);
+            else pick();
+        });
         findViewById(R.id.main_link).setOnClickListener(v -> askLink());
         findViewById(R.id.main_record).setOnClickListener(v ->
                 startActivity(new Intent(this, RecordActivity.class).putExtra(EXTRA_FOLDER, folder)));
@@ -384,7 +388,12 @@ public final class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
-        if (req != REQ_PICK || res != RESULT_OK || data == null) return;
+        boolean fromRecs = req == REQ_RECS;
+        if (fromRecs && res == RESULT_OK && data != null && data.getBooleanExtra(RecordingsActivity.RESULT_OTHER, false)) {
+            pick();
+            return;
+        }
+        if ((req != REQ_PICK && !fromRecs) || res != RESULT_OK || data == null) return;
         if (data.getClipData() != null && data.getClipData().getItemCount() > 1) {
             List<Uri> uris = new ArrayList<>();
             for (int i = 0; i < data.getClipData().getItemCount() && uris.size() < Transcript.MAX_PARTS; i++) {
@@ -400,12 +409,14 @@ public final class MainActivity extends Activity {
         }
         if (data.getData() == null) return;
         Uri uri = data.getData();
-        persistable = false;
-        try {
-            getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            persistable = true;
-        } catch (RuntimeException ignored) {
-            // nicht jede Quelle erlaubt dauerhaften Zugriff; für den Lauf reicht der vorübergehende
+        persistable = fromRecs; // liegt im dauerhaft freigegebenen Aufnahme-Ordner
+        if (!fromRecs) {
+            try {
+                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                persistable = true;
+            } catch (RuntimeException ignored) {
+                // nicht jede Quelle erlaubt dauerhaften Zugriff; für den Lauf reicht der vorübergehende
+            }
         }
         begin(uri, null);
     }

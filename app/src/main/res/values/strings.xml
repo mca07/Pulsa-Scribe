@@ -569,7 +569,7 @@
     <string name="call_folder">Anrufaufnahmen übernehmen</string>
     <string name="call_status_off">Aus – Ordner der Anrufaufnahmen freigeben</string>
     <string name="call_status_on">An – Ordner „%1$s“</string>
-    <string name="call_folder_info">Wähle im nächsten Schritt den Ordner, in dem dein Handy Anrufaufnahmen speichert (Samsung: „Recordings“ → „Call“). Pulsa Scribe darf dann nur diesen Ordner lesen. Jede neue Aufnahme erscheint automatisch als Eintrag mit Benachrichtigung „Transkribieren“. Ältere Aufnahmen werden nicht übernommen.\n\nWichtig: Telefonate nur mit Einverständnis des Gesprächspartners aufzeichnen.</string>
+    <string name="call_folder_info">Wähle im nächsten Schritt den Ordner, in dem dein Handy Anrufaufnahmen speichert (z. B. Documents → CubeCallRecorder → All; Samsung-Telefon-App: Recordings → Call). Pulsa Scribe darf dann nur diesen Ordner lesen. Jede neue Aufnahme erscheint automatisch als Eintrag mit Benachrichtigung „Transkribieren“. Ältere Aufnahmen werden nicht übernommen.\n\nWichtig: Telefonate nur mit Einverständnis des Gesprächspartners aufzeichnen.</string>
     <string name="call_folder_active">Überwacht wird: „%1$s“.</string>
     <string name="call_choose">Ordner wählen</string>
     <string name="call_change">Anderen Ordner</string>
@@ -594,4 +594,23 @@
     <string name="multi_skipped">Nur die Audio- und Videodateien werden übernommen.</string>
     <string name="multi_parts">Aus %1$d Aufnahmen: %2$s</string>
     <string name="call_target">Ordner für Telefonate</string>
+    <!-- Aufnahmen vorhören (1.22) -->
+    <string name="recs_title">Aufnahmen</string>
+    <string name="recs_search">Suchen (Name, Nummer, Datum)</string>
+    <string name="recs_loading">Lade …</string>
+    <string name="recs_empty">Im freigegebenen Ordner liegen keine Aufnahmen.</string>
+    <string name="recs_no_folder">Noch kein Aufnahme-Ordner freigegeben.\n\nHier tippen und den Ordner deiner Aufnahme-App wählen (z. B. Documents → CubeCallRecorder → All).</string>
+    <string name="recs_other">Andere Datei (Android-Auswahl) …</string>
+    <string name="recs_change_folder">Anderen Ordner freigeben …</string>
+    <string name="recs_reload">Neu laden</string>
+    <string name="recs_cannot_play">Diese Datei lässt sich nicht abspielen.</string>
+    <string name="recs_listen">Anhören</string>
+    <string name="recs_select">Auswählen: %1$s</string>
+    <string name="recs_phone">Telefon</string>
+    <string name="recs_pick_hint">Antippen zum Auswählen, ▶ zum Anhören</string>
+    <string name="recs_max">Höchstens %1$d Aufnahmen auf einmal.</string>
+    <plurals name="recs_go">
+        <item quantity="one">1 Aufnahme transkribieren</item>
+        <item quantity="other">%1$d Aufnahmen übernehmen</item>
+    </plurals>
 </resources>

@@ -232,6 +232,12 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 - ✅ SEND_MULTIPLE nur für audio/* und video/*
 - ✅ Unit-Test `joinedRecordings`
 
+## 9r. Zielordner, Aufnahmen vorhören (ab 1.21/1.22)
+- ✅ Zuletzt geöffneter Ordner nur als ID gespeichert und über `Folders.clean` geprüft (gelöschter Ordner → oberste Ebene)
+- ✅ Vorhören nur aus dem einen freigegebenen Ordner (SAF, nur Lesen), Wiedergabe lokal mit MediaPlayer, nichts wird hochgeladen, bevor der Nutzer „transkribieren/übernehmen“ wählt
+- ✅ Ergebnis nur an die eigene App (setResult), Aktivität nicht exportiert; max. 20 Dateien je Auswahl
+- ✅ Dateinamen nur als Text angezeigt (setText), Länge begrenzt
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB

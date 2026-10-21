@@ -160,7 +160,7 @@ final class CallImport {
         List<String[]> found = new ArrayList<>(); // {docId, name, lastModified}
         try {
             String root = DocumentsContract.getTreeDocumentId(tree);
-            list(c, tree, root, found, 0);
+            list(c, tree, root, found, 0, false);
         } catch (RuntimeException e) {
             return 0;
         }
@@ -180,7 +180,7 @@ final class CallImport {
         return added;
     }
 
-    private static void list(Context c, Uri tree, String parentId, List<String[]> out, int depth) {
+    private static void list(Context c, Uri tree, String parentId, List<String[]> out, int depth, boolean any) {
         Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, parentId);
         String[] cols = {DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                 DocumentsContract.Document.COLUMN_MIME_TYPE, DocumentsContract.Document.COLUMN_LAST_MODIFIED,
@@ -192,13 +192,43 @@ final class CallImport {
                 long mod = cur.isNull(3) ? 0 : cur.getLong(3), size = cur.isNull(4) ? 0 : cur.getLong(4);
                 if (id == null || name == null) continue;
                 if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) {
-                    if (depth < 1) list(c, tree, id, out, depth + 1);
+                    if (depth < 1) list(c, tree, id, out, depth + 1, any);
                     continue;
                 }
-                if (size < 2048 || !isAudio(name, mime)) continue;
-                out.add(new String[]{id, name, Long.toString(mod)});
+                if ((!any && size < 2048) || !isAudio(name, mime)) continue;
+                out.add(new String[]{id, name, Long.toString(mod), Long.toString(size)});
             }
         } catch (RuntimeException ignored) { }
+    }
+
+    /** Eintrag für die Vorhör-Auswahl. */
+    static final class Rec {
+        Uri uri;
+        String name;
+        long modified, size;
+    }
+
+    /** Alle Audiodateien im freigegebenen Ordner (1 Unterordnerebene), neueste zuerst, max. 2000. */
+    static List<Rec> listAll(Context c) {
+        List<Rec> out = new ArrayList<>();
+        Uri tree = tree(c);
+        if (tree == null) return out;
+        List<String[]> found = new ArrayList<>();
+        try {
+            list(c, tree, DocumentsContract.getTreeDocumentId(tree), found, 0, true);
+        } catch (RuntimeException e) {
+            return out;
+        }
+        for (String[] f : found) {
+            Rec r = new Rec();
+            r.uri = DocumentsContract.buildDocumentUriUsingTree(tree, f[0]);
+            r.name = Text.line(f[1], 160);
+            r.modified = Long.parseLong(f[2]);
+            r.size = Long.parseLong(f[3]);
+            out.add(r);
+        }
+        out.sort((a, b) -> Long.compare(b.modified, a.modified));
+        return out;
     }
 
     static boolean isAudio(String name, String mime) {
