@@ -702,4 +702,34 @@ public class FeatureTest {
         assertTrue(h2 < txt.indexOf("Zweiter Anruf."));
         assertTrue(Export.meta(r).contains("2 Aufnahmen"));
     }
+
+    @Test
+    public void expertEstimatesUseWebSearch() {
+        Transcript t = new Transcript();
+        t.id = "abcdefgh12";
+        t.segments.add(new Transcript.Segment(0, "Sprecher 1", "Wir müssen die Druckformulare anpassen."));
+        String plain = Gemini.questionPrompt(t, "Wie lange dauert das?", "same");
+        assertTrue(plain.contains("using only the transcript"));
+        assertFalse(plain.contains("Google Search"));
+        String p = Gemini.questionPrompt(t, "Wie lange dauert das?", "same", true, "IT-Berater ERP", null);
+        assertTrue(p.contains("Google Search"));
+        assertTrue(p.contains("range in hours"));
+        assertTrue(p.contains("About the user"));
+        String body = Gemini.expertRequest(p);
+        assertTrue(body.contains("\"tools\":[{\"google_search\":{}}]"));
+        assertFalse(body.contains("responseSchema"));
+        String reply = "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"## Schätzung\\n* **4-6 Stunden**\"}]},"
+                + "\"groundingMetadata\":{\"groundingChunks\":[{\"web\":{\"uri\":\"https://example.com/a\",\"title\":\"Beispiel\"}},"
+                + "{\"web\":{\"uri\":\"javascript:alert(1)\",\"title\":\"böse\"}}]}}]}";
+        Gemini.Reply r = Gemini.reply(reply);
+        assertEquals(1, r.sources.size());
+        Transcript.Answer a = Gemini.parseExpert(r, "Wie lange?");
+        assertTrue(a.expert);
+        assertEquals("Schätzung\n- 4-6 Stunden", a.answer);
+        assertEquals("https://example.com/a", a.sources.get(0)[1]);
+        t.answers.add(a);
+        Transcript back = Transcript.fromJson(t.toJson());
+        assertTrue(back.answers.get(0).expert);
+        assertEquals("Beispiel", back.answers.get(0).sources.get(0)[0]);
+    }
 }

@@ -126,6 +126,21 @@ public final class SettingsActivity extends Activity {
                     .setNegativeButton(R.string.cancel, null).show();
         });
 
+        TextView about = findViewById(R.id.about_value);
+        about.setText(Settings.aboutMe(this).isEmpty() ? getString(R.string.about_me_sub) : Settings.aboutMe(this));
+        findViewById(R.id.row_about).setOnClickListener(v -> {
+            android.widget.LinearLayout col = Ui.column(this);
+            android.widget.EditText e = Ui.input(this, Settings.aboutMe(this), 200, true);
+            e.setHint(R.string.about_me_hint);
+            Ui.add(col, e);
+            Ui.dialog(this).setTitle(R.string.about_me).setView(col)
+                    .setPositiveButton(R.string.save, (d, w) -> {
+                        Settings.setAboutMe(this, e.getText().toString());
+                        about.setText(Settings.aboutMe(this).isEmpty() ? getString(R.string.about_me_sub) : Settings.aboutMe(this));
+                    })
+                    .setNegativeButton(R.string.cancel, null).show();
+        });
+
         TextView lenV = findViewById(R.id.sum_len_value);
         lenV.setText(de.mca.pulsascribe.core.Templates.LENGTH_LABELS[de.mca.pulsascribe.core.Templates.lengthIndex(Settings.summaryLength(this))]);
         findViewById(R.id.row_sum_len).setOnClickListener(v -> Ui.dialog(this).setTitle(R.string.sum_length)

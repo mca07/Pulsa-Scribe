@@ -613,4 +613,13 @@
         <item quantity="one">1 Aufnahme transkribieren</item>
         <item quantity="other">%1$d Aufnahmen übernehmen</item>
     </plurals>
+    <!-- Einschätzung (1.23) -->
+    <string name="ask_expert">Mit Einschätzung (Websuche)</string>
+    <string name="ask_estimate">⏱ Aufwand schätzen</string>
+    <string name="ask_estimate_q">Wie viel Zeit sollte ich für die besprochenen Tätigkeiten einplanen? Bitte mit Aufschlüsselung nach Arbeitsschritten.</string>
+    <string name="ask_expert_label">Einschätzung anhand vergleichbarer Fälle aus dem Netz – bitte prüfen</string>
+    <string name="about_me">Über mich (für Einschätzungen)</string>
+    <string name="about_me_sub">z. B. Beruf, Fachgebiet, typische Aufgaben – macht Aufwandsschätzungen genauer</string>
+    <string name="about_me_hint">z. B. IT-Berater, ERP/CRM-Einführung und Support für KMU</string>
+    <string name="ask_sources">Quellen</string>
 </resources>

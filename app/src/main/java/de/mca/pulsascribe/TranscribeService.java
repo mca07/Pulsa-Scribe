@@ -107,8 +107,12 @@ public final class TranscribeService extends Service {
     }
 
     static void ask(Context c, String id, String question) {
+        ask(c, id, question, false);
+    }
+
+    static void ask(Context c, String id, String question, boolean expert) {
         c.startForegroundService(new Intent(c, TranscribeService.class).setAction(ACTION_ASK).putExtra(EXTRA_ID, id)
-                .putExtra(EXTRA_ARG, Text.line(question, 300)));
+                .putExtra(EXTRA_ARG, Text.line(question, 300)).putExtra(EXTRA_ARG2, expert ? "expert" : ""));
     }
 
     static void translate(Context c, String id, String lang) {
@@ -201,7 +205,7 @@ public final class TranscribeService extends Service {
             enqueue(new Job(id, null, T_SUMMARY, null, null));
         } else if (ACTION_ASK.equals(action)) {
             String q = Text.line(arg, 300);
-            if (!q.isEmpty()) enqueue(new Job(id, null, T_ASK, q, null));
+            if (!q.isEmpty()) enqueue(new Job(id, null, T_ASK, q, "expert".equals(intent.getStringExtra(EXTRA_ARG2)) ? "expert" : null));
         } else if (ACTION_TRANSLATE.equals(action)) {
             String l = Languages.clean(arg);
             if (!Languages.AUTO.equals(l)) enqueue(new Job(id, null, T_TRANSLATE, l, null));
@@ -806,11 +810,13 @@ public final class TranscribeService extends Service {
         Transcript base = Store.get(this, job.id);
         if (base == null) return;
         if (base.segments.isEmpty()) { restore(job, getString(R.string.err_summary_empty)); return; }
-        String body = Gemini.textRequest(Gemini.questionPrompt(base, job.arg, Settings.summaryLanguage(this)), Gemini.answerSchema(), 0.1);
+        boolean expert = "expert".equals(job.arg2);
+        String prompt = Gemini.questionPrompt(base, job.arg, Settings.summaryLanguage(this), expert, Settings.aboutMe(this), null);
+        String body = expert ? Gemini.expertRequest(prompt) : Gemini.textRequest(prompt, Gemini.answerSchema(), 0.1);
         long maxMs = Math.max(base.durationMs, base.segments.get(base.segments.size() - 1).startMs) + 60_000;
         final Transcript.Answer[] ans = new Transcript.Answer[1];
         Outcome o = call(model -> client.json(model, body), (reply, oc) -> {
-            ans[0] = Gemini.parseAnswer(reply.text, job.arg, maxMs);
+            ans[0] = expert ? Gemini.parseExpert(reply, job.arg) : Gemini.parseAnswer(reply.text, job.arg, maxMs);
             return ans[0] != null;
         });
         if (cancelCurrent) { restore(job, null); return; }

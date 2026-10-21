@@ -108,6 +108,13 @@
                         android:layout_marginStart="12dp" android:maxWidth="150dp" android:gravity="end" android:textColor="?attr/pl_accent" android:textSize="15sp" />
                 </LinearLayout>
                 <View style="@style/SettingsDivider" />
+                <LinearLayout android:id="@+id/row_about" style="@style/SettingsRow">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView style="@style/SettingsTitle" android:text="@string/about_me" />
+                        <TextView android:id="@+id/about_value" style="@style/SettingsSub" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View style="@style/SettingsDivider" />
                 <LinearLayout android:id="@+id/row_sum_len" style="@style/SettingsRow">
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                         <TextView style="@style/SettingsTitle" android:text="@string/sum_length" />

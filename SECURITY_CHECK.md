@@ -238,6 +238,15 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 - ✅ Ergebnis nur an die eigene App (setResult), Aktivität nicht exportiert; max. 20 Dateien je Auswahl
 - ✅ Dateinamen nur als Text angezeigt (setText), Länge begrenzt
 
+## 9s. Einschätzung mit Websuche (ab 1.23)
+- ✅ Nur auf ausdrücklichen Wunsch (Knopf „Aufwand schätzen“ oder Schalter „Mit Einschätzung“); Standard bleibt „nur aus dem Gespräch“
+- ✅ Gemini-Werkzeug `google_search`; keine eigenen anderen Einträge werden mitgeschickt; Fakten zum Fall nur aus dem Transkript (Prompt)
+- ✅ Quellen aus den Grounding-Metadaten, nur HTTPS über `WebPage.cleanUrl` (javascript:/file: verworfen), max. 8, beim Laden erneut geprüft; Öffnen nur per ACTION_VIEW/BROWSABLE
+- ✅ Antwort als reiner Text (Markdown entfernt, `Text.block`, max. 5000 Zeichen), Anzeige per setText, klar als Einschätzung gekennzeichnet
+- ✅ „Über mich“ lokal, max. 200 Zeichen, im Prompt über `cleanForPrompt`
+- ⚠️ Google erhält Frage und Transkript-Ausschnitt wie bei jeder Gemini-Anfrage; Websuche kann zusätzliche Kosten/Kontingent verbrauchen
+- ✅ Unit-Test `expertEstimatesUseWebSearch`
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB

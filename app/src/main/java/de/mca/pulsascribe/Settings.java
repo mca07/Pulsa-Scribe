@@ -147,4 +147,10 @@ final class Settings {
         return Store.folders(c).clean(f);
     }
     static void setLastFolder(Context c, String f) { p(c).edit().putString("last_folder", f == null ? "" : f).apply(); }
+
+    /** Kurze Selbstbeschreibung für Einschätzungen (z. B. „IT-Berater für Myfactory ERP/CRM“). */
+    static String aboutMe(Context c) { return de.mca.pulsascribe.core.Text.line(p(c).getString("about_me", ""), 200); }
+    static void setAboutMe(Context c, String v) { p(c).edit().putString("about_me", de.mca.pulsascribe.core.Text.line(v, 200)).apply(); }
+    static boolean askExpert(Context c) { return p(c).getBoolean("ask_expert", false); }
+    static void setAskExpert(Context c, boolean v) { p(c).edit().putBoolean("ask_expert", v).apply(); }
 }

@@ -188,6 +188,10 @@ public final class TranscriptActivity extends Activity {
         tabSummary.setOnClickListener(v -> setTab(TAB_SUMMARY));
         tabAsk.setOnClickListener(v -> setTab(TAB_ASK));
         findViewById(R.id.tr_ask_send).setOnClickListener(v -> sendQuestion());
+        android.widget.Switch expertSw = findViewById(R.id.tr_ask_expert);
+        expertSw.setChecked(Settings.askExpert(this));
+        expertSw.setOnCheckedChangeListener((b, on) -> Settings.setAskExpert(this, on));
+        findViewById(R.id.tr_ask_estimate).setOnClickListener(v -> askQuestion(getString(R.string.ask_estimate_q), true));
         retry.setOnClickListener(v -> {
             if (t.isWorking()) TranscribeService.cancel(this, id);
             else if (t.aggregate) TranscribeService.folder(this, id, t.folder, "");
@@ -744,10 +748,39 @@ public final class TranscriptActivity extends Activity {
             q.setTextColor(Design.color(this, R.attr.pl_text));
             q.setPadding(0, Ui.dp(this, 16), 0, Ui.dp(this, 2));
             answersBox.addView(q);
+            if (a.expert) {
+                TextView tag = new TextView(this);
+                tag.setText(R.string.ask_expert_label);
+                tag.setTextSize(12);
+                tag.setTextColor(Design.color(this, R.attr.pl_accent));
+                answersBox.addView(tag);
+            }
             TextView ans = Ui.body(this, a.answer);
             ans.setTextSize(15);
             ans.setOnLongClickListener(v -> { answerMenu(v, a); return true; });
             answersBox.addView(ans);
+            if (!a.sources.isEmpty()) {
+                TextView sh = new TextView(this);
+                sh.setText(R.string.ask_sources);
+                sh.setTextSize(12);
+                sh.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                sh.setTextColor(Design.color(this, R.attr.pl_muted));
+                sh.setPadding(0, Ui.dp(this, 6), 0, 0);
+                answersBox.addView(sh);
+                for (String[] src : a.sources) {
+                    TextView l = new TextView(this);
+                    l.setText("↗ " + src[0]);
+                    l.setTextSize(13);
+                    l.setTextColor(Design.color(this, R.attr.pl_accent));
+                    l.setMinHeight(Ui.dp(this, 36));
+                    l.setGravity(Gravity.CENTER_VERTICAL);
+                    l.setOnClickListener(v -> {
+                        String u = de.mca.pulsascribe.core.WebPage.cleanUrl(src[1]);
+                        if (u != null) launch(new Intent(Intent.ACTION_VIEW, Uri.parse(u)).addCategory(Intent.CATEGORY_BROWSABLE));
+                    });
+                    answersBox.addView(l);
+                }
+            }
             if (!a.refs.isEmpty() && t.isAudio()) {
                 LinearLayout chips = new LinearLayout(this);
                 chips.setOrientation(LinearLayout.HORIZONTAL);
@@ -795,18 +828,23 @@ public final class TranscriptActivity extends Activity {
     private void sendQuestion() {
         String q = Text.line(askInput.getText().toString(), 300);
         if (q.isEmpty()) return;
+        if (askQuestion(q, Settings.askExpert(this))) askInput.setText("");
+    }
+
+    /** Frage stellen; expert = mit Fachwissen und eigenen Vergleichsfällen (klar als Einschätzung markiert). */
+    private boolean askQuestion(String q, boolean expert) {
         if (t.isWorking()) {
             Toast.makeText(this, R.string.ask_busy, Toast.LENGTH_SHORT).show();
-            return;
+            return false;
         }
         if (!GeminiKey.has(this)) {
             KeyDialog.show(this, null);
-            return;
+            return false;
         }
-        askInput.setText("");
         InputMethodManager im = getSystemService(InputMethodManager.class);
         if (im != null) im.hideSoftInputFromWindow(askInput.getWindowToken(), 0);
-        TranscribeService.ask(this, id, q);
+        TranscribeService.ask(this, id, q, expert);
+        return true;
     }
 
     private void jumpTo(long ms) {

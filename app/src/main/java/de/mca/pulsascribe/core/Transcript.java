@@ -102,6 +102,7 @@ public final class Transcript {
     /** Mehrere Aufnahmen zu einem Eintrag zusammengeführt (Reihenfolge = Abspielreihenfolge). */
     public final List<Part> parts = new ArrayList<>();
     public static final int MAX_PARTS = 20;
+    public static final int MAX_SOURCES = 8;
 
     public static final class Part {
         public String name, uri;
@@ -154,6 +155,10 @@ public final class Transcript {
         public String question, answer;
         public final List<Long> refs = new ArrayList<>();
         public long askedMs;
+        /** Einschätzung mit Fachwissen/Websuche (nicht nur aus dem Gespräch). */
+        public boolean expert;
+        /** Quellen der Websuche: {Titel, https-Adresse}. */
+        public final List<String[]> sources = new ArrayList<>();
     }
 
     /** Übersetzung: ein Text je Abschnitt (gleiche Reihenfolge) und eine übersetzte Zusammenfassung. */
@@ -267,6 +272,17 @@ public final class Transcript {
             o.put("a", a.answer);
             o.put("at", a.askedMs);
             o.put("refs", new ArrayList<Object>(a.refs));
+            if (a.expert) o.put("x", true);
+            if (!a.sources.isEmpty()) {
+                List<Object> sl = new ArrayList<>();
+                for (String[] src : a.sources) {
+                    Map<String, Object> x = new LinkedHashMap<>();
+                    x.put("t", src[0]);
+                    x.put("u", src[1]);
+                    sl.add(x);
+                }
+                o.put("src", sl);
+            }
             qa.add(o);
         }
         m.put("qa", qa);
@@ -414,6 +430,16 @@ public final class Transcript {
                 Answer a = answerFromMap(Json.obj(o), Times.MAX_MS);
                 if (a != null) {
                     a.askedMs = clamp(Json.num(Json.obj(o), "at", 0), 0, now + 86_400_000L);
+                    a.expert = Json.bool(Json.obj(o), "x", false);
+                    List<Object> sl = Json.arr(Json.obj(o), "src");
+                    if (sl != null) {
+                        for (Object so : sl) {
+                            if (a.sources.size() >= MAX_SOURCES) break;
+                            Map<String, Object> x = Json.obj(so);
+                            String u = WebPage.cleanUrl(Json.str(x, "u"));
+                            if (u != null) a.sources.add(new String[]{Text.line(Json.str(x, "t"), 120), u});
+                        }
+                    }
                     t.answers.add(a);
                 }
             }
@@ -457,7 +483,7 @@ public final class Transcript {
         if (m == null) return null;
         Answer a = new Answer();
         a.question = Text.line(Json.str(m, "q"), 300);
-        a.answer = Text.block(Json.str(m, "a"), 3000);
+        a.answer = Text.block(Json.str(m, "a"), 5000);
         if (a.question.isEmpty() || a.answer.isEmpty()) return null;
         List<Object> refs = Json.arr(m, "refs");
         if (refs != null) {

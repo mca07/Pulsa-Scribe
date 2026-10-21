@@ -267,3 +267,10 @@ Mit Todoist:
 - [ ] Mehrere antippen → „3 Aufnahmen übernehmen“ → Dialog Zusammenführen/Einzeln
 - [ ] ⋮ → „Andere Datei (Android-Auswahl) …“ → normale Dateiauswahl wie bisher (z. B. für Videos, PDFs)
 - [ ] Ohne freigegebenen Ordner: „Datei“ öffnet direkt die Android-Auswahl (wie bisher)
+
+## 29. Aufwand schätzen mit Websuche (neu in 1.23)
+- [ ] Einstellungen → Standardwerte: „Über mich (für Einschätzungen)“ ausfüllen (z. B. Beruf, Fachgebiet)
+- [ ] Gespräch → Tab „Fragen“ → „⏱ Aufwand schätzen“ → Antwort beginnt mit „Das ist eine Schätzung …“, Spanne in Stunden + wahrscheinlicher Wert, Aufschlüsselung je Arbeitsschritt, Annahmen, Risiken
+- [ ] Darüber Hinweis „Einschätzung anhand vergleichbarer Fälle aus dem Netz – bitte prüfen“, darunter „Quellen“ mit Links → öffnen im Browser
+- [ ] Schalter „Mit Einschätzung (Websuche)“ an → eigene Fragen werden ebenfalls mit Websuche beantwortet; aus → nur aus dem Gespräch (wie bisher)
+- [ ] Fakten zum Fall stammen nur aus dem Gespräch, nichts Erfundenes über den Kunden

@@ -81,6 +81,15 @@
                     android:orientation="vertical" android:paddingStart="18dp" android:paddingEnd="18dp" android:paddingBottom="16dp" />
             </ScrollView>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"
+                android:gravity="center_vertical" android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="4dp">
+                <Switch android:id="@+id/tr_ask_expert" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1"
+                    android:text="@string/ask_expert" android:textColor="?attr/pl_text" android:textSize="14sp" android:switchPadding="8dp" />
+                <TextView android:id="@+id/tr_ask_estimate" android:layout_width="wrap_content" android:layout_height="40dp"
+                    android:layout_marginStart="8dp" android:gravity="center" android:paddingStart="12dp" android:paddingEnd="12dp"
+                    android:background="@drawable/tag_bg" android:text="@string/ask_estimate" android:textColor="?attr/pl_accent"
+                    android:textSize="14sp" android:clickable="true" android:focusable="true" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"
                 android:gravity="center_vertical" android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingBottom="8dp">
                 <EditText android:id="@+id/tr_ask_input" android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:minHeight="48dp" android:background="@drawable/input_bg"
