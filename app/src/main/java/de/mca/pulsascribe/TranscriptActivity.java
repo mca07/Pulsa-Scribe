@@ -304,6 +304,15 @@ public final class TranscriptActivity extends Activity {
         meta.setText(m);
         String status = Ui.status(this, t);
         if (status == null && t.incomplete) status = getString(R.string.st_incomplete);
+        if (status == null && t.parts.size() > 1 && viewLang == null) {
+            StringBuilder b = new StringBuilder();
+            for (int i = 0; i < t.parts.size(); i++) {
+                if (i > 0) b.append(" · ");
+                Transcript.Part pt = t.parts.get(i);
+                b.append(i + 1).append(") ").append(Times.clock(pt.startMs)).append(' ').append(pt.name);
+            }
+            status = getString(R.string.multi_parts, t.parts.size(), b.toString());
+        }
         if (status == null && viewLang != null) status = getString(R.string.translated_note, Languages.label(viewLang));
         note.setText(status == null ? "" : status);
         note.setVisibility(status == null ? View.GONE : View.VISIBLE);

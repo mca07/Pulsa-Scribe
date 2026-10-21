@@ -43,6 +43,7 @@ public final class Export {
         int sp = t.speakers().size();
         if (sp > 0) b.append(" · ").append(sp).append(sp == 1 ? " Sprecher" : " Sprecher");
         if (!t.url.isEmpty()) b.append(" · Quelle: ").append(t.url);
+        if (t.parts.size() > 1) b.append(" · ").append(t.parts.size()).append(" Aufnahmen");
         return b.toString();
     }
 
@@ -67,7 +68,16 @@ public final class Export {
             out.add(new Block(H2, "", "", t.isAudio() ? "Transkript" : "Text"));
         }
         String lastSpeaker = null;
+        int part = 0;
+        boolean parts = t.parts.size() > 1 && t.isAudio();
         for (Transcript.Segment s : t.segments) {
+            // Überschrift je Aufnahme bei zusammengeführten Dateien
+            while (parts && part < t.parts.size() && s.startMs >= t.parts.get(part).startMs) {
+                Transcript.Part pt = t.parts.get(part);
+                out.add(new Block(H2, "", "", partLabel(part, pt)));
+                part++;
+                lastSpeaker = null;
+            }
             String name = o.speakers ? t.speakerName(s.speaker) : "";
             // Sprecher nur nennen, wenn er wechselt (lesbarer), Zeit immer
             String show = name.equals(lastSpeaker) && !o.times ? "" : name;
@@ -75,6 +85,10 @@ public final class Export {
             lastSpeaker = name;
         }
         return out;
+    }
+
+    public static String partLabel(int index, Transcript.Part pt) {
+        return "Aufnahme " + (index + 1) + (pt.name.isEmpty() ? "" : ": " + pt.name) + " (ab " + Times.clock(pt.startMs) + ")";
     }
 
     private static void list(List<Block> out, String title, List<String> items) {

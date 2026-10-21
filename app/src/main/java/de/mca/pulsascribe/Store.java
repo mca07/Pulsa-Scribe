@@ -462,9 +462,16 @@ final class Store {
         if (j.isFile() && j.length() <= MAX_FILE) {
             try {
                 Transcript t = Transcript.fromJson(new String(Files.readAllBytes(j.toPath()), StandardCharsets.UTF_8));
-                if (t != null && !t.sourceUri.isEmpty()) {
-                    c.getContentResolver().releasePersistableUriPermission(android.net.Uri.parse(t.sourceUri),
-                            android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                if (t != null) {
+                    java.util.Set<String> uris = new java.util.HashSet<>();
+                    if (!t.sourceUri.isEmpty()) uris.add(t.sourceUri);
+                    for (Transcript.Part pt : t.parts) if (!pt.uri.isEmpty()) uris.add(pt.uri);
+                    for (String u : uris) {
+                        try {
+                            c.getContentResolver().releasePersistableUriPermission(android.net.Uri.parse(u),
+                                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        } catch (Exception ignored) { }
+                    }
                 }
             } catch (Exception ignored) { }
         }

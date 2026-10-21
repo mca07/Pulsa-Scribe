@@ -25,6 +25,8 @@ import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
+import android.widget.RadioButton;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
@@ -369,6 +371,7 @@ public final class MainActivity extends Activity {
         i.addCategory(Intent.CATEGORY_OPENABLE);
         i.setType("*/*");
         i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*", "video/*", "image/*", "text/plain", "application/pdf"});
+        i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true); // mehrere zusammengehörige Aufnahmen
         try {
             startActivityForResult(i, REQ_PICK);
         } catch (RuntimeException e) {
@@ -379,7 +382,21 @@ public final class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
-        if (req != REQ_PICK || res != RESULT_OK || data == null || data.getData() == null) return;
+        if (req != REQ_PICK || res != RESULT_OK || data == null) return;
+        if (data.getClipData() != null && data.getClipData().getItemCount() > 1) {
+            List<Uri> uris = new ArrayList<>();
+            for (int i = 0; i < data.getClipData().getItemCount() && uris.size() < Transcript.MAX_PARTS; i++) {
+                Uri u = data.getClipData().getItemAt(i).getUri();
+                if (u == null || !"content".equals(u.getScheme())) continue;
+                try {
+                    getContentResolver().takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (RuntimeException ignored) { }
+                uris.add(u);
+            }
+            beginMulti(uris);
+            return;
+        }
+        if (data.getData() == null) return;
         Uri uri = data.getData();
         persistable = false;
         try {
@@ -392,6 +409,15 @@ public final class MainActivity extends Activity {
     }
 
     private void handleShare(Intent intent) {
+        if (intent != null && Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())) {
+            List<Uri> uris = new ArrayList<>();
+            ArrayList<Uri> extra = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+            if (extra != null) for (Uri u : extra) if (u != null && "content".equals(u.getScheme()) && uris.size() < Transcript.MAX_PARTS) uris.add(u);
+            intent.setAction(null);
+            persistable = false;
+            beginMulti(uris);
+            return;
+        }
         if (intent == null || !Intent.ACTION_SEND.equals(intent.getAction())) return;
         String type = intent.getType();
         Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
@@ -427,6 +453,7 @@ public final class MainActivity extends Activity {
     }
 
     private String pendingText, pendingSubject, pendingLink;
+    private List<Uri> pendingUris;
 
     /** Erst Hinweis, dann Schlüssel, dann Startdialog. */
     private void begin(Uri uri, String text) {
@@ -437,7 +464,7 @@ public final class MainActivity extends Activity {
                         Settings.setHintAccepted(this);
                         begin(uri, text);
                     })
-                    .setNegativeButton(R.string.cancel, (d, w) -> { pendingUri = null; pendingText = null; pendingLink = null; })
+                    .setNegativeButton(R.string.cancel, (d, w) -> { pendingUri = null; pendingText = null; pendingLink = null; pendingUris = null; })
                     .setCancelable(false)
                     .show();
             return;
@@ -445,10 +472,14 @@ public final class MainActivity extends Activity {
         if (!GeminiKey.has(this)) {
             Ui.dialog(this).setTitle(R.string.key_title).setMessage(R.string.start_need_key)
                     .setPositiveButton(R.string.start_set_key, (d, w) -> KeyDialog.show(this, () -> {
-                        if (GeminiKey.has(this) && (pendingUri != null || pendingText != null || pendingLink != null)) begin(pendingUri, pendingText);
+                        if (GeminiKey.has(this) && (pendingUri != null || pendingText != null || pendingLink != null || pendingUris != null)) begin(pendingUri, pendingText);
                     }))
-                    .setNegativeButton(R.string.cancel, (d, w) -> { pendingUri = null; pendingText = null; pendingLink = null; })
+                    .setNegativeButton(R.string.cancel, (d, w) -> { pendingUri = null; pendingText = null; pendingLink = null; pendingUris = null; })
                     .show();
+            return;
+        }
+        if (pendingUris != null) {
+            showMultiStart(pendingUris);
             return;
         }
         if (pendingLink != null) {
@@ -537,6 +568,103 @@ public final class MainActivity extends Activity {
                 if (total > max) throw new java.io.IOException("zu groß");
                 os.write(buf, 0, n);
             }
+        }
+    }
+
+    /** Mehrere Dateien gewählt/geteilt: nur Audio/Video lassen sich zusammenführen. */
+    private void beginMulti(List<Uri> uris) {
+        List<Uri> media = new ArrayList<>();
+        for (Uri u : uris) {
+            String mime = null;
+            try { mime = getContentResolver().getType(u); } catch (RuntimeException ignored) { }
+            if (mime == null || mime.startsWith("audio/") || mime.startsWith("video/")) media.add(u);
+        }
+        if (media.isEmpty()) {
+            Toast.makeText(this, R.string.multi_only_audio, Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (media.size() < uris.size()) Toast.makeText(this, R.string.multi_skipped, Toast.LENGTH_LONG).show();
+        if (media.size() == 1) {
+            begin(media.get(0), null);
+            return;
+        }
+        pendingUris = media;
+        begin(null, null);
+    }
+
+    private void showMultiStart(List<Uri> input) {
+        // Reihenfolge nach Dateiname (Aufnahme-Apps schreiben Datum/Uhrzeit hinein)
+        List<Uri> uris = new ArrayList<>(input);
+        java.util.Map<Uri, String> names = new java.util.HashMap<>();
+        for (Uri u : uris) {
+            String n = displayName(u);
+            names.put(u, n.isEmpty() ? u.getLastPathSegment() == null ? "?" : Text.line(u.getLastPathSegment(), 80) : n);
+        }
+        uris.sort((a, b) -> names.get(a).compareToIgnoreCase(names.get(b)));
+        LinearLayout col = Ui.column(this);
+        StringBuilder list = new StringBuilder();
+        for (int i = 0; i < uris.size(); i++) list.append(i + 1).append(". ").append(names.get(uris.get(i))).append('\n');
+        TextView files = Ui.body(this, list.toString().trim());
+        files.setTextSize(13);
+        files.setTextColor(Design.color(this, R.attr.pl_muted));
+        Ui.add(col, files);
+        RadioGroup rg = new RadioGroup(this);
+        RadioButton join = new RadioButton(this);
+        join.setId(View.generateViewId());
+        join.setText(getString(R.string.multi_join, uris.size()));
+        join.setMinHeight(Ui.dp(this, 48));
+        RadioButton single = new RadioButton(this);
+        single.setId(View.generateViewId());
+        single.setText(getString(R.string.multi_single, uris.size()));
+        single.setMinHeight(Ui.dp(this, 48));
+        rg.addView(join);
+        rg.addView(single);
+        rg.check(join.getId());
+        Ui.add(col, rg);
+        String first = Text.titleFromFileName(names.get(uris.get(0)));
+        OptionsForm form = new OptionsForm(this, col, getString(R.string.multi_title, first, uris.size() - 1), folder, true);
+        TextView info = Ui.body(this, getString(R.string.multi_info));
+        info.setTextColor(Design.color(this, R.attr.pl_muted));
+        info.setTextSize(13);
+        Ui.add(col, info);
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.addView(col);
+        Ui.dialog(this).setTitle(getString(R.string.multi_heading, uris.size())).setView(sc)
+                .setPositiveButton(R.string.start_go, (d, w) -> {
+                    askNotifications();
+                    if (rg.getCheckedRadioButtonId() == join.getId()) {
+                        Transcript t = form.build();
+                        for (Uri u : uris) t.parts.add(new Transcript.Part(names.get(u), Transcript.cleanUri(u.toString()), 0));
+                        t.source = names.get(uris.get(0));
+                        t.sourceUri = Transcript.cleanUri(uris.get(0).toString());
+                        t.status = Transcript.QUEUED;
+                        Store.save(this, t);
+                        startSafe(t, () -> TranscribeService.startMulti(this, t.id, uris));
+                    } else {
+                        for (Uri u : uris) {
+                            Transcript t = form.build();
+                            t.title = Text.titleFromFileName(names.get(u));
+                            t.source = names.get(u);
+                            t.sourceUri = Transcript.cleanUri(u.toString());
+                            t.status = Transcript.QUEUED;
+                            Store.save(this, t);
+                            startSafe(t, () -> TranscribeService.start(this, t.id, u));
+                        }
+                    }
+                    pendingUris = null;
+                })
+                .setNegativeButton(R.string.cancel, (d, w) -> pendingUris = null)
+                .show();
+    }
+
+    private void startSafe(Transcript t, Runnable start) {
+        try {
+            start.run();
+        } catch (RuntimeException e) {
+            Transcript n = Store.copy(t);
+            n.status = Transcript.ERROR;
+            n.error = getString(R.string.err_unexpected, e.getClass().getSimpleName());
+            Store.save(this, n);
         }
     }
 

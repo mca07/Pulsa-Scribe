@@ -165,6 +165,7 @@ final class BackupManager {
             if (t.isWorking()) t.status = Transcript.ERROR;
             t.folder = now.clean(t.folder);
             t.sourceUri = ""; // Freigaben gelten nur auf dem alten Gerät
+            for (Transcript.Part pt : t.parts) pt.uri = "";
             File aac = new File(tmp, "t/" + id + ".aac"), jpg = new File(tmp, "t/" + id + ".jpg");
             t.audioReady = t.audioReady && aac.isFile() && moveFile(aac, new File(dir, id + ".aac"));
             if (jpg.isFile()) moveFile(jpg, new File(dir, id + ".jpg"));

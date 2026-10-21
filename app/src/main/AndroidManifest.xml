@@ -39,6 +39,13 @@
                 <data android:mimeType="audio/*" />
                 <data android:mimeType="video/*" />
             </intent-filter>
+            <!-- Mehrere Aufnahmen teilen: zu einem Eintrag zusammenführen oder einzeln -->
+            <intent-filter android:label="@string/share_target">
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
             <!-- Text oder Screenshot teilen: wird zusammengefasst und auf Wunsch vorgelesen -->
             <intent-filter android:label="@string/share_title">
                 <action android:name="android.intent.action.SEND" />

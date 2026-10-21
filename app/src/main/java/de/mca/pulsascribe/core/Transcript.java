@@ -99,6 +99,20 @@ public final class Transcript {
     public long durationMs;
     public String source = "";
     public String sourceUri = ""; // content://-Adresse mit dauerhafter Freigabe (nur für erneute Versuche)
+    /** Mehrere Aufnahmen zu einem Eintrag zusammengeführt (Reihenfolge = Abspielreihenfolge). */
+    public final List<Part> parts = new ArrayList<>();
+    public static final int MAX_PARTS = 20;
+
+    public static final class Part {
+        public String name, uri;
+        public long startMs;
+
+        public Part(String name, String uri, long startMs) {
+            this.name = name == null ? "" : name;
+            this.uri = uri == null ? "" : uri;
+            this.startMs = startMs;
+        }
+    }
     public String language = Languages.AUTO;
     public boolean diarize = true;
     public boolean summarize = true;
@@ -196,6 +210,17 @@ public final class Transcript {
         m.put("duration", durationMs);
         m.put("source", source);
         m.put("src", sourceUri);
+        if (!parts.isEmpty()) {
+            List<Object> pl = new ArrayList<>();
+            for (Part pt : parts) {
+                Map<String, Object> x = new LinkedHashMap<>();
+                x.put("n", pt.name);
+                x.put("u", pt.uri);
+                x.put("s", pt.startMs);
+                pl.add(x);
+            }
+            m.put("parts", pl);
+        }
         m.put("language", language);
         m.put("diarize", diarize);
         m.put("summarize", summarize);
@@ -297,6 +322,17 @@ public final class Transcript {
         t.durationMs = clamp(Json.num(m, "duration", 0), 0, Times.MAX_MS);
         t.source = Text.line(Json.str(m, "source"), 120);
         t.sourceUri = cleanUri(Json.str(m, "src"));
+        List<Object> pl = Json.arr(m, "parts");
+        if (pl != null) {
+            for (Object o : pl) {
+                if (t.parts.size() >= MAX_PARTS) break;
+                Map<String, Object> x = Json.obj(o);
+                if (x == null) continue;
+                long st = Json.num(x, "s", 0);
+                t.parts.add(new Part(Text.line(Json.str(x, "n"), 120), cleanUri(Json.str(x, "u")),
+                        st < 0 || st > Times.MAX_MS ? 0 : st));
+            }
+        }
         t.language = Languages.clean(Json.str(m, "language"));
         t.diarize = Json.bool(m, "diarize", true);
         t.summarize = Json.bool(m, "summarize", true);

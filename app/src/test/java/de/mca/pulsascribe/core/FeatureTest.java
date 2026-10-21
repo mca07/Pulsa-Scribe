@@ -675,4 +675,31 @@ public class FeatureTest {
         assertFalse(r.isWorking());
         assertEquals(t.sourceUri, r.sourceUri);
     }
+
+    @Test
+    public void joinedRecordings() {
+        Transcript t = new Transcript();
+        t.id = "abcdefgh12";
+        t.parts.add(new Transcript.Part("phone_20261021-093920.amr", "content://a/1", 0));
+        t.parts.add(new Transcript.Part("whatsapp_20261021-110811.amr", "content://a/2", 65_000));
+        t.parts.add(new Transcript.Part("x", "file:///etc/passwd", -5));
+        t.segments.add(new Transcript.Segment(0, "Sprecher 1", "Erster Anruf."));
+        t.segments.add(new Transcript.Segment(70_000, "Sprecher 1", "Zweiter Anruf."));
+        Transcript r = Transcript.fromJson(t.toJson());
+        assertEquals(3, r.parts.size());
+        assertEquals(65_000, r.parts.get(1).startMs);
+        assertEquals("", r.parts.get(2).uri);       // nur content://
+        assertEquals(0, r.parts.get(2).startMs);    // ungültige Zeit
+        r.parts.remove(2);
+        String p = Gemini.summaryPrompt(r, "same");
+        assertTrue(p.contains("joins 2 separate recordings"));
+        assertTrue(p.contains("from 01:05"));
+        String txt = Export.txt(r, new Export.Options());
+        int h1 = txt.indexOf("AUFNAHME 1: PHONE_20261021-093920.AMR"), h2 = txt.indexOf("AUFNAHME 2: WHATSAPP");
+        assertTrue(h1 >= 0 && h2 >= 0);
+        assertTrue(h1 < txt.indexOf("Erster Anruf."));
+        assertTrue(txt.indexOf("Erster Anruf.") < h2);
+        assertTrue(h2 < txt.indexOf("Zweiter Anruf."));
+        assertTrue(Export.meta(r).contains("2 Aufnahmen"));
+    }
 }

@@ -87,6 +87,21 @@ public final class TranscribeService extends Service {
         c.startForegroundService(i);
     }
 
+    /** Mehrere Dateien zu einem Eintrag: alle Quellen mit vorübergehender Lesefreigabe übergeben. */
+    static void startMulti(Context c, String id, java.util.List<Uri> sources) {
+        Intent i = new Intent(c, TranscribeService.class).setAction(ACTION_START).putExtra(EXTRA_ID, id);
+        ClipData cd = null;
+        for (Uri u : sources) {
+            if (cd == null) cd = ClipData.newRawUri("audio", u);
+            else cd.addItem(new ClipData.Item(u));
+        }
+        if (cd != null) {
+            i.setClipData(cd);
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+        c.startForegroundService(i);
+    }
+
     static void summary(Context c, String id) {
         c.startForegroundService(new Intent(c, TranscribeService.class).setAction(ACTION_SUMMARY).putExtra(EXTRA_ID, id));
     }
@@ -120,6 +135,8 @@ public final class TranscribeService extends Service {
         final int type;
         final String arg, arg2;
         String prevStatus = Transcript.DONE;
+        /** Bei zusammengeführten Aufnahmen: alle Quellen mit vorübergehender Freigabe. */
+        java.util.List<Uri> sources = new java.util.ArrayList<>();
 
         Job(String id, Uri source, int type, String arg, String arg2) {
             this.id = id;
@@ -168,10 +185,18 @@ public final class TranscribeService extends Service {
             cancelJob(id);
         } else if (ACTION_START.equals(action)) {
             Uri src = null;
+            java.util.List<Uri> all = new java.util.ArrayList<>();
             ClipData cd = intent.getClipData();
-            if (cd != null && cd.getItemCount() == 1) src = cd.getItemAt(0).getUri();
-            if (src != null && !"content".equals(src.getScheme())) src = null; // nur content://
-            enqueue(new Job(id, src, T_FULL, null, null));
+            if (cd != null) {
+                for (int i = 0; i < cd.getItemCount() && i < Transcript.MAX_PARTS; i++) {
+                    Uri u = cd.getItemAt(i).getUri();
+                    if (u != null && "content".equals(u.getScheme())) all.add(u); // nur content://
+                }
+            }
+            if (all.size() == 1) src = all.get(0);
+            Job j = new Job(id, src, T_FULL, null, null);
+            if (all.size() > 1) j.sources = all;
+            enqueue(j);
         } else if (ACTION_SUMMARY.equals(action)) {
             enqueue(new Job(id, null, T_SUMMARY, null, null));
         } else if (ACTION_ASK.equals(action)) {
@@ -395,6 +420,21 @@ public final class TranscribeService extends Service {
         if (!t.audioReady || !audio.isFile()) {
             Uri source = job.source;
             if (source == null && !t.sourceUri.isEmpty()) source = Uri.parse(t.sourceUri); // dauerhafte Freigabe
+            java.util.List<Uri> multi = new java.util.ArrayList<>();
+            if (t.parts.size() > 1) {
+                if (job.sources.size() == t.parts.size()) multi.addAll(job.sources);
+                else {
+                    for (Transcript.Part pt : t.parts) {
+                        if (pt.uri.isEmpty()) { multi.clear(); break; }
+                        multi.add(Uri.parse(pt.uri));
+                    }
+                }
+                if (multi.isEmpty()) {
+                    fail(t.id, getString(R.string.err_need_file_again));
+                    return false;
+                }
+                source = multi.get(0);
+            }
             if (source == null) {
                 fail(t.id, getString(R.string.err_need_file_again));
                 return false;
@@ -407,8 +447,9 @@ public final class TranscribeService extends Service {
             setLive(t.id, R.string.st_prepare, 0);
             notifyWork(t.id, getString(R.string.st_prepare), 0);
             AudioPrep.Result r;
+            long[] partStarts = new long[Math.max(1, multi.size())];
             try {
-                r = AudioPrep.run(this, source, audio, new AudioPrep.Progress() {
+                r = AudioPrep.runAll(this, multi.size() > 1 ? multi : java.util.Collections.singletonList(source), audio, partStarts, new AudioPrep.Progress() {
                     long last;
 
                     @Override
@@ -432,6 +473,9 @@ public final class TranscribeService extends Service {
                 if (cancelCurrent) { markCanceled(t.id); return false; }
                 fail(t.id, getString(R.string.err_open_file));
                 return false;
+            }
+            if (multi.size() > 1) {
+                for (int i = 0; i < t.parts.size() && i < partStarts.length; i++) t.parts.get(i).startMs = partStarts[i];
             }
             double fps = r.sampleRate / (double) Adts.SAMPLES_PER_FRAME;
             t.cuts = Chunker.cuts(r.frames, r.energy, fps, CHUNK_SEC, CHUNK_WINDOW_SEC);

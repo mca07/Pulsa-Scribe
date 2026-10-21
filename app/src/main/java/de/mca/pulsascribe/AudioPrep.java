@@ -53,10 +53,62 @@ final class AudioPrep {
     }
 
     static Result run(Context ctx, Uri src, File out, Progress progress) throws IOException {
-        MediaExtractor ex = new MediaExtractor();
-        MediaCodec decoder = null;
+        return runAll(ctx, java.util.Collections.singletonList(src), out, null, progress);
+    }
+
+    /** Pause zwischen zusammengeführten Aufnahmen (hilft auch beim Aufteilen an ruhigen Stellen). */
+    static final int GAP_MS = 1500;
+
+    /**
+     * Eine oder mehrere Dateien nacheinander in eine AAC-Datei. Bei mehreren: feste Rate 16 kHz,
+     * Pause dazwischen; partStartsMs (Länge = Anzahl Dateien) bekommt die Startzeit jeder Datei.
+     */
+    static Result runAll(Context ctx, java.util.List<Uri> srcs, File out, long[] partStartsMs, Progress progress) throws IOException {
         Encoder enc = null;
         boolean ok = false;
+        try {
+            enc = new Encoder(out);
+            if (srcs.size() > 1) enc.forceRate(16000);
+            long totalUs = 0;
+            for (int i = 0; i < srcs.size(); i++) {
+                if (progress.isCanceled()) throw new IOException("canceled");
+                if (i > 0 && enc.hasInput()) enc.addSilence(GAP_MS);
+                if (partStartsMs != null) partStartsMs[i] = enc.pushedMs();
+                final int idx = i, n = srcs.size();
+                long us = decodeInto(ctx, srcs.get(i), enc, new Progress() {
+                    @Override
+                    public void onProgress(int percent) {
+                        progress.onProgress(Math.min(99, (idx * 100 + percent) / n));
+                    }
+
+                    @Override
+                    public boolean isCanceled() {
+                        return progress.isCanceled();
+                    }
+                }, i == srcs.size() - 1);
+                totalUs += Math.max(0, us);
+                if (totalUs > MAX_DURATION_US) throw new PrepException(R.string.err_too_long, "duration");
+            }
+            if (enc.frames == 0) throw new PrepException(R.string.err_no_audio, "empty");
+            Result r = new Result();
+            r.sampleRate = enc.outRate;
+            r.frames = enc.frames;
+            r.energy = enc.energy();
+            r.durationMs = enc.frames * (long) Adts.SAMPLES_PER_FRAME * 1000L / enc.outRate;
+            progress.onProgress(100);
+            ok = true;
+            return r;
+        } finally {
+            if (enc != null) enc.close();
+            if (!ok) //noinspection ResultOfMethodCallIgnored
+                out.delete();
+        }
+    }
+
+    /** Eine Datei dekodieren und in den Encoder geben; last = danach Ende des Stroms. Liefert die Dauer in µs (-1 unbekannt). */
+    private static long decodeInto(Context ctx, Uri src, Encoder enc, Progress progress, boolean last) throws IOException {
+        MediaExtractor ex = new MediaExtractor();
+        MediaCodec decoder = null;
         try {
             try {
                 ex.setDataSource(ctx, src, null);
@@ -86,16 +138,14 @@ final class AudioPrep {
             } catch (IOException | RuntimeException e) {
                 throw new PrepException(R.string.err_codec, mime);
             }
-
-            enc = new Encoder(out);
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             boolean inputDone = false, decodeDone = false;
+            boolean formatSet = false;
             int lastPct = -1;
             long guard = 0;
-            while (!enc.done) {
+            while (!decodeDone || (last && !enc.done)) {
                 if (progress.isCanceled()) throw new IOException("canceled");
                 if (++guard > 50_000_000L) throw new PrepException(R.string.err_codec, "loop");
-                // 1) Eingang des Decoders füttern (mehrere Puffer je Runde)
                 for (int k = 0; k < 8 && !inputDone; k++) {
                     int idx = decoder.dequeueInputBuffer(k == 0 ? TIMEOUT_US : 0);
                     if (idx < 0) break;
@@ -115,15 +165,15 @@ final class AudioPrep {
                         if (t > MAX_DURATION_US) throw new PrepException(R.string.err_too_long, "duration");
                     }
                 }
-                // 2) PCM aus dem Decoder holen (alles, was fertig ist)
                 for (int k = 0; k < 8 && !decodeDone; k++) {
                     int idx = decoder.dequeueOutputBuffer(info, k == 0 ? TIMEOUT_US : 0);
                     if (idx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                         enc.setInput(decoder.getOutputFormat());
+                        formatSet = true;
                         continue;
                     }
                     if (idx < 0) break;
-                    if (!enc.hasInput()) enc.setInput(decoder.getOutputFormat());
+                    if (!formatSet) { enc.setInput(decoder.getOutputFormat()); formatSet = true; }
                     ByteBuffer buf = decoder.getOutputBuffer(idx);
                     if (buf != null && info.size > 0) {
                         buf.position(info.offset);
@@ -133,30 +183,18 @@ final class AudioPrep {
                     decoder.releaseOutputBuffer(idx, false);
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         decodeDone = true;
-                        enc.endOfInput();
+                        if (last) enc.endOfInput();
                     }
                 }
-                // 3) Encoder füttern und leeren
-                enc.pump(decodeDone);
+                enc.pump(last && decodeDone);
             }
-            if (enc.frames == 0) throw new PrepException(R.string.err_no_audio, "empty");
-            Result r = new Result();
-            r.sampleRate = enc.outRate;
-            r.frames = enc.frames;
-            r.energy = enc.energy();
-            r.durationMs = enc.frames * (long) Adts.SAMPLES_PER_FRAME * 1000L / enc.outRate;
-            progress.onProgress(100);
-            ok = true;
-            return r;
+            return durationUs;
         } finally {
             try { ex.release(); } catch (RuntimeException ignored) { }
             if (decoder != null) {
                 try { decoder.stop(); } catch (RuntimeException ignored) { }
                 try { decoder.release(); } catch (RuntimeException ignored) { }
             }
-            if (enc != null) enc.close();
-            if (!ok) //noinspection ResultOfMethodCallIgnored
-                out.delete();
         }
     }
 
@@ -170,6 +208,8 @@ final class AudioPrep {
         private double step = 1, pos = 0; // Umrechnung: Eingangsrahmen je Ausgangssample
         private float prevSample = 0;
         private boolean haveInput;
+        private int forcedRate;
+        private long pushed; // Ausgangssamples insgesamt (für Startzeiten der Teile)
 
         private short[] pending = new short[16384];
         private int pendingLen = 0;
@@ -191,6 +231,22 @@ final class AudioPrep {
             return haveInput;
         }
 
+        /** Feste Ausgaberate (vor dem ersten setInput), z. B. beim Zusammenführen mehrerer Dateien. */
+        void forceRate(int rate) {
+            if (!haveInput && Adts.encoderRate(rate)) forcedRate = rate;
+        }
+
+        long pushedMs() {
+            return outRate == 0 ? 0 : pushed * 1000L / outRate;
+        }
+
+        void addSilence(int ms) {
+            if (outRate == 0) return;
+            int n = (int) ((long) outRate * ms / 1000);
+            for (int i = 0; i < n; i++) push(0f);
+            prevSample = 0;
+        }
+
         void setInput(MediaFormat f) throws IOException {
             int rate = f.containsKey(MediaFormat.KEY_SAMPLE_RATE) ? f.getInteger(MediaFormat.KEY_SAMPLE_RATE) : 0;
             int ch = f.containsKey(MediaFormat.KEY_CHANNEL_COUNT) ? f.getInteger(MediaFormat.KEY_CHANNEL_COUNT) : 0;
@@ -209,7 +265,8 @@ final class AudioPrep {
             inRate = rate;
             inChannels = ch;
             pcmEncoding = pe;
-            if (Adts.encoderRate(rate)) outRate = rate;
+            if (forcedRate != 0) outRate = forcedRate;
+            else if (Adts.encoderRate(rate)) outRate = rate;
             else outRate = rate > 48000 ? 48000 : 16000;
             step = (double) inRate / outRate;
             rateIndex = Adts.rateIndex(outRate);
@@ -263,6 +320,7 @@ final class AudioPrep {
                 pending = g;
             }
             pending[pendingLen++] = (short) v;
+            pushed++;
         }
 
         void flush() throws IOException {

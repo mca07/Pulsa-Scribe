@@ -237,3 +237,15 @@ Mit Todoist:
 - [ ] Alte Aufnahmen von vor dem Einschalten werden NICHT übernommen; keine Doppelten
 - [ ] Handy neu starten → nächster Anruf wird trotzdem übernommen (spätestens nach 30 Minuten oder beim Öffnen der App)
 - [ ] „Ausschalten“ → keine weiteren Übernahmen, Freigabe entfernt
+
+## 26. Mehrere Dateien auf einmal (neu in 1.20)
+- [ ] „Datei“ → in der Auswahl lange drücken → mehrere Aufnahmen markieren (z. B. phone_… und whatsapp_… zum gleichen Kunden) → „Auswählen“
+- [ ] Dialog „3 Aufnahmen“ zeigt die Dateien in Reihenfolge (nach Uhrzeit im Namen)
+- [ ] „Zu einem Eintrag zusammenführen“ → ein Transkript, oben Hinweis „Aus 3 Aufnahmen: 1) 0:00 … · 2) 5:12 …“; Wiedergabe spielt alle nacheinander mit kurzer Pause
+- [ ] Zusammenfassung / CRM / Servicebericht behandelt alles als einen Vorgang
+- [ ] Export (TXT/Word/PDF): Überschrift „Aufnahme 1 …“, „Aufnahme 2 …“ an der richtigen Stelle; Kopfzeile „· 3 Aufnahmen“
+- [ ] „Einzeln“ → je Datei ein eigener Eintrag mit gleichen Einstellungen
+- [ ] AMR-Dateien (8 kHz) gemischt mit anderen Formaten → funktioniert, Ton verständlich
+- [ ] In „Eigene Dateien“ mehrere Aufnahmen markieren → Teilen → Pulsa Scribe → gleicher Dialog
+- [ ] Bilder/PDF mit ausgewählt → Hinweis, nur Audio/Video wird übernommen
+- [ ] Zusammengeführten Eintrag in Papierkorb → endgültig löschen → keine Fehler

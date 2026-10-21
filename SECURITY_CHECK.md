@@ -225,6 +225,13 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 - ✅ Transkription startet nur durch Nutzeraktion (Benachrichtigung, App öffnen) – kein heimlicher Upload; Benachrichtigung VISIBILITY_PRIVATE (Sperrbildschirm ohne Inhalt), PendingIntents IMMUTABLE
 - ✅ Neuer Status „waiting“ auf der Positivliste; Unit-Test `waitingCallsSurviveReload`
 
+## 9q. Mehrere Dateien zusammenführen (ab 1.20)
+- ✅ Nur content://-Adressen, max. 20 Dateien, nur Audio/Video; Freigaben je Datei (dauerhaft, sonst vorübergehend per ClipData an den Dienst) und beim endgültigen Löschen wieder freigegeben; in der Sicherung entfernt
+- ✅ Teile beim Laden geprüft (Name bereinigt/gekürzt, URI nur content://, Startzeit 0–24 h); Dateinamen im Prompt über `cleanForPrompt`
+- ✅ Gesamtlänge weiterhin max. 10 h; ein gemeinsamer Encoder (16 kHz mono), keine Zwischendateien
+- ✅ SEND_MULTIPLE nur für audio/* und video/*
+- ✅ Unit-Test `joinedRecordings`
+
 ## 10. Datenschutz (DSGVO) und Barrierefreiheit
 - ✅ Datensparsamkeit: kein Konto, kein Tracking, keine Werbung; an Google geht nur die verkleinerte Mono-Tonspur bzw. für die Zusammenfassung der Text, nur auf Knopfdruck; Titel und Begriffe als Teil der Anweisung
 - ✅ Offengelegt vor der ersten Nutzung (Hinweis mit Bestätigung) und unter Einstellungen → Datenschutz: Empfänger Google Gemini, eigener Schlüssel, Bedingungen des Gratis-Kontingents, § 201 StGB
