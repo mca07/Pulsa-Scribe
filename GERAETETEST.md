@@ -285,3 +285,12 @@ Einstellungen → KI-Anbieter → „KI für alles“: Gemini / Claude / OpenAI 
 - [ ] YouTube-Link mit Claude/OpenAI/Mistral → über Gemini (Schlüssel nötig), sonst Meldung
 - [ ] Falscher Schlüssel → „Schlüssel abgelehnt“, nichts hängt
 - [ ] Zurück auf Gemini → alles wie vorher
+
+## 31. Neu transkribieren (neu in 1.25)
+- [ ] Liste: ⋮ am Eintrag → „Neu transkribieren …“ (auch im Eintrag unter ⋮)
+- [ ] Dialog: Sprache, Sprecher unterscheiden, Füllwörter, Namen/Fachbegriffe, (Online/Offline, wenn Modell geladen), Vorlage
+- [ ] „Neu transkribieren“ → Text und Zusammenfassung werden neu erstellt, Ton bleibt, gestellte Fragen bleiben
+- [ ] Mit anderem KI-Anbieter (z. B. OpenAI statt Gemini) neu transkribieren → „Modell: …“ zeigt den neuen Anbieter
+- [ ] Zusammengeführte Aufnahmen → wieder alle Teile, Markierungen bleiben
+- [ ] Screenshot/PDF/Webseite → wird neu gelesen; geteilter Text → Menüpunkt fehlt (nur „Zusammenfassung neu erstellen“)
+- [ ] Ton gelöscht und Quelle weg → Hinweis „Ton bzw. Quelle ist nicht mehr vorhanden“

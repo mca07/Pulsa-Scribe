@@ -883,9 +883,11 @@ public final class MainActivity extends Activity {
         m.getMenu().add(0, 2, 0, R.string.m_rename);
         m.getMenu().add(0, 4, 0, R.string.folder_move);
         m.getMenu().add(0, 5, 0, R.string.m_tags);
+        if (Retranscribe.possible(this, t)) m.getMenu().add(0, 6, 0, R.string.m_retranscribe);
         m.getMenu().add(0, 3, 0, R.string.m_delete);
         m.setOnMenuItemClickListener(mi -> {
             switch (mi.getItemId()) {
+                case 6: Retranscribe.show(this, t.id); return true;
                 case 1: TranscribeService.cancel(this, t.id); return true;
                 case 2: rename(this, t.id); return true;
                 case 3: confirmDelete(this, t.id, null); return true;

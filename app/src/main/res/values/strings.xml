@@ -638,4 +638,10 @@
     <string name="err_pdf_provider">%1$s kann keine PDFs lesen. Bitte einen Gemini-Schlüssel hinterlegen oder einen anderen Anbieter wählen.</string>
     <string name="err_youtube_gemini">YouTube-Videos kann nur Gemini ansehen. Bitte in den Einstellungen einen Gemini-Schlüssel hinterlegen.</string>
     <string name="ask_expert_label_plain">Einschätzung aus allgemeinem Fachwissen (ohne Websuche) – bitte prüfen</string>
+    <!-- Neu transkribieren (1.24) -->
+    <string name="m_retranscribe">Neu transkribieren …</string>
+    <string name="retr_title">Neu transkribieren</string>
+    <string name="retr_info">Text und Zusammenfassung werden mit den Einstellungen unten neu erstellt (mit dem gewählten KI-Anbieter). Übersetzungen und eigene Sprechernamen werden zurückgesetzt, gestellte Fragen bleiben.</string>
+    <string name="retr_go">Neu transkribieren</string>
+    <string name="retr_impossible">Ton bzw. Quelle ist nicht mehr vorhanden – bitte die Datei neu öffnen.</string>
 </resources>

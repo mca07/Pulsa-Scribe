@@ -1218,6 +1218,7 @@ public final class TranscriptActivity extends Activity {
             m.getMenu().add(0, 4, 0, R.string.m_resummary);
             m.getMenu().add(0, 10, 0, R.string.m_translate);
         }
+        if (Retranscribe.possible(this, t)) m.getMenu().add(0, 42, 0, R.string.m_retranscribe);
         if (!t.translations.isEmpty()) m.getMenu().add(0, 11, 0, R.string.m_show_lang);
         m.getMenu().add(0, 12, 0, R.string.folder_move);
         m.getMenu().add(0, 13, 0, R.string.m_tags);
@@ -1242,6 +1243,7 @@ public final class TranscriptActivity extends Activity {
                             .setNegativeButton(R.string.cancel, null).show();
                     return true;
                 case 7: MainActivity.confirmDelete(this, id, this::finish); return true;
+                case 42: Retranscribe.show(this, id); return true;
                 case 41:
                     startActivity(new Intent(this, BrowserActivity.class).putExtra(BrowserActivity.EXTRA_URL, t.url));
                     return true;
