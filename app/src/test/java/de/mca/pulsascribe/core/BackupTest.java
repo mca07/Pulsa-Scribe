@@ -154,7 +154,7 @@ public class BackupTest {
         assertEquals(1, del.size());
         assertEquals("pulsa-scribe-auto-2026-10-10.pscb", del.get(0));
         // gleicher Tag wird überschrieben → nichts löschen
-        assertEquals(1, BackupFiles.toDelete(names, 7, "2026-10-16").size());
+        assertEquals(0, BackupFiles.toDelete(names, 7, "2026-10-16").size()); // gleicher Tag überschreibt
         assertEquals(0, BackupFiles.toDelete(names, 14, "2026-10-17").size());
         try { BackupFiles.autoName("../x"); throw new AssertionError("day"); } catch (IllegalArgumentException expected) { }
     }
