@@ -4,7 +4,7 @@
 |---|---|
 | **Projekt** | Pulsa Scribe – transkribiert Audio- und Videodateien sowie live aufgenommene Gespräche mit Google Gemini: Sprecher, Zeitstempel, Zusammenfassung (Kernpunkte, Aufgaben, Entscheidungen, offene Fragen), Suche, Wiedergabe mit Sprung zur Stelle, Export als PDF, Word, Text und SRT; Designs Pulsa und Academy |
 | **Art** | Android (Java, native Oberfläche, keine WebView, minSdk 29 / targetSdk 35) |
-| **Version / Stand** | 1.28, 22.10.2026 |
+| **Version / Stand** | 1.29, 22.10.2026 |
 | **Geprüft von** | Claude (Erstellung), Abnahme: Mario |
 
 **Legende:** ✅ erfüllt · 🔧 bei dieser Prüfung behoben · ⚠️ offen oder bewusst akzeptiert (mit Begründung) · – nicht relevant
@@ -224,6 +224,8 @@ Begründung: Inhalte hinter Logins (z. B. Lernplattform) sind sonst nicht lesbar
 - ✅ Hintergrund nur über JobScheduler (Inhaltsänderung im Medienspeicher + alle 30 min, nach Neustart über RECEIVE_BOOT_COMPLETED); JobService nicht exportiert, nur BIND_JOB_SERVICE
 - ✅ Transkription startet nur durch Nutzeraktion (Benachrichtigung, App öffnen) – kein heimlicher Upload; Benachrichtigung VISIBILITY_PRIVATE (Sperrbildschirm ohne Inhalt), PendingIntents IMMUTABLE
 - ✅ Neuer Status „waiting“ auf der Positivliste; Unit-Test `waitingCallsSurviveReload`
+
+- ✅ (1.29) Datensparsamkeit: übernommene Telefonate werden standardmäßig **nicht** mehr automatisch gesendet; einmalige Umstellung auf „aus“ für alle. Erst „Transkribieren“ (Karte, Eintrag oder Benachrichtigung) sendet; „Verwerfen“ legt in den Papierkorb und entfernt die Benachrichtigung
 
 ## 9q. Mehrere Dateien zusammenführen (ab 1.20)
 - ✅ Nur content://-Adressen, max. 20 Dateien, nur Audio/Video; Freigaben je Datei (dauerhaft, sonst vorübergehend per ClipData an den Dienst) und beim endgültigen Löschen wieder freigegeben; in der Sicherung entfernt

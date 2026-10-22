@@ -326,3 +326,11 @@ Einstellungen → KI-Anbieter → „KI für alles“: Gemini / Claude / OpenAI 
 - [ ] Falsches Passwort beim Wiederherstellen → Meldung, Dialog mit Hinweis erscheint erneut
 - [ ] Einstellungen → Passwort merken → „Passwort-Hinweis ändern“; Zeile zeigt „Hinweis: …“
 - [ ] Alte Sicherung (vor 1.28) wiederherstellen → „kein Hinweis hinterlegt“, Wiederherstellen klappt
+
+## 35. Telefonate selbst entscheiden (neu in 1.29)
+- [ ] Nach dem Update: Einstellungen → Telefonate → „Beim Öffnen sofort transkribieren“ ist aus
+- [ ] Neues Telefonat aufnehmen → App öffnen → Karte „Neues Telefonat – bereit zum Transkribieren“, es startet nichts von selbst
+- [ ] Auf der Karte „Transkribieren“ → Dialog „Telefonat transkribieren?“ mit Sprache, Sprecher, Füllwörter, Begriffe, Vorlage → „Transkribieren“ startet
+- [ ] „Verwerfen“ → Telefonat im Papierkorb, Benachrichtigung weg; aus dem Papierkorb wiederherstellbar
+- [ ] Benachrichtigung antippen → Eintrag öffnet sich, startet aber nicht; Knopf „Transkribieren“ dort öffnet denselben Dialog
+- [ ] Schalter wieder an → neue Telefonate starten beim Öffnen wie bisher
