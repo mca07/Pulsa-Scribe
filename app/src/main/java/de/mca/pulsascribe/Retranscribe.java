@@ -35,8 +35,9 @@ final class Retranscribe {
             return;
         }
         boolean audio = t.isAudio();
+        boolean waiting = Transcript.WAITING.equals(t.status);
         LinearLayout col = Ui.column(a);
-        TextView info = Ui.body(a, a.getString(R.string.retr_info));
+        TextView info = Ui.body(a, a.getString(waiting ? R.string.call_decide_info : R.string.retr_info));
         info.setTextSize(13);
         info.setTextColor(Design.color(a, R.attr.pl_muted));
         Ui.add(col, info);
@@ -96,8 +97,17 @@ final class Retranscribe {
         sc.addView(col);
         final Switch fd = diarize, fc = clean;
         final EditText ft = terms;
-        Ui.dialog(a).setTitle(R.string.retr_title).setView(sc)
-                .setPositiveButton(R.string.retr_go, (d, w) -> {
+        android.app.AlertDialog.Builder b = Ui.dialog(a).setTitle(waiting ? R.string.call_decide_title : R.string.retr_title).setView(sc);
+        if (waiting) {
+            // Telefonat nicht gebraucht: in den Papierkorb (dort noch wiederherstellbar)
+            b.setNeutralButton(R.string.call_discard, (d, w) -> {
+                if (Store.trash(a, id)) Toast.makeText(a, R.string.call_discarded, Toast.LENGTH_SHORT).show();
+                android.app.NotificationManager nm = a.getSystemService(android.app.NotificationManager.class);
+                if (nm != null) nm.cancel(id.hashCode());
+                if (a instanceof TranscriptActivity) a.finish();
+            });
+        }
+        b.setPositiveButton(waiting ? R.string.call_transcribe : R.string.retr_go, (d, w) -> {
                     if (!Transcript.ENGINE_WHISPER.equals(engine[0]) && !AiKeys.ready(a)) {
                         KeyDialog.showActive(a, null);
                         return;
@@ -119,10 +129,14 @@ final class Retranscribe {
                     n.translations.clear();
                     n.speakerNames.clear();
                     n.incomplete = false;
-                    n.summarize = true;
+                    n.summarize = waiting ? cur.summarize : true;
                     n.error = "";
                     n.status = Transcript.QUEUED;
                     Store.save(a, n);
+                    if (waiting) {
+                        android.app.NotificationManager nm = a.getSystemService(android.app.NotificationManager.class);
+                        if (nm != null) nm.cancel(id.hashCode());
+                    }
                     try {
                         TranscribeService.start(a, id, null);
                     } catch (RuntimeException e) {

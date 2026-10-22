@@ -1032,6 +1032,8 @@ public final class MainActivity extends Activity {
                 if (t.aggregate) {
                     // Ordner-Auswertung erneut
                     TranscribeService.folder(MainActivity.this, t.id, t.folder, "");
+                } else if (Transcript.WAITING.equals(t.status)) {
+                    Retranscribe.show(MainActivity.this, t.id); // selbst entscheiden: Optionen, Transkribieren oder Verwerfen
                 } else {
                     TranscribeService.start(MainActivity.this, t.id, null);
                 }

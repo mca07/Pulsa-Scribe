@@ -195,6 +195,7 @@ public final class TranscriptActivity extends Activity {
         retry.setOnClickListener(v -> {
             if (t.isWorking()) TranscribeService.cancel(this, id);
             else if (t.aggregate) TranscribeService.folder(this, id, t.folder, "");
+            else if (Transcript.WAITING.equals(t.status)) Retranscribe.show(this, id);
             else TranscribeService.start(this, id, null);
         });
         play.setOnClickListener(v -> togglePlay());

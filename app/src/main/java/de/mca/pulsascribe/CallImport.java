@@ -89,7 +89,14 @@ final class CallImport {
         } catch (SecurityException ignored) { }
     }
 
-    static boolean autoStart(Context c) { return p(c).getBoolean(K_AUTO, true); }
+    static boolean autoStart(Context c) {
+        SharedPreferences sp = p(c);
+        if (!sp.getBoolean("auto_v2", false)) {
+            // ab 1.29: nie mehr ungefragt starten – einmalig ausschalten, danach gilt die eigene Wahl
+            sp.edit().putBoolean(K_AUTO, false).putBoolean("auto_v2", true).apply();
+        }
+        return sp.getBoolean(K_AUTO, false);
+    }
     static void setAutoStart(Context c, boolean v) { p(c).edit().putBoolean(K_AUTO, v).apply(); }
     /** Zielordner für übernommene Telefonate ("" = oberste Ebene). */
     static String folder(Context c) { return Store.folders(c).clean(p(c).getString("folder", de.mca.pulsascribe.core.Folders.ROOT)); }

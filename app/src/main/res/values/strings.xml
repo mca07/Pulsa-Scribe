@@ -639,10 +639,14 @@
     <string name="call_enabled">Ab jetzt werden neue Anrufaufnahmen übernommen.</string>
     <string name="call_failed">Der Ordner konnte nicht freigegeben werden.</string>
     <string name="call_auto">Beim Öffnen sofort transkribieren</string>
-    <string name="call_auto_sub">Neue Telefonate starten, sobald du die App oder die Benachrichtigung öffnest. Aus: erst auf „Transkribieren“ tippen.</string>
+    <string name="call_auto_sub">Aus (empfohlen): Neue Telefonate werden nur übernommen – du entscheidest je Telefonat mit „Transkribieren“ oder „Verwerfen“. An: starten, sobald du die App oder die Benachrichtigung öffnest.</string>
     <string name="call_template">Vorlage für Telefonate</string>
     <string name="call_title">Telefonat %1$s</string>
     <string name="call_new_title">Neues Telefonat übernommen</string>
+    <string name="call_decide_title">Telefonat transkribieren?</string>
+    <string name="call_decide_info">Wird erst gesendet, wenn du auf „Transkribieren“ tippst. Optionen bei Bedarf anpassen – oder „Verwerfen“ legt das Telefonat in den Papierkorb.</string>
+    <string name="call_discard">Verwerfen</string>
+    <string name="call_discarded">In den Papierkorb gelegt</string>
     <string name="call_transcribe">Transkribieren</string>
     <string name="st_waiting">Neues Telefonat – bereit zum Transkribieren</string>
     <string name="ch_calls">Neue Telefonate</string>
